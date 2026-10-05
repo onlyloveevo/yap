@@ -1,10 +1,18 @@
 # YAP
 
-**An AI creative partner, from your first idea to your next take.**
+**A first-pass prototype of a communication partner that learns with you.**
 
-YAP is the creative partner I'm building to help you turn what's in your head into videos that sound like you. Talk through an idea, shape it into talking points, rehearse, record, and assemble an editable cut. The longer-term vision connects your creative choices to audience feedback and experiments, helping you find what works for your voice.
+YAP is the creative partner I'm building to help you turn what's in your head into something that sounds like you. The vision is that what you learn from a video, a Loom-style recording or a meeting helps you prepare for the next one: better stories, more natural delivery and a strategy that develops with you. It starts with creating videos, with a longer-term path into presentations, meetings, interviews and difficult conversations.
 
-This repository contains a **runnable local prototype** for review. Personalised trained models, shared learning across users and connected audience analytics are roadmap work, not demonstrated capabilities of this build.
+**This is the first pass, not the finished promise.** The runnable local prototype lets reviewers inspect the idea → prepare → record → edit → next-take foundation. Personalised trained models, shared learning across users, connected audience analytics, meeting assistance and an advantage over base frontier models are goals to build and test. They are not demonstrated by this release.
+
+Start with the app, then read the [modular roadmap](ROADMAP.md), [Loom claim map](docs/LOOM_MAP.md) and [claim-by-claim delivery plan](docs/CLAIMS.md). They connect the demo's timestamps to the seven modules, the original four-week plan and the evidence needed before each larger claim can be made.
+
+## The modular plan
+
+**Prep → Live → Cut → Publish → Review → Experiments → the next Prep**, with **Coach** supporting preparation and delivery. A shared learning layer will connect the user's choices, predictions and real outcomes across those modules.
+
+The original four-week plan moves from recording/editing, to voice preparation/coaching/publishing, to real analytics/experiments, then outside-user testing. Each module must connect into the same real-video journey. Later work adds evaluated personalisation, opt-in learning across users, and communication beyond content. The roadmap preserves the original target dates and acceptance checks; those dates are planning targets, not evidence of completion or guaranteed releases.
 
 ## Run it
 
@@ -32,6 +40,8 @@ The bundled sample and manual recording/editing path need no model account or AP
 Camera/microphone permission is requested by Chrome. Natural wake-word control is experimental; typed controls and the held-key option are available. The full walkthrough, presentation mode and optional AI setup are in [INSTALL.md](INSTALL.md).
 
 ## What to assess
+
+This is an inventory of the snapshot's implemented paths, not a claim that every path has passed a human walkthrough. Preparation checks covered fresh setup, the local server, offline sample replay and 244 selected deterministic tests. Real microphone/camera use, natural wake, every export format and outside-user usability still need validation on the exact package.
 
 | Area | In this prototype | Remaining work |
 | --- | --- | --- |
