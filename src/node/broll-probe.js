@@ -58,6 +58,19 @@ export function looksLikeVideo(head) {
   return false;
 }
 
+/** PNG or JPEG, by its first bytes. A picture becomes a short clip before it is kept (server/broll-api.js). */
+export function looksLikeImage(head) {
+  if (head.length < 4) return false;
+  const hex = head.subarray(0, 4).toString('hex');
+  return hex === '89504e47' || hex.startsWith('ffd8ff');
+}
+
+/** Run ffmpeg to the end with a deadline; true when it exited cleanly. Never throws. */
+export async function runClipTool(ffmpeg, args, ms = 120000) {
+  const result = await run(ffmpeg, args, ms);
+  return !result.timedOut && result.code === 0;
+}
+
 /**
  * @param {string} ffmpeg
  * @param {string} file

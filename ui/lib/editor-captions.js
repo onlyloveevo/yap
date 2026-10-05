@@ -108,6 +108,8 @@ export function createCaptionOverlay({ document: doc, player, video }) {
       if (want === shownText) return;
       shownText = want;
       box.hidden = want === null;
+      // The beat card in the preview moves up while a caption shows, so the two never share the same strip of picture.
+      player.dataset.caption = want === null ? 'off' : 'on';
       text.textContent = want || '';
       if (want !== null) { place(); drawCaptionTile(canvas, want); }
     },

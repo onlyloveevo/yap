@@ -18,7 +18,7 @@ const url=process.argv[3], origin=url ? new URL(url).origin : null; const shotDi
     for (const id of ['brand', 'camera', 'memory-card', 'memory-keep', 'memory-drop', 'trial-status', 'bet', 'record', 'beats']) need(await vis(id), `${w}: ${id} missing before take 2 starts`);
     need(/last time you wanted to slow down/i.test(await txt('memory-card')) && /keep that cue/i.test(await txt('memory-card')), `${w}: memory card should ask "Last time you wanted to slow down during the opening. Keep that cue?"`);
     need(/grab a coffee/i.test(await txt('trial-status')) && /1 of 3/.test(await txt('trial-status')), `${w}: trial status should read the coffee trial, video 1 of 3`);
-    need(/bet/i.test(await txt('bet')) && /at most 2 restarts/i.test(await txt('bet')), `${w}: YAP's bet should read like "My bet: at most 2 restarts this take"`);
+    /* SUPERSEDED ON PURPOSE (BUILD_YapSubmitDemo round 2): no "bet" wording on screen; the line is the last take's count and what to aim for */ need(/last take had 2 restarts/i.test(await txt('bet')) && !/\bbet\b/i.test(await txt('memory-card')), `${w}: the card should say "Last take had 2 restarts. Aim for fewer." and never "bet"`); need(/what yap is trying with you/i.test(await txt('memory-card')), `${w}: the cue, the experiment and the lesson sit under one heading, "What YAP is trying with you"`);
     need(!(await vis('story-card')), `${w}: the story card waits until recording starts`);
     await click('memory-keep'); await click('record');
     need(!(await vis('memory-card')), `${w}: the memory card should close when recording starts`);
@@ -29,7 +29,7 @@ const url=process.argv[3], origin=url ? new URL(url).origin : null; const shotDi
     const s = await (await p.$(T('story-card')))?.boundingBox(), d = await (await p.$(T('delivery-cue')))?.boundingBox();
     if (s && d) need(Math.abs((s.x + s.width / 2) - (d.x + d.width / 2)) < 120 && Math.abs(s.x + s.width / 2 - w / 2) < w * 0.08, `${w}: cues must sit together on the centre line`);
     await click('end-take');
-    need(await vis('bet-result') && /(held|missed)/i.test(await txt('bet-result')) && /restart/i.test(await txt('bet-result')), `${w}: after the take, the bet result should say held or missed with the restart count`);
+    /* SUPERSEDED ON PURPOSE: take 2 ends on one sentence about what changed and one button */ need(await vis('bet-result') && /take 2 had .*take 1/i.test(await txt('result-line')) && !/\bbet\b/i.test(await txt('bet-result')), `${w}: after the take, one sentence should say what changed since take 1`); need((await p.$$eval('button', es => es.filter(e => e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden' && e.dataset.testid !== 'beat-node').map(e => e.dataset.testid).join(','))) === 'result-next', `${w}: after the take there is one button, to the next step`);
     const body = (await p.evaluate(() => document.body.innerText)).toLowerCase();
     need(!/\bscore\b|\bgrade\b|\b\d{1,3}\s*\/\s*100\b/.test(body), `${w}: no score or grade for the person`);
     need(!/more views|boost|guarantee/.test(body), `${w}: no performance promises`);
@@ -39,5 +39,5 @@ const url=process.argv[3], origin=url ? new URL(url).origin : null; const shotDi
   }
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS Return shell: kept note first, coffee trial 1 of 3, YAP bet checked after the take, cues on the centre line, 2 sizes, no errors, no network');
+  console.log('PASS Return shell: kept note first, coffee trial 1 of 3, one sentence and one button after the take, no bet wording, cues on the centre line, 2 sizes, no errors, no network');
 })().catch(e => { console.log('FAIL check crashed: ' + e); process.exit(1); });

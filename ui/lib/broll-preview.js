@@ -41,6 +41,12 @@ export function createBrollPreview({ document: doc, player }) {
     const vw = player.videoWidth;
     const vh = player.videoHeight;
     if (!box.width || !box.height || !vw || !vh) return;
+    // The editor's player fills its frame (cover); the clip then fills the same frame. Fullscreen shows the whole picture (contain).
+    const host = frame.parentElement;
+    if (doc.defaultView.getComputedStyle(player).objectFit === 'cover' && host) {
+      Object.assign(frame.style, { left: '0px', top: '0px', width: `${host.clientWidth}px`, height: `${host.clientHeight}px` });
+      return;
+    }
     const scale = Math.min(box.width / vw, box.height / vh);
     const w = vw * scale;
     const h = vh * scale;

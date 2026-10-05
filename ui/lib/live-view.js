@@ -12,3 +12,15 @@ export function panelModel(exchange = {}) {
  const p=exchange.proposal;
  return {you:exchange.remark || '',yap:exchange.reply || p?.ask || '',card:p?{tag:p.category || 'Greeting',line:exchange.greeting || p.to || p.change?.to || '',trialLength:p.trialLength || 3}:null,saved:exchange.saved || ''};
 }
+// The line the person would say with the change in it: "Grab a tea. Let's get into it." with tea for coffee.
+export function changedLine(current = '', from = '', to = '') {
+ if(from && to && current.includes(from))return current.replace(from, to);
+ return to && current.includes(to) ? current : to;
+}
+// What the old wording is known by: against "Grab a coffee", "Grab a tea" is "tea".
+export function keptWords(from = '', to = '') {
+ const a=from.split(/\s+/).filter(Boolean), b=to.split(/\s+/).filter(Boolean);
+ let i=0;
+ while(i<a.length-1 && i<b.length && a[i].toLowerCase()===b[i].toLowerCase())i++;
+ return a.slice(i).join(' ').replace(/[.!?]+$/,'');
+}

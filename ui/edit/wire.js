@@ -3,14 +3,15 @@ import {applyLaptopEditorLayout} from '../lib/laptop-layout.js';
 import {parseWav} from '../../src/engine/wav.js';
 import {waveformPeaks} from '../lib/waveform.js';
 import { createClipPreviews, attachClipPreviews } from '../lib/clip-previews.js';
-import { isShellMode, comingSoon, sayQuietly, go } from '../lib/app.js';
+import { isShellMode, sayQuietly, go } from '../lib/app.js';
 import { getRecording, restoreCut, exportRecording, trimRecording } from '../lib/api.js';
 import { createTrimEditor, currentTrim, labelTrimClips } from '../lib/trim-editor.js';
 import { createEditorRail } from '../lib/editor-rail.js';
 import { createBrollPreview } from '../lib/broll-preview.js';
-import { brollState } from '../../src/engine/broll-plan.js';
+import { brollState, brollWindows } from '../../src/engine/broll-plan.js';
+import { edlDocument, fcp7XmlDocument } from '../../src/engine/export.js';
 import { matchRoute, routeFor } from '../lib/routes.js';
-import { clipsFromCuts, lengths, skipTarget, cutTime, mediaFor, formatTime } from '../lib/edit-model.js';
+import { clipsFromCuts, lengths, skipTarget, cutTime, mediaFor, formatTime, exactKeptRanges, placeTags, tagRank } from '../lib/edit-model.js';
 const shellMode = isShellMode(location);
 if (!shellMode) applyLaptopEditorLayout(document);
 const id = matchRoute(location.pathname, location.search)?.params.id;
@@ -28,7 +29,10 @@ const paths = {
  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 6-6 4 4 3-3 5 5"/>',
  trash: '<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',
  sparkle: '<path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z"/>',
- words: '<path d="M4 6h16M4 12h10M4 18h16"/>'
+ words: '<path d="M4 6h16M4 12h10M4 18h16"/>',
+ download: '<path d="M12 3v13m-5-5 5 5 5-5M4 21h16"/>',
+ chevron: '<path d="m6 9 6 6 6-6"/>',
+ chart: '<path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/>'
 };
 const icon = name => { const e = el('span'); e.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[name] || ''}</svg>`; return e.firstChild; };
 document.querySelectorAll('[data-icon]').forEach(e => e.replaceChildren(icon(e.dataset.icon)));
@@ -68,8 +72,25 @@ if (shellMode) {
 }
 const clipDuration=seconds=>seconds>0&&seconds<1?`${seconds.toFixed(1)} seconds`:formatTime(seconds);
 function toast(text) { return sayQuietly(document, text); }
+// The tags above the strip share one line: after each draw they are measured and moved apart so none touches another.
+// A tag with no room gives way (the pause first) and its words stay on the clip's own label and tooltip.
+function spreadTags() {
+ const strip = get('clips'), box = strip.getBoundingClientRect();
+ if (!box.width) return;
+ const tags = [...strip.querySelectorAll('.clip-label, .kept-bubble')];
+ for (const tag of tags) { tag.style.translate = ''; tag.hidden = false; }
+ const shown = tags.filter(tag => getComputedStyle(tag).display !== 'none');
+ const measured = shown.map(tag => { const r = tag.getBoundingClientRect(), c = tag.parentElement.getBoundingClientRect(); return { left: r.left, width: r.width, rank: tagRank(tag.textContent), clipLeft: c.left, clipRight: c.right }; });
+ placeTags(measured, { left: box.left, right: box.right }).forEach((place, i) => {
+  const tag = shown[i];
+  tag.hidden = place.hidden;
+  if (place.dx) tag.style.translate = `${place.dx}px 0`;
+  if (place.hidden) tag.parentElement.title = tag.textContent;
+ });
+}
 function render() {
  const total = lengths(clips);
+ const laid = !shellMode && recording ? brollState(recording) : { asset: null };
  get('view-original').querySelector('small').textContent = `Full recording (${formatTime(total.original)})`;
  get('view-yapcut').querySelector('small').textContent = total.yapCut === total.original ? `No cuts applied (${formatTime(total.yapCut)})` : `A cleaner, tighter version (${formatTime(total.yapCut)})`;
  for (const name of ['original','yapcut']) get('view-' + name).setAttribute('aria-pressed', String(view === name));
@@ -78,28 +99,33 @@ function render() {
   const active = selected === index, tile = el('button', 'clip');
   const trimEdge = !shellMode && recording?.cuts?.cuts?.some(c => c.id === clip.cutId && c.kind === 'trim');
   const durationLabel = clip.seconds > 0 && clip.seconds < 1 ? `${clip.seconds.toFixed(1)}s` : formatTime(clip.seconds);
+  // The clip the saved B-roll starts on says so, as the strip says what was removed.
+  const text = clip.state === 'kept' && (!clip.label || clip.label === 'Best take') && laid.asset && laid.start >= clip.start && laid.start < clip.end ? 'B-roll added' : clip.label;
   Object.assign(tile.dataset, { testid: 'clip', state: clip.state, duration: String(clip.seconds), selected: String(active), index: String(index), cutId: clip.cutId || '', reviewState: clip.reviewState || '', certainty: clip.certainty || '' });
   tile.style.flexGrow = String(clip.seconds);
   if (!shellMode && clipPreviews) attachClipPreviews(tile, clip, clipPreviews);
   if (clip.reviewState === 'pending') { tile.style.borderColor = 'var(--amber)'; tile.setAttribute('title', 'Suggested cut. Audio is kept until you click Apply.'); }
   tile.setAttribute('aria-label', `Clip ${index + 1}, ${clipDuration(clip.seconds)}, ${clip.state}${clip.cutId ? ', click to ' + (clip.state === 'removed' ? 'restore' : clip.reviewState === 'pending' ? 'apply suggested cut' : 'remove again') : ''}`);
   tile.setAttribute('aria-pressed', String(active));
-  if (clip.label) {
-   const label = el('span', 'clip-label' + (clip.label === 'Best take' ? ' best' : ''));
+  if (text) {
+   const label = el('span', 'clip-label' + (text === 'Best take' ? ' best' : ''));
    label.dataset.testid = 'clip-label';
    if (clip.reviewState === 'pending') { label.style.color = 'var(--amber)'; label.style.border = '1px solid var(--amber)'; }
    if (clip.state === 'removed') label.append(icon('trash'));
-   label.append(document.createTextNode(clip.label + (trimEdge ? ` · ${durationLabel}` : '')));
-   if (clip.label === 'Best take') label.append(icon('sparkle'));
+   if (text === 'B-roll added') label.append(icon('image'));
+   label.append(document.createTextNode(text + (trimEdge ? ` · ${durationLabel}` : '')));
+   if (text === 'Best take') label.append(icon('sparkle'));
    tile.append(label);
   }
   if (!trimEdge) tile.append(el('span', 'duration', durationLabel));
   if (active) {
    tile.append(el('span','clip-handle start'), el('span','clip-handle end'));
-   if (clip.state === 'kept') { const b = el('span', 'kept-bubble', shellMode ? "kept, that's you" : total.yapCut === total.original ? 'Original retained' : 'Clip kept'); b.dataset.testid = 'kept-bubble'; tile.append(b); }
+   // A kept clip that already carries a tag of its own (Best take, B-roll added) says it is kept: one tag per clip.
+   if (clip.state === 'kept' && !text && (shellMode || total.yapCut !== total.original)) { const b = el('span', 'kept-bubble', "kept, that's you"); b.dataset.testid = 'kept-bubble'; tile.append(b); }
   }
   get('clips').append(tile);
  }
+ spreadTags();
  const current = clips[selected];
  if (!shellMode) {
   get('shorten').disabled = busy || !recording || !player;
@@ -122,7 +148,7 @@ function render() {
  if(!shellMode){
   let status=document.querySelector('[data-testid="waveform-status"]');
   if(!status){status=el('p','waveform-status');status.dataset.testid='waveform-status';status.style.cssText='font-size:12px;color:var(--muted,#777);margin:6px 0 0';get('waveform').after(status);}
-  status.hidden=Boolean(peaks.length);status.textContent=waveformLoading?'Preparing audio waveform…':'Audio waveform unavailable. You can still play the original video.';
+  status.hidden=Boolean(peaks.length);status.textContent=waveformLoading?'Drawing your audio…':'This take has no audio to draw.';
  }
 
  wave.innerHTML=bars.map((level,i)=>{
@@ -146,6 +172,21 @@ function render() {
   if (!band) { band = el('div', 'broll-band'); band.dataset.testid = 'broll-band'; band.setAttribute('aria-hidden', 'true'); get('waveform').prepend(band); }
   band.hidden = !b.asset || !total.original;
   if (b.asset && total.original) { band.style.left = `${b.start / total.original * 100}%`; band.style.width = `${(b.end - b.start) / total.original * 100}%`; band.title = `B-roll: ${b.asset.name}`; }
+  // Where YAP suggests B-roll: a dashed stretch on the waveform. A press opens the clips for that moment.
+  document.querySelectorAll('[data-testid="broll-suggestion"]').forEach(mark => mark.remove());
+  if (total.original) rail.brollMoments().forEach((m, i) => {
+   if (b.asset && m.start < b.end && m.end > b.start) return;
+   const mark = el('button', 'broll-suggestion'); mark.type = 'button';
+   Object.assign(mark.dataset, { testid: 'broll-suggestion', index: String(i), start: String(m.start), end: String(m.end) });
+   mark.style.left = `${m.start / total.original * 100}%`; mark.style.width = `${(m.end - m.start) / total.original * 100}%`;
+   mark.setAttribute('aria-label', `B-roll would fit at ${formatTime(m.start)}. Open clips for this moment`);
+   mark.setAttribute('aria-pressed', String(rail.isOpen() && rail.activeTab() === 'broll' && rail.brollMomentIndex() === i));
+   mark.append(icon('image'), el('span', '', 'B-roll'));
+   mark.disabled = busy;
+   mark.addEventListener('pointerdown', event => event.stopPropagation());
+   mark.addEventListener('click', event => { event.stopPropagation(); rail.open('broll', { from: get('broll') }); rail.chooseBrollMoment(i); render(); });
+   get('waveform').append(mark);
+  });
   const on = rail.captionsEnabled(), cc = get('cc');
   cc.setAttribute('aria-pressed', String(on)); cc.setAttribute('aria-label', on ? 'Captions on: turn off' : 'Captions off: turn on'); cc.title = on ? 'Captions are on for this recording' : 'Turn captions on for this recording';
   cc.disabled = busy; cc.style.opacity = on ? '1' : '.7';
@@ -153,6 +194,7 @@ function render() {
 }
 function updateTime() {
  const total = lengths(clips), time = player?.currentTime || 0;
+ if (!shellMode) showBeat(time);
  brollPreview?.sync();
  get('time').textContent = `${formatTime(view === 'yapcut' ? cutTime(clips, time) : time)} / ${formatTime(view === 'yapcut' ? total.yapCut : total.original)}`;
  get('playhead').style.left = `${total.original ? time / total.original * 100 : 0}%`;
@@ -161,6 +203,13 @@ function updateTime() {
  if (!shellMode && rail) rail.tick();
  get('play').setAttribute('aria-label', player && !player.paused ? 'Pause preview' : 'Play preview');
  get('play').setAttribute('aria-pressed', String(Boolean(player && !player.paused)));
+}
+// The beat being spoken at the playhead, from the take's own beat times. A take with no beat times shows no card.
+function showBeat(time) {
+ const spoken = (recording?.beats || []).filter(b => { const take = b.takes?.find(t => t.id === b.chosenTakeId) || b.takes?.[0]; return take && time >= take.start; }).at(-1);
+ const overlay = get('story-overlay');
+ overlay.style.display = spoken ? '' : 'none';
+ if (spoken) overlay.querySelector('h1').textContent = spoken.title;
 }
 function skipRemoved() {
  if (!player || view !== 'yapcut') return;
@@ -175,9 +224,8 @@ function skipRemoved() {
 }
 if(!shellMode){
  const wave=get('waveform');let dragging=false;
- wave.tabIndex=0;wave.setAttribute('role','slider');wave.setAttribute('aria-label','Seek in original recording');wave.setAttribute('aria-valuemin','0');wave.setAttribute('aria-orientation','horizontal');wave.title='Seek in original time. Arrow keys move 1 second; Home and End reach the ends. YAP cut skips removed spans.';
+ wave.tabIndex=0;wave.setAttribute('role','slider');wave.setAttribute('aria-label','Seek in original recording');wave.setAttribute('aria-valuemin','0');wave.setAttribute('aria-orientation','horizontal');
  wave.style.cursor='pointer';wave.style.touchAction='none';
- const hint=el('p','','Seek recording · drag or use ← →');hint.dataset.testid='seek-hint';hint.style.cssText='font-size:12px;color:var(--muted,#aaa);margin:6px 0 0';wave.after(hint);
  wave.addEventListener('focus',()=>{wave.style.outline='2px solid var(--amber)';wave.style.outlineOffset='3px';});wave.addEventListener('blur',()=>{wave.style.outline='';wave.style.outlineOffset='';});
  const seek=(time,direction=1)=>{if(!player||busy)return;const end=lengths(clips).original;let target=Math.max(0,Math.min(end,time));if(view==='yapcut'){if(direction<0){for(const clip of [...clips].reverse())if(clip.state==='removed'&&target>=clip.start&&target<clip.end)target=Math.max(0,clip.start-.001);}else target=skipTarget(clips,target)??target;}player.currentTime=target;if(target>=end)player.pause();updateTime();};
  const pointerSeek=event=>{const box=wave.getBoundingClientRect();if(box.width)seek((event.clientX-box.left)/box.width*lengths(clips).original);};
@@ -186,7 +234,7 @@ if(!shellMode){
  wave.addEventListener('pointerup',event=>{if(!dragging)return;pointerSeek(event);dragging=false;if(wave.hasPointerCapture(event.pointerId))wave.releasePointerCapture(event.pointerId);});
  wave.addEventListener('pointercancel',()=>{dragging=false;});
  wave.addEventListener('keydown',event=>{if(!player)return;const steps={ArrowLeft:-1,ArrowDown:-1,ArrowRight:1,ArrowUp:1,PageDown:-10,PageUp:10};if(event.key==='Home'||event.key==='End'||Object.hasOwn(steps,event.key)){event.preventDefault();seek(event.key==='Home'?0:event.key==='End'?lengths(clips).original:player.currentTime+steps[event.key],steps[event.key]<0?-1:1);}});
- {const button=get('help');button.disabled=true;button.setAttribute('aria-label','Help, unavailable');button.title='Help is not available in this demo';button.hidden=true;}
+ get('help').hidden=true;document.querySelector('.menu').hidden=true;
  get('cc').disabled=true;get('cc').setAttribute('aria-label','Captions, loading');
 }
 get('clips').addEventListener('click', async event => {
@@ -209,7 +257,7 @@ get('clips').addEventListener('click', async event => {
     skipRemoved();
     // Export links describe a saved snapshot, not the newly changed timeline.
     // Replace both links only once this cut decision has reached disk.
-    if (get('export-download') || get('export-cuts-download')) { dropStaleExport(); toast('Cut changed. Export again to download the updated YAP cut.'); }
+    if (get('export-download')) { dropStaleExport(); toast('Cut changed. Export again to download the updated YAP cut.'); }
    } catch (err) { toast(`Could not change the cut: ${err.message}`); }
    finally { busy = false; }
   }
@@ -244,8 +292,11 @@ get('fullscreen').addEventListener('click', async () => {
 });
 document.addEventListener('fullscreenchange', syncFullscreen);
 syncFullscreen();
-get('cc').addEventListener('click', () => { if (shellMode) comingSoon(document, 'Captions'); else if (rail && recording && !busy) rail.toggleCaptions(); });
-if (shellMode) for (const [name, label] of [['broll','B-roll'],['help','Help']]) get(name).addEventListener('click', () => comingSoon(document, label));
+get('cc').addEventListener('click', () => { if (!shellMode && rail && recording && !busy) rail.toggleCaptions(); });
+if (shellMode) {
+ // The drawn reference: Add B-roll goes to the clip that carries B-roll.
+ get('broll').addEventListener('click', () => { const at = clips.findIndex(c => c.label === 'B-roll added'); if (at >= 0) { selected = at; render(); } });
+}
 else {
  get('edit-words').hidden = false;
  for (const name of ['edit-words', 'broll']) {
@@ -253,15 +304,18 @@ else {
   get(name).addEventListener('click', () => { if (rail && recording && !busy) rail.open(get(name).dataset.railEntry, { from: get(name) }); });
  }
 }
-if (shellMode) get('shorten').addEventListener('click', () => comingSoon(document, 'Shorten'));
 get('keep').addEventListener('click', () => {
  const clip = clips[selected];
  if (!clip || busy) return;
  if (clip.state === 'removed') get('clips').children[selected]?.click();
  else toast('This clip is already kept.');
 });
-get('retry').addEventListener('click', () => { if (shellMode) comingSoon(document, 'Retry'); else if (recording) go(routeFor('return', { id })); });
-if (!shellMode) { get('retry').lastChild.textContent = 'Next take'; get('retry').setAttribute('aria-label', 'Prepare the next take') }
+get('retry').addEventListener('click', () => { if (!shellMode && recording) go(routeFor('return', { id })); });
+if (!shellMode) {
+ get('retry').lastChild.textContent = 'Next take'; get('retry').setAttribute('aria-label', 'Prepare the next take');
+ // Review for this take: what worked, and what to try next.
+ if (id) { const review = el('a', 'glass review-link'); review.href = `/review/${id}`; review.dataset.testid = 'open-review'; review.append(icon('chart'), document.createTextNode('Review this take')); document.querySelector('.header-actions').prepend(review); }
+}
 // Fetch the pinned response before initiating a browser download. A rejected
 // identity is an operator message, never a JSON error saved as an MP4.
 let downloading=false,reviewRequired=false;
@@ -274,48 +328,90 @@ document.addEventListener('click',async event=>{
  event.preventDefault();if(downloading)return;downloading=true;
  try{
   const response=await fetch(link.href,{mode:'same-origin',credentials:'same-origin',cache:'no-store'});
-  if(!response.ok){if(response.status===409||response.status===400){reviewRequired=true;get('export').disabled=true;}const failure=await response.json().catch(()=>null);throw new Error(failure?.error||'Download could not finish. Reload to review the current cut and export again.');}
+  if(!response.ok){if(response.status===409||response.status===400){reviewRequired=true;dropStaleExport();get('export').disabled=true;}const failure=await response.json().catch(()=>null);throw new Error(failure?.error||'Download could not finish. Reload to review the current cut and export again.');}
   const blob=await response.blob(),url=URL.createObjectURL(blob),download=el('a');
   download.href=url;download.download=link.download;download.hidden=true;document.body.append(download);download.click();download.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
  }catch(error){
   exportReviewNotice(error.message);
  }finally{downloading=false;}
 });
+// Export works in the Export button's own place, then that place becomes one Download control with the other formats behind it.
+function setExporting(on) {
+ const button = get('export');
+ button.dataset.state = on ? 'working' : 'idle'; button.setAttribute('aria-busy', String(on));
+ button.lastChild.textContent = on ? 'Exporting…' : 'Export';
+}
+function exportStatus(text) {
+ let line = get('export-status');
+ if (!line) { line = el('p', 'sr-only'); line.dataset.testid = 'export-status'; line.setAttribute('role', 'status'); document.querySelector('.view-row').append(line); }
+ line.textContent = text;
+}
+function showDownloads(result, notes) {
+ dropStaleExport();
+ const box = el('div', 'export-ready'); box.dataset.testid = 'export-ready';
+ const main = el('a', 'export-main'); main.href = result.downloadUrl; main.download = `YAP-${id}.mp4`; main.dataset.testid = 'export-download';
+ main.append(icon('download'), document.createTextNode(result.outputs?.video ? 'Download' : 'Download audio'));
+ const more = el('button', 'export-more'); more.type = 'button'; more.dataset.testid = 'export-more';
+ more.setAttribute('aria-label', 'More formats'); more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-expanded', 'false'); more.append(icon('chevron'));
+ const menu = el('div', 'export-menu glass'); menu.dataset.testid = 'export-menu'; menu.setAttribute('role', 'menu'); menu.hidden = true;
+ const item = (label, hint, href, name, testid) => { const a = el('a', 'export-item'); a.setAttribute('role', 'menuitem'); a.href = href; a.download = name; a.dataset.testid = testid; a.append(el('strong', '', label), el('small', '', hint)); menu.append(a); };
+ if (result.outputs?.video) {
+  // The same cut as timelines other editors open, written from the clips on this strip. They point at the original recording by the name its MP4 download carries.
+  const kept = exactKeptRanges(recording), over = brollState(recording), clipName = `YAP-${id}-original.mp4`, title = `YAP cut ${recording.title || id}`;
+  const broll = over.asset ? { name: over.asset.name, duration: over.asset.duration, windows: brollWindows(kept, over) } : null;
+  const blob = (text, type) => { const url = URL.createObjectURL(new Blob([text], { type })); exportBlobs.push(url); return url; };
+  item('Premiere Pro', 'XML timeline', blob(fcp7XmlDocument({ title, clipName, duration: recording.duration, keptRanges: kept, width: player?.videoWidth || 1920, height: player?.videoHeight || 1080, broll }), 'application/xml'), `YAP-${id}.xml`, 'export-xml-download');
+  item('DaVinci Resolve', 'EDL timeline', blob(edlDocument({ title, clipName, keptRanges: kept, broll }), 'text/plain'), `YAP-${id}.edl`, 'export-edl-download');
+  item('Original recording', 'MP4 for the timelines', `/api/app/originals/${id}`, clipName, 'export-original-download');
+ }
+ if (result.cutsDownloadUrl && /^\/(?![/\\])/.test(result.cutsDownloadUrl)) item('Cut list', 'JSON', result.cutsDownloadUrl, `YAP-${id}.cuts.json`, 'export-cuts-download');
+ if (notes) { const note = el('p', 'export-note', notes); note.dataset.testid = 'export-note'; menu.append(note); }
+ const setMenu = open => { menu.hidden = !open; more.setAttribute('aria-expanded', String(open)); };
+ more.addEventListener('click', event => { event.stopPropagation(); setMenu(menu.hidden); });
+ box.addEventListener('keydown', event => { if (event.key === 'Escape' && !menu.hidden) { setMenu(false); more.focus(); } });
+ // A press elsewhere closes the menu. The page's own click on a finished download is not a press.
+ document.addEventListener('click', event => { if (event.isTrusted && !box.contains(event.target)) setMenu(false); });
+ box.append(main, more, menu);
+ get('export').hidden = true; get('export').after(box);
+}
 get('export').addEventListener('click', async () => {
  if (shellMode) return toast(`Export: YAP cut (${formatTime(lengths(clips).yapCut)})`);
  if (!recording || busy || reviewRequired) return;
- busy = true; get('export').disabled = true;
+ busy = true; get('export').disabled = true; setExporting(true);
+ // An earlier failure notice has had its answer: this export.
+ document.querySelectorAll('[data-testid="toast"]').forEach(note => { note.hidden = true; });
  const captioned = Boolean(rail && rail.captionsEnabled());
- toast(captioned ? 'Drawing captions and writing your YAP cut…' : 'Writing your YAP cut…')?.setAttribute('role','status');
+ exportStatus(captioned ? 'Drawing captions and writing your YAP cut…' : 'Writing your YAP cut…');
  try {
   const made = rail ? await rail.exportExtras() : { extra: {}, cueCount: 0 };
   const result = await exportRecording(id,globalThis,{duration:recording.duration,cuts:recording.cuts.cuts.map(({id,start,end,applied})=>({id,start,end,applied}))},made.extra);
   const path = result.outputs?.video || result.outputs?.audio;
   const note = typeof result.video === 'string' ? result.video : result.video?.note;
-  const laid = result.broll?.applied ? ` B-roll is laid over the picture${result.broll.windows?.length > 1 ? ` in ${result.broll.windows.length} parts` : ''}; your original voice plays throughout.` : '';
-  const burned = result.captions?.burned ? ` ${result.captions.cueCount} ${result.captions.cueCount === 1 ? 'caption is' : 'captions are'} burned in.` : result.captions ? ` No captions were burned in: ${result.captions.note || 'there was nothing to caption.'}` : '';
-  const box = toast(path ? (result.outputs?.video ? `Your MP4 is ready.${laid}${burned}` : `Your audio is ready.${note ? ' '+note : ''}`) : 'Export completed without a downloadable media file.');
-  if (box && result.downloadUrl && /^\/(?![/\\])/.test(result.downloadUrl)) {
-   const link = el('a', '', result.outputs?.video ? ' Download video' : ' Download audio');
-   link.href = result.downloadUrl; link.download = `YAP-${id}.mp4`; link.dataset.testid = 'export-download'; link.style.color = 'var(--amber)'; box.append(link);
-  }
-  if (box && result.cutsDownloadUrl && /^\/(?![/\\])/.test(result.cutsDownloadUrl)) {
-   const link = el('a', '', 'Download cut list');link.href=result.cutsDownloadUrl;link.download=`YAP-${id}.cuts.json`;link.dataset.testid='export-cuts-download';Object.assign(link.style,{color:'var(--amber)',marginLeft:'18px'});box.append(link);
-  }
-  // Keep a completed export visible until the next action; the user needs its download link.
-  if (box) { const copy = box.cloneNode(true); Object.assign(copy.style,{bottom:'auto',top:'96px',pointerEvents:'none'}); for(const link of copy.querySelectorAll('a'))link.style.pointerEvents='auto'; box.replaceWith(copy); }
+  const laid = result.broll?.applied ? `B-roll is laid over the picture${result.broll.windows?.length > 1 ? ` in ${result.broll.windows.length} parts` : ''}; your original voice plays throughout.` : '';
+  const burned = result.captions?.burned ? `${result.captions.cueCount} ${result.captions.cueCount === 1 ? 'caption is' : 'captions are'} burned in.` : result.captions ? `No captions were burned in: ${result.captions.note || 'there was nothing to caption.'}` : '';
+  const notes = [laid, burned].filter(Boolean).join(' ');
+  if (path && result.downloadUrl && /^\/(?![/\\])/.test(result.downloadUrl)) {
+   showDownloads(result, notes);
+   exportStatus(result.outputs?.video ? `Your MP4 is ready.${notes ? ' ' + notes : ''}` : `Your audio is ready.${note ? ' ' + note : ''}`);
+  } else { exportStatus(''); toast('Export completed without a downloadable media file.'); }
  } catch (err) {
+  exportStatus('');
   if(err.status===409||err.status===400){reviewRequired=true;exportReviewNotice(err.message);}
   else {
-   // A long export can fail after the operator looked away: keep the failure up (like the success notice) until the next action.
+   // A long export can fail after the operator looked away: keep the failure up until the next action.
    const box=toast(`Export failed: ${err.message}`);
    if(box){const copy=box.cloneNode(true);Object.assign(copy.style,{bottom:'auto',top:'96px',pointerEvents:'none'});copy.setAttribute('role','alert');box.replaceWith(copy);}
   }
  }
- finally { busy = false; get('export').disabled = reviewRequired; }
+ finally { busy = false; setExporting(false); get('export').disabled = reviewRequired; }
 });
 // Trim recording (Shorten): the engine's trimStart/trimEnd, saved by the server against the cut this page is showing.
-function dropStaleExport() { for (const name of ['export-download', 'export-cuts-download']) document.querySelectorAll(`[data-testid="${name}"]`).forEach(link => link.remove()); }
+const exportBlobs = [];
+function dropStaleExport() {
+ document.querySelectorAll('[data-testid="export-ready"]').forEach(box => box.remove());
+ for (const url of exportBlobs.splice(0)) URL.revokeObjectURL(url);
+ get('export').hidden = false; exportStatus('');
+}
 const cutSnapshot = r => ({ duration: r.duration, cuts: r.cuts.cuts.map(({ id, start, end, applied }) => ({ id, start, end, applied })) });
 async function saveTrim(patch, describe) {
  busy = true; render();
@@ -359,19 +455,16 @@ async function open() {
   clips = labelTrimClips(clipsFromCuts(recording.cuts, recording.duration), recording.cuts);
   selected = Math.max(0, clips.findIndex(c => c.state === 'kept'));
   player = document.createElement('video'); player.dataset.testid = 'preview-video'; player.preload = 'metadata'; player.playsInline = true;
-  Object.assign(player.style, { position:'absolute', inset:'0', width:'100%', height:'100%', objectFit:'contain', background:'#130f0e' });
+  if (answer.meta?.sample) { player.classList.add('is-sample'); const tag = el('span', 'sample-tag', 'Sample'); tag.dataset.testid = 'sample-tag'; get('player').append(tag); }
   player.src = mediaFor(recording, answer.meta);
   clipPreviews = createClipPreviews(player.src, recording.duration);
   window.addEventListener('pagehide', event => { if (!event.persisted) clipPreviews?.dispose(); });
   get('player').prepend(player);
   ambientBackdrop(player);
-  get('story-overlay').hidden = true; get('story-overlay').style.display = 'none';
-  // The camera preview never contains the on-screen prompts or decorative copy.
-  document.querySelector('.player-note').hidden = true;
   player.addEventListener('loadedmetadata', skipRemoved);
   for (const event of ['timeupdate','seeked']) player.addEventListener(event, () => { if (!player.paused) skipRemoved(); updateTime(); });
   for (const event of ['play','pause','ended','loadedmetadata']) player.addEventListener(event, updateTime);
-  player.addEventListener('error', () => toast('This recording could not be loaded. The saved take and its cuts are still here.'));
+  player.addEventListener('error', () => toast('This take did not load. It is still saved, with its cuts.'));
   get('export').disabled = false;
   get('cc').disabled = false;
   brollPreview = createBrollPreview({ document, player });
@@ -396,3 +489,5 @@ function ambientBackdrop(video) {
  new MutationObserver(() => { if (fromVideo) return; const img = get('clips').querySelector('img'); if (img?.complete && img.naturalWidth) draw(img); }).observe(get('clips'), { childList:true, subtree:true });
 }
 open();
+// The strip changes width when the side panel opens or the window is resized: the tags are laid out again.
+if (typeof ResizeObserver === 'function') new ResizeObserver(() => spreadTags()).observe(get('clips'));

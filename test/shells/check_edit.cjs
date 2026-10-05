@@ -56,7 +56,10 @@ const url=process.argv[3], origin=url ? new URL(url).origin : null; const shotDi
     await p.click(T('view-original'), { timeout: 2000 }).catch(() => need(false, `${w}: cannot click Original`)); await p.waitForTimeout(200);
     need((await p.$eval(T('view-original'), e => e.getAttribute('aria-pressed')).catch(() => null)) === 'true', `${w}: clicking Original should select it`);
     await p.click(T('broll'), { timeout: 2000 }).catch(() => need(false, `${w}: cannot click Add B-roll`)); await p.waitForTimeout(200);
-    need(await vis('toast') && /coming soon/i.test(await txt('toast')), `${w}: Add B-roll should say it is coming soon (a toast), not fake an edit`);
+    // His Loom at 04:08: B-roll is real. On the drawn page the button goes to the clip that carries it, and nothing says it is unfinished.
+    const onBroll = await p.$$eval(T('clip'), es => es.filter(e => e.dataset.selected === 'true').map(e => (e.querySelector('[data-testid="clip-label"]') || {}).innerText || ''));
+    need(onBroll.length === 1 && /b-roll added/i.test(onBroll[0]), `${w}: Add B-roll should select the clip tagged "B-roll added" (selected: ${onBroll.join(' | ')})`);
+    need(!/coming soon/i.test(await txt('toast')), `${w}: Add B-roll must not say "coming soon"`);
     const body = (await p.evaluate(() => document.body.innerText)).toLowerCase();
     need(!/\b\d{1,3}\s*\/\s*100\b|\bscore\b|\bgrade\b/.test(body), `${w}: no score or grade for the person`);
     const sw = await p.evaluate(() => document.documentElement.scrollWidth); need(sw <= w, `${w}: horizontal scroll (${sw}px)`);
@@ -65,5 +68,5 @@ const url=process.argv[3], origin=url ? new URL(url).origin : null; const shotDi
   }
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS Edit mode shell: player, views with consistent lengths, clip undo, selection and waveform, B-roll coming soon, 2 sizes, no errors, no network');
+  console.log('PASS Edit mode shell: player, views with consistent lengths, clip undo, selection and waveform, B-roll goes to its clip, 2 sizes, no errors, no network');
 })().catch(e => { console.log('FAIL check crashed: ' + e); process.exit(1); });

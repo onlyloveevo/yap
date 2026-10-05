@@ -19,7 +19,8 @@ import { paceCue } from './pace.js';
 /**
  * @typedef {'slow-down' | 'smile' | 'more-energy' | 'pause' | 'look-at-lens' | 'land-the-point'} DeliveryKind
  * @typedef {{ id: string, kind: DeliveryKind, text: string, beatId: string | null }} DeliveryCue
- * @typedef {{ kind: DeliveryKind, text?: string, beatId?: string | null }} DeliveryPick
+ * @typedef {{ kind: DeliveryKind, text?: string, beatId?: string | null, placed?: boolean }} DeliveryPick
+ *   `placed: false` keeps a pick off every beat: the cue is raised by what YAP measures, never by the beat
  * @typedef {{ cues: DeliveryCue[] }} Delivery
  * @typedef {'beat' | 'pace'} DeliveryReason  why the cue now showing is showing
  * @typedef {{ cue: DeliveryCue | null, beatId: string | null, reason: DeliveryReason, at: number }} DeliveryChange
@@ -57,6 +58,22 @@ export const DELIVERY_DEFAULTS = Object.freeze({
 });
 
 const SLOW_DOWN = 'slow-down';
+
+/**
+ * The cues YAP raises from what it sees and hears, each with what it is measured from: pace from the voice, a smile
+ * from the face on camera. The other four are the person's own reminders and show on a beat.
+ */
+export const MEASURED_CUES = Object.freeze({ 'slow-down': 'pace', smile: 'face' });
+
+/** One setting each for the smile watch. */
+export const SMILE_DEFAULTS = Object.freeze({
+  level: 0.4, // a smile reading (0 to 1) at or over this is a smile
+  holdSec: 0.4, // a smile counts once it has held this long: a word shaped like one passes sooner
+  quietSec: 8, // Smile shows after this long on camera without one
+  showSec: 6, // and stays at most this long; then the count starts again
+  gapSec: 1, // readings further apart than this count as this long: time off camera is not time without a smile
+  lostSec: 2, // with no face in view for this long a shown cue goes
+});
 
 function namedError(name, message) {
   const err = new Error(message);
@@ -102,7 +119,7 @@ function cuesOf(delivery) {
  * The person's 1 to 3 delivery cues (D-44). A pick may carry its own wording
  * and its own beat. Picks with no beat are dealt to the beats in order, around
  * the beats other picks named; a cue left over when the beats run out has no
- * beat (`beatId: null`) and never shows by beat.
+ * beat (`beatId: null`) and never shows by beat. A pick with `placed: false` is never dealt.
  *
  * Throws DeliveryCueCountError for fewer than `min` or more than `max` picks,
  * DeliveryCueKindError for an unknown kind or the same kind twice, and
@@ -146,7 +163,7 @@ export function chooseDeliveryCues(picks, beats, settings) {
   const cues = list.map((pick, i) => {
     const base = /** @type {{ kind: DeliveryKind, text: string }} */ (DELIVERY_CUES.find((c) => c.kind === pick.kind));
     let beatId = namedBeat(pick);
-    if (beatId === null && next < free.length) {
+    if (beatId === null && pick.placed !== false && next < free.length) {
       beatId = free[next];
       next += 1;
     }
@@ -299,6 +316,67 @@ export function createDeliveryStream(options = {}) {
      */
     spans() {
       return spanList.map((s) => ({ cue: copyCue(s.cue), beatId: s.beatId, reason: s.reason, from: s.from, to: s.to }));
+    },
+  };
+}
+
+/**
+ * Watches a face for a smile (L25). Each reading is the smile score of one camera frame (0 to 1), or null when no face
+ * is in view. Smile shows once the face has gone `quietSec` on camera without a smile, and a smile clears it.
+ *
+ * Pure: every time is passed in, in seconds from any fixed start.
+ *
+ * @param {Partial<typeof SMILE_DEFAULTS>} [settings]
+ */
+export function createSmileWatch(settings) {
+  const s = { ...SMILE_DEFAULTS, ...(settings || {}) };
+  let show = false;
+  /** Seconds on camera since the last smile. */
+  let quiet = 0;
+  /** @type {number | null} */ let lastFaceAt = null;
+  /** @type {number | null} */ let smileSince = null;
+  /** @type {number | null} */ let shownAt = null;
+
+  function set(next, at) {
+    const changed = next !== show;
+    show = next;
+    shownAt = next ? (changed ? at : shownAt) : null;
+    if (!next) quiet = changed ? 0 : quiet;
+    return { show, changed };
+  }
+
+  return {
+    /**
+     * @param {number | null} score the smile score of this frame, or null with no face in view
+     * @param {number} at
+     * @returns {{ show: boolean, changed: boolean }}
+     */
+    sample(score, at) {
+      checkTime(at, 'sample');
+      if (!isFiniteNumber(score)) {
+        smileSince = null;
+        if (show && lastFaceAt !== null && at - lastFaceAt >= s.lostSec) return set(false, at);
+        return { show, changed: false };
+      }
+      const step = lastFaceAt === null ? 0 : Math.min(Math.max(0, at - lastFaceAt), s.gapSec);
+      lastFaceAt = at;
+      if (score >= s.level) {
+        if (smileSince === null) smileSince = at;
+        if (at - smileSince >= s.holdSec) {
+          quiet = 0;
+          return set(false, at);
+        }
+      } else {
+        smileSince = null;
+      }
+      quiet += step;
+      if (show && shownAt !== null && at - shownAt >= s.showSec) return set(false, at);
+      if (!show && quiet >= s.quietSec) return set(true, at);
+      return { show, changed: false };
+    },
+    /** True while Smile is showing. */
+    showing() {
+      return show;
     },
   };
 }

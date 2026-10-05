@@ -3,11 +3,9 @@
  "fit": true,
  "words": {
   "brand": "YAP",
-  "nav-home": "Home",
   "nav-ideas": "Ideas",
   "nav-create": "Create",
   "nav-review": "Review",
-  "nav-grow": "Grow",
   "back-top": "Back to idea",
   "eyebrow": "CREATE",
   "title": "Your idea, broken into beats",
@@ -17,8 +15,6 @@
   "idea-kind": "YouTube · Talking head",
   "edit-idea": "Edit idea",
   "add-beat": "Add beat",
-  "extras-title": "Thumbnail & experiment",
-  "extras-chip": "Proposed",
   "prepare-recording": "Prepare recording",
   "back-bottom": "Back to idea",
   "refine-title": "Refine with YAP",
@@ -72,11 +68,6 @@
    "beat-delay",
    "data-state",
    "suggested"
-  ],
-  [
-   "extras",
-   "aria-expanded",
-   "false"
   ]
  ],
  "leftOf": [
@@ -134,10 +125,6 @@
   ],
   [
    "add-beat",
-   "extras"
-  ],
-  [
-   "extras",
    "prepare-recording"
   ],
   [
@@ -166,11 +153,6 @@
      "accepted"
     ]
    ]
-  },
-  {
-   "click": "extras",
-   "attr": "aria-expanded",
-   "after": "true"
   }
  ],
  "keys": [

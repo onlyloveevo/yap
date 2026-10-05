@@ -2,11 +2,17 @@
   "files": {
     "beats": {
       "assets/idea-thumb.png": "48a815abf7645e6af838b2ee7cfc4b6fade7280a7bd2c96df8be623c12495c57",
-      "beats.js": "b031d00a2416480331b096b822625db71b09ebf4fb935548d75480dc498c14e6",
-      "index.html": "a103a22c300b350a7a1529edf71e6d9ec476d303fa77dc32d53e2499165cf95b",
-      "styles.css": "c4fe85efa24cab9ade457bdf827f4835ebd55270f52398ba5ed32af1a510b58b"
+      "beats.js": "3d572ec5dd68ed96c95755253247afcc6877d89d3ddc32d46f1b1b0e20203cc1",
+      "index.html": "c04b1fb9282a88d9b437e49ce1c0d144529a85f1f67e036cba5901b0adafd63b",
+      "styles.css": "19535e098d19497ec2da3a1ee0afbd5abc854cf1cd18ca190dcf938a76cbce13"
     },
     "gallery": {
+      "assets/format-instagram-reel.jpg": "4f879f73a82cec30d70b6492ee5e738ce0a39385c3624549c250d9c12857c041",
+      "assets/format-linkedin-video.jpg": "bdc7690770bf961a8937b6c67af74f465ff7440738b246b856daefea19797426",
+      "assets/format-podcast.jpg": "2a99a33b4482482b7393d13a9fab7fc59b185fc500dc391a0cedb3549f2df319",
+      "assets/format-tiktok-video.jpg": "34450debc29fb80d0931698383983f4d3517318269798135364b3e28fd3ccea9",
+      "assets/format-youtube-short.jpg": "a8b486576bb813f8e441c909c726d1a794e4e9eb34cb8c23c40d14fff6332cf8",
+      "assets/format-youtube-video.jpg": "5fe23c590ffe65de70223960e4096195b04bdb349b4750f7cb48d590a568a7ea",
       "assets/t1.png": "303caa026cf58889100de39655fa940ff71e4f2359beb5dffde433a21dbf033f",
       "assets/t2.png": "d4487e0474cbe45a35c7eea85ef995492124627803789b330e4c57704187b768",
       "assets/t3.png": "5032c3e1084770a8d7955e1f5abe4328bafde106a758b540c4745223170b8352",
@@ -14,47 +20,47 @@
       "assets/t5.png": "e90184b66543c1c6ddffe934e6d8deac62209b9e643cb4bd299d978b04ab1f97",
       "assets/t6.png": "ceb532da10a802eec63f2dd3313dd934be47a112ad8cd8acccf9a888ab8a528e",
       "gallery.js": "106d8ae0e719f70fb2fe3380c754a28c789a78142513c5bc58793e9cc33b76ae",
-      "index.html": "9845d4180e774f48250a7336a316fc270d727f06040b96724c22dd2560b2cd6b",
-      "styles.css": "c6c8284cd4d5ba271b75860d86ea1450f9188d0b93b29838eca295fd94df1910"
+      "index.html": "f76ea909e4d9b01a31f7a9621e7f95d45bfe540e6445e90e300642c8827f29e8",
+      "styles.css": "41e951d6a32b420d8339ce5dc9466da7080aae365c8f79056bd2eb06331678e9"
     },
     "ideas": {
       "ideas.js": "b51e8c7f7db92e5572f43a308bec4a8ee4faadbddc1419725e255a1381cc903f",
-      "index.html": "2fb72ef54d473fe5dcb13f9e328f4f330fe070a51ef2d71f8c728a6442963c79",
+      "index.html": "df843feb6cf32c069f39076a36ee8c63a45f8731ac7a4bb67aaf2fb918a3ce95",
       "styles.css": "ff54be8d1cafdeffb6170f88c975f2355d9039755b952c0a973b732a94374170"
     },
     "prepare": {
-      "index.html": "2bceb8bce42fecf613e4c09eed4f63d977657c87baea18e2814af8654d11c0b8",
-      "styles.css": "11d6a3b946ba0f8153c4a6c6df505ac29d44429321bd3c7a0f6a25f1bcad7985"
+      "index.html": "fea6d9e25045f0f5d1203d582c6db8a84ba2b99cc73908e470dccc11543bf56f",
+      "styles.css": "e02193e785bb9551adfe8e84ede5a094b5b9ce1d4b186a3c966b1f6f86e7c322"
     },
     "record": {
-      "index.html": "36db97c5aae975110cf9333ab57b7c9d9e54e995ef5b3e08f442407761a7e92e",
-      "styles.css": "8f58a2d7f758523cf3558dd799b56ac04518c3b26708f2510b9f006af46991fd"
+      "index.html": "1cd11c748fcecfb2f78c09a9cc1d8efddecc2e51479c8bf17e6b0da616363a1b",
+      "styles.css": "a2866b129b9a1800acbd802a8a28d4463e8892b8839af70a70d74a6f3c4eefb9"
     },
     "edit": {
-      "index.html": "2e33eccd539f65382864f636a0e8ba785e224e817fa5ab529a97d4b4100be870",
-      "styles.css": "bb13903094b439a103025649efe307d495eebd57a717dd92ccd1c8b9be5458d0"
+      "index.html": "c7261d2dfad0319a1bcde16aa87bd168043f6a91c85052706aeb1e6608de34e0",
+      "styles.css": "8c435ff078f33e3802f471dd82a76f924c9eff5033a0ccc9f133d0242275c5ac"
     },
     "return": {
-      "index.html": "89b216e441c4e12266eaca85a64a7706a67148090a9c8b794fda8029b190760c",
-      "styles.css": "5311fc3c8079eaf53ff7dd1e4cde27fb745d6cfcd651b0c1e8fc920f5e991375",
+      "index.html": "d1afd811b8b5a40528dda6bbdd37eb11bab54e0947802902a7749c4b6391b697",
+      "styles.css": "546dadfe8bf27da4613835214361b9fd870c45c25abb2817baf6aec2967cd2bb",
       "check-in.css": "ac9835fb8005db1769ebf4f2b84f12a14c08addf8b282d6d503cc7211f3d8ce5"
     },
     "conversation": {
       "conversation.js": "d79cf303a231896606be98ff7311968c26ac9091c31a21f67940b2dce446e1cd",
-      "index.html": "34cd6005e6f865f19a02c54ade62e8981c5e9a1644ab094cc311749bb123a2bd",
+      "index.html": "98de658181a662f7601e596b17c2c1d1bc65c845510e74e2a2ebfa7ff5f1a642",
       "styles.css": "de213c7be68f13d17bf4a11621e49d4fc56d410133ef728ae5bed235f414464d"
     },
     "concept": {
       "assets/thumb-a.png": "fffa8c275af60f43c275372dd8daf88ea897667579a94be91bfcbd7c063d9e7a",
       "assets/thumb-b.png": "2f50ecb5207c577700757a5ea090019d2ce51eabc5abc223cf5abd4902843d89",
       "concept.js": "de2e18a68f6abacaf13a24f6305a14e568ccaf4d1455360d3f10b989dab3dd95",
-      "index.html": "e9bbf3b8163f058f612ff338d21ea76bab46a4dd5e733f708275d4937e152c01",
+      "index.html": "7ece7eaa6c4776b8930d25c947cc85b06984d4edcb3660458dd7c28128217257",
       "styles.css": "b8eb6cdc8839fae34c8faf5451373760cb9f642c672ec4a6584b1529dd6332db"
     },
     "confirm": {
       "assets/idea-thumb.png": "bf0455a14862d776176acb783dc16bdca0dda310f1371ca52ff049f51c2bd24d",
       "confirm.js": "91cfe3aa17f70d8d3078353168dc1e2eecbb4496b74b1e43776564fa040f2b17",
-      "index.html": "f4ecf3cb59ccff871a63dc492f0859500e6ed5e2df4dfbe55128db62fd7a840a",
+      "index.html": "57474edd356019c1fee90c51bf11f59d8769f7894c0fed9f85e9a720a6809140",
       "styles.css": "1c6268aad9409bf0dde85f5b3478a4e1dfa7e0abe68f274864b8def598d109d4"
     },
     "review": {
@@ -64,12 +70,12 @@
       "card-4.jpg": "e1c900964b372f23502d7d28f40451d2397c077ebdcc659fea89df1c287b6e00",
       "card-5.jpg": "201de1be9cead95f3f0eb11a3ee8c8e1ceb47123bd2ed956027e9b55ef692b27",
       "card-6.jpg": "bcbc91bdf9592adf59cf0bb746cc787cc3256ceda48a96ccf0e294a00adfeb78",
-      "index.html": "fd5ad2380d39bf326cbc5f99b3881a9c04dc0ce0e7538f9d2db4046e419deaa4",
-      "styles.css": "a4b609988f11ea613d875f547393467fe2adaf42626fb3de615071a17505b8bb"
+      "index.html": "4e6f559c30f0f3ae92f4befaaff25def34bcce4cae3ca46e6c7bd540cd82ac96",
+      "styles.css": "e6e87b3aa51245e0e308265a299df0f3755ea990e1b9c69b4ba8c52096c54b0f"
     },
     "reviewdetail": {
-      "index.html": "de7a0f36ad6104728b7cb865de4cf3a64b15c2db0cd56fc0fd7612c62ef69797",
-      "styles.css": "90b063a52aa088b93b61958219207445b9fb9cdd8368d722bd0336b278bbcfe5",
+      "index.html": "0ca97293f9193ad2235d44f4668a92af3256ec5527c8d94e746c7c9fe4e63f11",
+      "styles.css": "5442c65b477c1c361cd1757d433c8aa5150a766cc0b55a097d0488966138d3d1",
       "thumb-current.jpg": "29cc6f3c526db82b6eef7186fa8f78a6cf86a3d093211adee1b7b2945d1af921",
       "thumb-proposed.jpg": "6e2962b2d16c7dbf74f43b2fd81b3e9c3bee3d417ade0485e0aefe7b392d9227"
     },
@@ -83,8 +89,8 @@
       "assets/thumb-current.jpg": "29cc6f3c526db82b6eef7186fa8f78a6cf86a3d093211adee1b7b2945d1af921",
       "assets/thumb-proposed.jpg": "6e2962b2d16c7dbf74f43b2fd81b3e9c3bee3d417ade0485e0aefe7b392d9227",
       "assets/video.jpg": "92c2292c411d16d2c327e06ab0ffef45c3e8c499f62367b094a5a69e6d907c0a",
-      "index.html": "2d982c379db12c90ce8a7227ae465684749f939b1eb04a040247ea5197451dec",
-      "styles.css": "1eee9b64b938885be2737881ba5356facba48472a73ada2a8f8af8cc65e6504d"
+      "index.html": "81074f05d02fd1b4f52025cdac332b76b2cb63ab3775bb3daf306c70fc1974ef",
+      "styles.css": "80c3fe6fe4e4f8c974a25bacd3093bf1a2143fdf1921f68d428829a55dd4ae9d"
     },
     "present": {
       "assets/build-next-take.jpg": "ac113045e8d9a0738ad4540866d8de2499564222aae7fcd86f2b8441d82f9054",
@@ -100,7 +106,7 @@
       "assets/design-09.jpg": "8708603717c65a855eebdeb72db785b94507c28a96358adee8abcfa84e093744",
       "assets/design-10.jpg": "f71a12b671ff66419be14f4bfad7a00cb632be4e697fb6143900a272257ba722",
       "assets/design-11.jpg": "08a3926ae9527d94e36efa9a7d0b0c27a956a748e6bd88ae5adcad846a0ac0b8",
-      "index.html": "9afc5af8936c143d474e1e9d671272a603a1397794a9c2ca40c28458feb12347",
+      "index.html": "9162be723ea8c1ceb6a69bc5923f1659453a6178879d35eb4bfb2196f287fbd4",
       "styles.css": "40ae9e4933858dbdd83d9f960fcf64425cef3d9f813090a31fe648e4d2581c57"
     }
   },

@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "clips": [
+    {
+      "id": "c643c2bbd6396a5dbf0b08b48e0bb233",
+      "sha256": "c643c2bbd6396a5dbf0b08b48e0bb233e206de3cb3a3f8ed162d77862eeee489",
+      "bytes": 348416,
+      "duration": 6,
+      "width": 1280,
+      "height": 720,
+      "container": "mp4",
+      "name": "Plant by the window",
+      "tags": [
+        "plant",
+        "window",
+        "green",
+        "nature",
+        "morning",
+        "calm"
+      ],
+      "file": "plant-window.mp4",
+      "poster": "plant-window.jpg"
+    },
+    {
+      "id": "22f08277da6be32517f58cf076e67fa8",
+      "sha256": "22f08277da6be32517f58cf076e67fa8ddad462fdb1cd0b016d73ebbe5332567",
+      "bytes": 276941,
+      "duration": 6,
+      "width": 1280,
+      "height": 720,
+      "container": "mp4",
+      "name": "Shelf and lamp",
+      "tags": [
+        "lamp",
+        "shelf",
+        "books",
+        "home",
+        "evening",
+        "cosy"
+      ],
+      "file": "shelf-lamp.mp4",
+      "poster": "shelf-lamp.jpg"
+    },
+    {
+      "id": "9404e6044044b8ab0cb1013d26e74b86",
+      "sha256": "9404e6044044b8ab0cb1013d26e74b862df6f22e8e130bf32c15c5a633101708",
+      "bytes": 320173,
+      "duration": 6,
+      "width": 1280,
+      "height": 720,
+      "container": "mp4",
+      "name": "Coffee on the desk",
+      "tags": [
+        "coffee",
+        "mug",
+        "desk",
+        "morning",
+        "work"
+      ],
+      "file": "coffee-desk.mp4",
+      "poster": "coffee-desk.jpg"
+    },
+    {
+      "id": "d96cb02a136c65e7ba24b341497a09ba",
+      "sha256": "d96cb02a136c65e7ba24b341497a09badae83cd9f56a6fcc3667659647971bb4",
+      "bytes": 254660,
+      "duration": 6,
+      "width": 1280,
+      "height": 720,
+      "container": "mp4",
+      "name": "Warm light",
+      "tags": [
+        "light",
+        "warm",
+        "glow",
+        "abstract",
+        "mood"
+      ],
+      "file": "warm-light.mp4",
+      "poster": "warm-light.jpg"
+    },
+    {
+      "id": "830296dd9b2a299dc18b2278b2b9bf9c",
+      "sha256": "830296dd9b2a299dc18b2278b2b9bf9cb70b41cb059ae6fb1753e2d80416d3bf",
+      "bytes": 273668,
+      "duration": 6,
+      "width": 1280,
+      "height": 720,
+      "container": "mp4",
+      "name": "Plant on the shelf",
+      "tags": [
+        "plant",
+        "shelf",
+        "green",
+        "home",
+        "calm"
+      ],
+      "file": "shelf-plant.mp4",
+      "poster": "shelf-plant.jpg"
+    },
+    {
+      "id": "a69ed13d0084c99c4b448b4063317709",
+      "sha256": "a69ed13d0084c99c4b448b4063317709d4730df4aa8b450a6e6331d5d98dd57f",
+      "bytes": 295233,
+      "duration": 6,
+      "width": 1280,
+      "height": 720,
+      "container": "mp4",
+      "name": "Books on the desk",
+      "tags": [
+        "books",
+        "desk",
+        "plant",
+        "work",
+        "reading"
+      ],
+      "file": "desk-books.mp4",
+      "poster": "desk-books.jpg"
+    }
+  ]
+}

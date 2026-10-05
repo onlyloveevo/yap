@@ -282,9 +282,14 @@ export function findSpokenRestarts(t) {
   return runs;
 }
 
+/** Words a sentence opens with that one of the two attempts may be missing: the person drops it, or the recogniser does. */
+export const OPENERS = Object.freeze(new Set(['the', 'a', 'an', 'and', 'but', 'so', 'then']));
+
 /**
  * How the opening of an abandoned attempt matches the sentence that follows the restart: the number of
- * leading tokens (lead-in words set aside) that are exactly the same, and their letters.
+ * leading tokens (lead-in words set aside) that are exactly the same, and their letters. When the retake
+ * opens with a word the abandoned attempt lacks ("habit I almost skipped ... sorry, let me start that again.
+ * The habit I almost skipped ..."), that one opener is set aside too.
  * @param {string[]} abandoned
  * @param {string[]} restart
  * @returns {{ words: number, letters: number, skipA: number, skipB: number }}
@@ -292,13 +297,21 @@ export function findSpokenRestarts(t) {
 export function sharedOpening(abandoned, restart) {
   const skipA = abandoned.length - stripLeadin(abandoned).length;
   const skipB = restart.length - stripLeadin(restart).length;
+  const count = (a, b) => {
+    let words = 0;
+    let letters = 0;
+    while (words < a.length && words < b.length && a[words] === b[words]) {
+      letters += a[words].length;
+      words += 1;
+    }
+    return { words, letters };
+  };
   const a = abandoned.slice(skipA);
   const b = restart.slice(skipB);
-  let words = 0;
-  let letters = 0;
-  while (words < a.length && words < b.length && a[words] === b[words]) {
-    letters += a[words].length;
-    words += 1;
+  const plain = count(a, b);
+  if (plain.words === 0 && b.length > 1 && OPENERS.has(b[0])) {
+    const late = count(a, b.slice(1));
+    if (late.words) return { ...late, skipA, skipB: skipB + 1 };
   }
-  return { words, letters, skipA, skipB };
+  return { ...plain, skipA, skipB };
 }

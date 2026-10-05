@@ -1,0 +1,122 @@
+/* The look every screen shares: the ground, the glass and the type of the Loom frames (ref/loom) and the stills.
+   One file. ui/lib/app.js adds it to every page after the page's own stylesheet, and marks the page with its
+   screen folder (data-yap-screen on the html element), so a rule here wins over a screen's own ground and font.
+   Nothing here is fetched from anywhere but this app: the faces are in ui/lib/fonts, the lights are drawn below.
+
+   Measured from the frames and stills (sizes at 1440 wide):
+   - ground: near black, rgb(13,11,10), warmer toward the bottom edge;
+   - lights: about two dozen soft orange discs, 2 to 5 % of the long side across, brightest rgb(176,83,22),
+     gathered along the top edge, down the sidebar, down the right edge and along the bottom, with one cool
+     light at the left edge and one top right; the middle, behind the panels, stays dim;
+   - glass: a panel reads rgb(33,29,28) over the dark ground and rgb(57,38,24) over a light, a hairline of white
+     at 14 %, heavy blur;
+   - sidebar: almost clear, the lights show through it;
+   - amber: rgb(240,193,78) on the main button, the screens' own #f4c66b to #f0b93f;
+   - type: a wide geometric face, round o, straight l, two-storey a (the stills are set in Avenir Next).
+     Kumbh Sans is the open face that sits closest; its apostrophe is a straight tick where the stills' is
+     curled, so the quote marks alone come from Albert Sans. Headline 39px at 700, sub line 18.5px at 400,
+     panel line 25px at 600, labels 13.5px at 500. The screens were sized for the system font, which runs
+     narrower, so each face is set at 94 %: that lands the stills' sizes and keeps every line where it was. */
+
+@font-face { font-family: "YAP Sans"; font-style: normal; font-weight: 400; font-display: swap; size-adjust: 94%; src: url("fonts/kumbh-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "YAP Sans"; font-style: normal; font-weight: 500; font-display: swap; size-adjust: 94%; src: url("fonts/kumbh-sans-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "YAP Sans"; font-style: normal; font-weight: 600; font-display: swap; size-adjust: 94%; src: url("fonts/kumbh-sans-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "YAP Sans"; font-style: normal; font-weight: 700; font-display: swap; size-adjust: 94%; src: url("fonts/kumbh-sans-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "YAP Sans"; font-style: normal; font-weight: 800 900; font-display: swap; size-adjust: 94%; src: url("fonts/kumbh-sans-latin-800-normal.woff2") format("woff2"); }
+/* The quote marks only: straight and curled, single and double. */
+@font-face { font-family: "YAP Sans"; font-style: normal; font-weight: 400 500; font-display: swap; size-adjust: 94%; src: url("fonts/albert-sans-latin-400-normal.woff2") format("woff2"); unicode-range: U+0022, U+0027, U+2018-201D; }
+@font-face { font-family: "YAP Sans"; font-style: normal; font-weight: 600 900; font-display: swap; size-adjust: 94%; src: url("fonts/albert-sans-latin-700-normal.woff2") format("woff2"); unicode-range: U+0022, U+0027, U+2018-201D; }
+
+/* With ui/lib/fonts gone, the next name is the stills' own face where the machine has it (every Mac does),
+   set so each line takes the width it takes in the bundled one (its bold runs wider) and no line moves; then the
+   system's. Nothing is fetched for it. */
+@font-face { font-family: "YAP Sans Local"; font-weight: 400; size-adjust: 94%; src: local("AvenirNext-Regular"), local("Avenir Next Regular"); }
+@font-face { font-family: "YAP Sans Local"; font-weight: 500; size-adjust: 94%; src: local("AvenirNext-Medium"), local("Avenir Next Medium"); }
+@font-face { font-family: "YAP Sans Local"; font-weight: 600; size-adjust: 91%; src: local("AvenirNext-DemiBold"), local("Avenir Next Demi Bold"); }
+@font-face { font-family: "YAP Sans Local"; font-weight: 700; size-adjust: 91%; src: local("AvenirNext-Bold"), local("Avenir Next Bold"); }
+@font-face { font-family: "YAP Sans Local"; font-weight: 800 900; size-adjust: 91%; src: local("AvenirNext-Heavy"), local("Avenir Next Heavy"); }
+
+html:root {
+  --yap-font: "YAP Sans", "YAP Sans Local", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif;
+  /* Ground. */
+  --yap-ground: #0d0b0a;
+  --yap-ground-warm: rgba(92,44,16,.42);
+  --yap-light: rgb(178,86,25);
+  --yap-light-mid: rgba(150,76,27,.78);
+  --yap-light-dim: rgba(118,64,27,.5);
+  --yap-light-cool: rgba(84,86,112,.6);
+  --yap-lights: 1;          /* how strongly the lights show: 1 on the idea screens, less where the frame is quieter */
+  --yap-lights-soft: 1.1vmax;
+  /* Glass. */
+  --yap-glass: rgba(30,27,26,.7);
+  --yap-glass-border: rgba(255,255,255,.14);
+  --yap-glass-blur: 26px;
+  --yap-nav-glass: rgba(10,8,7,.3);
+  /* Every screen that names its font through a token gets the shared face. */
+  --font: var(--yap-font);
+}
+
+/* ---- Type ---- */
+html body { font-family: var(--yap-font); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+html body :where(button, input, select, textarea) { font-family: inherit; }
+/* Three places set the system font on an element of their own: the two loading lines and the carried lesson. */
+html body [data-testid="idea-loading"], html body [data-testid="take-loading"] { font-family: var(--yap-font) !important; }
+html body .carried-lesson { font-family: inherit; }
+/* The screens tightened their headlines to suit the system font. This face is set open, as in the stills, and
+   the page headline of the idea screens, the gallery and Review is bold there. */
+html body h1 { letter-spacing: 0 !important; }
+html:is([data-yap-screen="ideas"], [data-yap-screen="conversation"], [data-yap-screen="concept"], [data-yap-screen="confirm"], [data-yap-screen="gallery"], [data-yap-screen="review"], [data-yap-screen="reviewsample"]) body h1 { font-weight: 700; }
+
+/* ---- Ground ---- */
+html body { background: var(--yap-ground) !important; }
+html body::before {
+  content: ""; position: fixed; inset: -4vmax; z-index: -1; pointer-events: none;
+  opacity: var(--yap-lights); filter: blur(var(--yap-lights-soft));
+  background-color: transparent; background-repeat: no-repeat;
+  background-image:
+    /* top edge */
+    radial-gradient(circle 4.6vmax at 51% 7%, var(--yap-light) 0 58%, transparent 100%),
+    radial-gradient(circle 3.3vmax at 15% 5%, var(--yap-light-mid) 0 58%, transparent 100%),
+    radial-gradient(circle 2.6vmax at 23% 9%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 3vmax at 37% 8%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 2.4vmax at 64% 4%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 3.4vmax at 93% 6%, var(--yap-light-mid) 0 58%, transparent 100%),
+    radial-gradient(circle 3vmax at 80% 12%, var(--yap-light-cool) 0 50%, transparent 100%),
+    /* down the sidebar */
+    radial-gradient(circle 2.4vmax at 7% 21%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 4.2vmax at 8% 50%, var(--yap-light) 0 58%, transparent 100%),
+    radial-gradient(circle 3.2vmax at 4.5% 58%, var(--yap-light-cool) 0 50%, transparent 100%),
+    radial-gradient(circle 5vmax at 6% 69%, var(--yap-light-mid) 0 58%, transparent 100%),
+    radial-gradient(circle 3.6vmax at 9% 88%, var(--yap-light-dim) 0 58%, transparent 100%),
+    /* behind the panels */
+    radial-gradient(circle 3.2vmax at 46% 38%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 3.2vmax at 61% 33%, var(--yap-light-mid) 0 58%, transparent 100%),
+    radial-gradient(circle 3vmax at 73% 47%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 3.4vmax at 30% 62%, var(--yap-light-dim) 0 58%, transparent 100%),
+    /* down the right edge */
+    radial-gradient(circle 4.6vmax at 92% 36%, var(--yap-light) 0 58%, transparent 100%),
+    radial-gradient(circle 3.4vmax at 90% 53%, var(--yap-light-mid) 0 58%, transparent 100%),
+    radial-gradient(circle 3vmax at 95% 64%, var(--yap-light-mid) 0 58%, transparent 100%),
+    /* bottom edge */
+    radial-gradient(circle 6vmax at 37% 90%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 5vmax at 52% 96%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 4vmax at 68% 88%, var(--yap-light-dim) 0 58%, transparent 100%),
+    radial-gradient(circle 4.4vmax at 91% 93%, var(--yap-light-dim) 0 58%, transparent 100%),
+    /* the warmth that rises from the bottom edge */
+    radial-gradient(ellipse 80% 46% at 50% 104%, var(--yap-ground-warm), transparent 100%);
+}
+
+/* A frame that is quieter than the idea screens: the gallery, Review and the editor sit on a darker ground. */
+html[data-yap-screen="gallery"], html[data-yap-screen="review"], html[data-yap-screen="reviewdetail"],
+html[data-yap-screen="reviewsample"], html[data-yap-screen="edit"], html[data-yap-screen="present"] { --yap-lights: .42; --yap-lights-soft: 2.2vmax; }
+
+/* Ready paints a ground of its own over the page; the shared one shows through instead. */
+html body .shell[data-view="prepare"]:not([data-presentation="true"]) { background: transparent !important; }
+
+/* ---- Glass ---- */
+/* The screens with panels on the lit ground share one glass. Live, the editor and Review keep theirs:
+   their glass sits on a picture, not on the ground. */
+html[data-yap-screen="ideas"], html[data-yap-screen="conversation"], html[data-yap-screen="concept"],
+html[data-yap-screen="confirm"], html[data-yap-screen="gallery"], html[data-yap-screen="beats"] {
+  --glass: var(--yap-glass); --glass-border: var(--yap-glass-border); --blur: var(--yap-glass-blur);
+}

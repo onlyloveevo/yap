@@ -284,20 +284,7 @@ test('every path setup writes resolves inside the app folder', async () => {
   for (const c of f.calls.spawn) assert.ok(isInside(appRoot, c.options.logFile));
 });
 
-test('INSTALL.md is the one prompt: npm run setup, nothing to connect, installs stay in the folder', () => {
-  const file = path.join(repoRoot, 'INSTALL.md');
-  assert.ok(fs.existsSync(file), 'INSTALL.md exists');
-  const text = fs.readFileSync(file, 'utf8');
-  assert.match(text, /`npm run setup`/);
-  assert.match(text, /nothing (needs|to) connect/i);
-  assert.match(text, /no account/i);
-  assert.match(text, /inside (this|the|the app) folder/i);
-  assert.match(text, /npm run replay -- --fast/);
-  assert.match(text, /optional/i);
-  assert.match(text, /OPENAI_API_KEY/);
-  assert.match(text, /own/i);
-  assert.ok(!/sk-[A-Za-z0-9]/.test(text), 'no key-shaped text');
-});
+// The judge guide (README.md) is checked in test/launcher.test.js.
 
 test('setup never reuses another clone answering on the requested port',async()=>{
  const {createYapServer}=await import('../server/serve.js');

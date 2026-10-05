@@ -54,7 +54,7 @@ body{padding-bottom:var(--space-9)}
 .own .truth{padding:var(--zero) var(--space-2) var(--space-2)}.own .truth p{margin:var(--zero)}
 .own .cols{grid-template-columns:minmax(0,1fr)}
 .own .col-left{position:static}
-.own .words,.own .saved-words,.own .assistant,.own .cues-box{display:grid;gap:var(--space-3);padding:var(--space-4);border:var(--line) solid var(--glass-border);border-radius:var(--radius-card);background:var(--glass)}
+.own .words,.own .saved-words,.own .assistant,.own .lesson-box{display:grid;gap:var(--space-3);padding:var(--space-4);border:var(--line) solid var(--glass-border);border-radius:var(--radius-card);background:var(--glass)}
 .own .words .time-row{flex-wrap:nowrap}.own .words .time-row input{flex:1 1 auto}.own .words .time-row button{flex:0 0 auto}
 .own .saved-transcript{max-height:9em;overflow:auto;white-space:pre-wrap;padding:var(--space-3);border:var(--line) solid var(--glass-border);border-radius:var(--radius-small);background:var(--input-bg);font-size:var(--font-small);line-height:var(--leading)}
 .own .moments{display:grid;gap:var(--space-2)}
@@ -84,9 +84,6 @@ body{padding-bottom:var(--space-9)}
 .own .composer input:focus-visible{outline:none}
 .detail button.send{flex:0 0 auto;width:40px;height:40px;padding:var(--zero);border-radius:var(--radius-round);background:var(--white);color:var(--camera-dark);border-color:var(--white);font-size:16px}
 .detail button.send:disabled{opacity:.5;cursor:progress}
-.own .cue-item{display:grid;gap:var(--space-2);padding:var(--space-3);border:var(--line) solid var(--glass-border);border-radius:var(--radius-small);background:var(--input-bg);overflow-wrap:anywhere}
-.own .cue-text{font-weight:var(--weight-medium)}
-.own .removed{justify-content:space-between;flex-wrap:nowrap;opacity:.8}.own .removed p{min-width:var(--zero);overflow-wrap:anywhere}
 .own [data-testid="review-notice"][hidden]{display:none}
 
 @media (min-width:1100px){
@@ -105,5 +102,17 @@ body{padding-bottom:var(--space-9)}
 @media (max-width:1099px){
 .own .cols{gap:var(--space-3)}
 .own .col-left,.own .col-right{display:contents}
-.own .frame{order:1}.own [data-testid="player-error"]{order:1}.own [data-testid="storage-line"]{order:2}.own .words{order:3}.own .assistant{order:4}.own .saved-words{order:5}.own .cues-box{order:6}
+.own .frame{order:1}.own [data-testid="player-error"]{order:1}.own [data-testid="storage-line"]{order:2}.own .words{order:3}.own .assistant{order:4}.own .saved-words{order:5}.own .lesson-box{order:6}
 }
+/* a suggestion and its one action; the lesson carried into the next take */
+.own .try-next{display:grid;gap:var(--space-2);padding:var(--space-3) var(--space-4);border:var(--line) solid var(--warm-border);border-radius:var(--radius-small);background:var(--pill-bg);overflow-wrap:anywhere}
+.own .try-label{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+.own .try-text{font-weight:var(--weight-medium);line-height:1.4}
+.lesson-action{display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-2)}
+.lesson-row{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.detail .lesson-use,.detail .lesson-keep{border-radius:var(--radius-pill);padding:var(--pill-pad) var(--space-5);font-size:var(--font-small)}
+.detail .lesson-use{background:var(--amber);border-color:var(--amber);color:var(--camera-dark);font-weight:600}
+.lesson-ask,.lesson-trouble{font-size:var(--font-small);line-height:1.5;color:var(--white-soft);overflow-wrap:anywhere}
+.lesson-on{font-size:var(--font-small);font-weight:600;color:var(--amber)}
+.lesson-on::before{content:"✓";margin-right:var(--space-2)}
+.lesson-box .carried-lesson{background:var(--input-bg)}

@@ -74,7 +74,7 @@ export const LEG_SAYS = Object.freeze({
   'save-idea': 'Save idea',
   'confirm-idea': 'confirm idea',
   'tick-closing': 'tick Closing',
-  'press-confirm-idea': 'Confirm idea',
+  'press-confirm-idea': 'Save to ideas',
   gallery: 'the Create gallery',
   'first-card': 'the first card',
   'beat-list': 'the beat list',
@@ -94,14 +94,16 @@ export const LEG_SAYS = Object.freeze({
   'restore-one': 'restore one',
   export: 'export writes a file',
   'file-plays': 'the file plays in a fresh page with a picture, an audio track and a length within 1 second of the take\'s',
-  return: 'return shows the kept note, trial 1 of 3 and the bet',
+  return: 'return shows the kept note, trial 1 of 3 and the last take\'s count',
+  'review-take': 'Review this take: its own numbers on one length, a moment moves the player, a typed question is answered, Try this',
+  'next-take-carries': 'the next take names what YAP is trying, with no bet wording',
   'review-nav': 'nav Review opens the inbox',
   'review-inbox': 'the inbox, four cards under Needs review',
   'review-open': 'Open review on the first card: the stand-in, sample labelled',
   'review-retention': 'pick a part of the retention line, the player jumps',
   'review-ctr': 'pick click-through rate, the reply changes',
-  'review-dismiss': 'Dismiss, no trial',
-  'review-try-twice': 'Try this twice, reload, exactly one trial',
+  'review-not-used': 'a suggestion nobody used keeps no lesson',
+  'review-use-twice': 'Try this twice, reload, exactly one lesson',
   'review-waiting': 'back to the inbox, that video under Waiting for results',
   'review-add-video': 'Add video with the bundled sample take: its card, Uploaded video',
   'review-own-plays': 'Open review: it plays, no sample number on the screen',
@@ -110,7 +112,7 @@ export const LEG_SAYS = Object.freeze({
 });
 
 // From live mode on, the loop walk is the full walk (D-107).
-const FROM_LIVE_MODE = ['live-mode', 'hey-yap-panel', 'try', 'stop', 'first-cut-ready', 'edit-removed-clips', 'restore-one', 'export', 'return'];
+const FROM_LIVE_MODE = ['live-mode', 'hey-yap-panel', 'try', 'stop', 'first-cut-ready', 'edit-removed-clips', 'restore-one', 'export', 'return', 'review-take', 'next-take-carries'];
 
 /** The walks: each an ordered list of leg names. */
 export const MODES = Object.freeze({
@@ -148,8 +150,8 @@ export const MODES = Object.freeze({
     'review-open',
     'review-retention',
     'review-ctr',
-    'review-dismiss',
-    'review-try-twice',
+    'review-not-used',
+    'review-use-twice',
     'review-waiting',
     'review-add-video',
     'review-own-plays',
@@ -200,14 +202,17 @@ const hook = (id) => `[data-testid="${id}"]`;
  */
 export const LEGS = {
 
-  'send-thought': async w => {await w.page.fill(hook('idea-input'),'I repaired a torn jacket before a rainy walk. I patched the seam with scrap fabric. Next time I will carry a small repair kit.');await w.page.click(hook('send'));await w.page.waitForURL('**/ideas/*');w.facts.idea=new URL(w.page.url()).pathname.split('/').pop();},
-  'first-conversation': async w => {await w.page.locator(hook('save-thought')).waitFor();await w.shot('conversation');},
+  // The walk calls no model: Claude is silent on the coach's route, so YAP's built-in coach answers.
+  'send-thought': async w => {await w.page.route('**/api/model',r=>JSON.parse(r.request().postData()||'{}').task==='idea-coach'?r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({source:'none',text:null})}):r.continue());await w.page.fill(hook('idea-input'),'I repaired a torn jacket before a rainy walk. I patched the seam with scrap fabric. Next time I will carry a small repair kit.');await w.page.click(hook('send'));await w.page.waitForURL('**/ideas/*');w.facts.idea=new URL(w.page.url()).pathname.split('/').pop();},
+  'first-conversation': async w => {await w.page.locator(hook('save-thought')).waitFor();await w.page.locator(hook('idea-provenance')).waitFor();if(!(await w.page.locator('.thread').innerText()).includes('?'))throw new Error('YAP asked nothing');await w.shot('conversation');},
   'keep-exploring': async w => {await w.page.click(hook('keep-exploring'));await w.page.locator(hook('save-idea')).waitFor();},
-  'shaping-the-idea': async w => {await w.page.locator(hook('idea-provenance')).waitFor();if(!(await w.page.locator('.thread').innerText()).includes('torn jacket'))throw new Error('Own words missing');if(await w.page.locator(hook('thumb-a')).isVisible())throw new Error('Unchosen thumbnail shown');await w.shot('concept');},
+  'shaping-the-idea': async w => {await w.page.locator(hook('idea-provenance')).waitFor();if(!(await w.page.locator('.thread').innerText()).includes('torn jacket'))throw new Error('Own words missing');if(!(await w.page.locator(hook('thumb-a')).isVisible())||await w.page.locator(`${hook('thumb-a')} img`).count())throw new Error('The key element has no direction in the person\'s words');await w.shot('concept');},
   'save-idea': async w => {await w.page.click(hook('save-idea'));await w.page.locator(hook('confirm-idea')).waitFor();},
-  'confirm-idea': async w => {await w.shot('confirm');},
-  'tick-closing': async w => {await w.page.click(hook('point-closing'));if(await w.page.locator(hook('point-closing')).getAttribute('aria-checked')!=='true')throw new Error('Closing did not tick');},
-  'press-confirm-idea': async w => {await w.page.click(hook('confirm-idea'));await w.page.waitForURL('**/create');await w.page.locator(hook('saved-'+w.facts.idea)).waitFor();const data=readData(w.dataDir,'ideas.json');const list=Array.isArray(data)?data:data.ideas;const idea=list.find(i=>i.id===w.facts.idea);if(idea?.state!=='saved'||idea?.ticks?.closing!==true)throw new Error('Confirmed idea choices did not persist');},
+  'confirm-idea': async w => {await w.page.locator(hook('point-closing')).waitFor();await w.shot('confirm');},
+  // A proposed beat starts ticked: untick it, then tick it again.
+  'tick-closing': async w => {const closing=w.page.locator(hook('point-closing'));await closing.click();if(await closing.getAttribute('aria-checked')!=='false')throw new Error('Closing did not untick');await closing.click();if(await closing.getAttribute('aria-checked')!=='true')throw new Error('Closing did not tick');},
+  // Save to ideas keeps the idea in the inbox; Confirm idea would go straight on to its beats.
+  'press-confirm-idea': async w => {await w.page.click(hook('save-for-later'));await w.page.waitForURL('**/create');await w.page.locator(hook('saved-'+w.facts.idea)).waitFor();const data=readData(w.dataDir,'ideas.json');const list=Array.isArray(data)?data:data.ideas;const idea=list.find(i=>i.id===w.facts.idea);if(idea?.state!=='saved'||idea?.ticks?.closing!==true)throw new Error('Confirmed idea choices did not persist');},
   'accept-one-suggestion': async w => {await w.page.locator('[data-state="suggested"] button').filter({hasText:'Accept'}).first().click();await w.page.locator('[data-state="accepted"]').first().waitFor();},
 
 
@@ -233,18 +238,21 @@ export const LEGS = {
     await w.page.locator(hook('experiment-card')).waitFor({state:'visible'});
     const text=await w.page.locator(hook('experiment-line')).innerText();
     if(!/coffee/i.test(text))throw new Error('coffee proposal missing');
+    w.facts.sampleTake=true;
     await w.shot('heyyap');
   },
   try: async w => {
-    await w.page.click(hook('try'));
+    // The sample's presenter says yes a moment later and that saves it too: a press that comes after it has nothing left to do.
+    await w.page.click(hook('try'),{timeout:3000}).catch(()=>{});
     await w.page.locator(hook('trial-saved')).waitFor({state:'visible'});
     const trials=readData(w.dataDir,'experiments.json');
     if(!trials?.experiments?.length)throw new Error('Trial shown saved but absent on disk');
-    await w.page.click(hook('back'));
-    // Let restarts and pacing moments after the exchange actually happen.
-    await w.page.waitForFunction(()=>{const v=document.querySelector('video');return v&&v.duration&&v.currentTime>=v.duration-.5;},{},{timeout:90000});
+    // Saving closes the talk with YAP and shows the experiment card; the take carries on by itself.
+    if(await w.page.locator(hook('help-panel')).isVisible())await w.page.click(hook('back'));
   },
   stop: async w => {
+    // The sample take plays its restarts and pauses out and stops itself where its footage ends.
+    if(w.facts.sampleTake)return 'the sample take stops by itself';
     await w.page.click(hook('stop'));
   },
   'first-cut-ready': async w => {
@@ -313,7 +321,8 @@ export const LEGS = {
     if(!source.reviewMoments?.length&&!source.deliveryCues?.length)throw new Error('Return has no actual cue evidence from first take');
     const text=await w.page.locator(hook('memory-card')).innerText();
     if(!/slow down/i.test(text))throw new Error('Expected actual carried cue missing: '+text);
-    if(!(await w.page.locator(hook('bet')).innerText()).trim())throw new Error('Bet missing');
+    if(!/Last take had \d+ restart/.test(await w.page.locator(hook('bet')).innerText()))throw new Error('The last take\'s count is missing');
+    if(/\bbet\b/i.test(text))throw new Error('The card still says bet: '+text);
     await w.page.click(hook('memory-keep'));
     await w.page.waitForFunction(()=>document.querySelector('[data-testid="memory-keep"]')?.getAttribute('aria-pressed')==='true');
     const memory=readData(w.dataDir,'memory.json');
@@ -323,6 +332,47 @@ export const LEGS = {
     await w.shot('return');
   },
 
+
+  // ---- a take recorded in YAP, read in Review, and what follows it into the next take ----
+  'review-take': async w => {
+    // no model in a walk: the model route answers empty, so a typed question is answered from the take's own facts
+    await w.page.route('**/api/model', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ source: '', text: '' }) }));
+    await Promise.all([w.page.waitForURL(`${w.base}/review/${w.facts.id}`), w.page.click(hook('lesson-open-review'))]);
+    await w.page.locator('[data-testid="take-review"][data-state="ready"]').waitFor();
+    const numbers = await w.page.locator(hook('kpi')).allInnerTexts();
+    for (const label of ['Length', 'After the cut', 'Restarts', 'Pace', 'Beats covered']) if (!numbers.some(n => n.includes(label))) throw new Error(`the take's ${label} is missing: ${numbers.join(' | ')}`);
+    const text = await w.page.evaluate(() => document.body.innerText);
+    if (/views|impressions|CTR|subscribers|not available|not connected/i.test(text)) throw new Error('a platform number, or a line about a missing one, is on a take\'s review');
+    const total = (await w.page.locator(hook('time')).innerText()).split('/')[1].trim();
+    if (await w.page.locator('.xlab').last().innerText() !== total) throw new Error('the chart and the player disagree on the take\'s length');
+    const moments = w.page.locator(hook('moment'));
+    if (await moments.count() < 3) throw new Error('fewer than three key moments on a take with restarts');
+    await moments.nth(2).click();
+    await w.page.waitForFunction(() => { const m = document.querySelectorAll('[data-testid="moment"]')[2], v = document.querySelector('[data-testid="video"]'); return Math.abs(v.currentTime - Number(m.dataset.seconds)) < 0.6; }, {}, { timeout: 8000 });
+    await w.page.fill(hook('ask-input'), 'Why did YAP cut so much?');
+    await w.page.click(hook('ask-send'));
+    await w.page.waitForFunction(() => { const b = [...document.querySelectorAll('[data-testid="msg-yap"]')].pop(); return b && !b.classList.contains('thinking') && /YAP removed [\d.]+ seconds/.test(b.textContent); }, {}, { timeout: 8000 });
+    w.facts.experiment = (await w.page.locator(hook('exp-text')).innerText()).trim();
+    await w.page.click(hook('use-lesson'));
+    await w.page.locator(hook('lesson-accepted')).waitFor();
+    const trying = await w.page.locator(hook('trying')).innerText();
+    if (!/what yap is trying with you/i.test(trying) || !/Grab a coffee/.test(trying)) throw new Error('the experiment started in the take is not under What YAP is trying with you: ' + trying);
+    w.facts.lesson = await w.page.locator(`${hook('trying')} ${hook('carried-lesson-text')}`).innerText();
+    if (!w.facts.experiment.startsWith(w.facts.lesson)) throw new Error('the experiment tried is not the one named');
+    await w.page.unroute('**/api/model');
+    await w.shot('review-take');
+    return numbers.map(n => n.replace(/\s+/g, ' ')).join(' | ');
+  },
+  'next-take-carries': async w => {
+    await w.page.goto(`${w.base}/record/${w.facts.id}?take=2`);
+    await w.page.locator(`${hook('carry-forward')} ${hook('carried-lesson-text')}`).waitFor();
+    if (await w.page.locator(`${hook('carry-forward')} ${hook('carried-lesson-text')}`).innerText() !== w.facts.lesson) throw new Error('the next take does not name the experiment picked in Review');
+    if (await w.page.locator(hook('carried-lesson-remove')).count() !== 1) throw new Error('the experiment cannot be removed');
+    const card = await w.page.locator(hook('memory-card')).innerText();
+    if (/\bbet\b/i.test(card)) throw new Error('the card still says bet');
+    await w.shot('return');
+    return w.facts.lesson;
+  },
 
   // ---- the review walk (PRD-review-own-video.md, Done when) ----
   'review-nav': async w => {
@@ -342,13 +392,18 @@ export const LEGS = {
     await Promise.all([w.page.waitForURL(`${w.base}/review/sample-video`), w.page.click(hook('open-review'))]);
     await w.page.locator(hook('sample-badge')).waitFor();
     if (!/sample/i.test(await w.page.locator(hook('sample-badge')).innerText())) throw new Error('the screen does not say sample');
-    await w.page.waitForFunction(() => { const v = document.querySelector('[data-testid="video"]'); return v && v.readyState >= 1; });
+    // the sample video has no footage: its player shows its own stills, and opens on the frame at 0:14
+    await w.page.waitForFunction(() => { const s = document.querySelector('[data-testid="still"]'); return s && s.complete && s.naturalWidth > 0; });
+    if (await w.page.locator('video').count() !== 0) throw new Error('another video plays in the sample review');
+    if ((await w.page.locator(hook('time')).innerText()).trim() !== '0:14 / 8:27') throw new Error('the sample player does not open at 0:14 of 8:27');
     await w.shot('review-detail');
   },
   'review-retention': async w => {
-    // a key moment moves the player: the drawn 4:05 of 8:27 is mapped onto the real length
+    // a key moment moves the player to that moment: the player, the chart and the key moments share the video's 8:27
     await w.page.locator(hook('moment')).nth(3).click();
-    await w.page.waitForFunction(() => { const v = document.querySelector('[data-testid="video"]'); return v && Math.abs(v.currentTime - 245 / 507 * v.duration) < 0.6; }, {}, { timeout: 8000 });
+    await w.page.waitForFunction(() => document.querySelector('[data-testid="time"]').textContent.trim() === '4:05 / 8:27', {}, { timeout: 8000 });
+    if (await w.page.locator('.xlab').last().innerText() !== '8:27') throw new Error('the chart does not end at the player\'s length');
+    if (!/moment-4\.jpg$/.test(await w.page.locator(hook('still')).getAttribute('src'))) throw new Error('the player does not show the frame of the moment pressed');
     w.facts.retentionReply = await w.page.locator(hook('answer')).innerText();
   },
   'review-ctr': async w => {
@@ -357,25 +412,25 @@ export const LEGS = {
     await w.page.locator(hook('kpi')).nth(2).click();
     const ctr = await w.page.locator(hook('answer')).innerText();
     if (ctr === views || ctr === w.facts.retentionReply) throw new Error('picking a number did not change the reply');
-    if (!/sample/i.test(ctr)) throw new Error('the click-through reply is not labelled sample');
+    if (!/6\.4%/.test(ctr)) throw new Error('the click-through reply does not state the number on the screen');
   },
-  'review-dismiss': async w => {
-    await w.page.click(hook('dismiss'));
-    await w.page.locator(hook('dismissed')).waitFor();
-    const n = await w.page.evaluate(() => JSON.parse(localStorage.getItem('yap-review-proof-v1') || '{"trials":[]}').trials.length);
-    if (n !== 0) throw new Error(`Dismiss saved ${n} trials`);
+  'review-not-used': async w => {
+    await w.page.locator(hook('use-lesson')).waitFor();
+    if (await w.page.evaluate(() => localStorage.getItem('yap-sample-lesson-v1')) !== null) throw new Error('a lesson was kept before anyone used the suggestion');
     await w.page.reload();
-    await w.page.locator(hook('try')).waitFor();
+    await w.page.locator(hook('use-lesson')).waitFor();
   },
-  'review-try-twice': async w => {
-    // the same button pressed twice in one breath: the engine keeps one trial
-    await w.page.evaluate(() => { const b = document.querySelector('[data-testid="try"]'); b.click(); b.click(); });
-    await w.page.locator(hook('trial-saved')).waitFor();
-    const count = () => w.page.evaluate(() => JSON.parse(localStorage.getItem('yap-review-proof-v1')).trials.length);
-    if (await count() !== 1) throw new Error('Try this twice did not leave one trial');
+  'review-use-twice': async w => {
+    // the same button pressed twice in one breath: one lesson is kept, in this browser and not in the person's own data
+    await w.page.evaluate(() => { const b = document.querySelector('[data-testid="use-lesson"]'); b.click(); b.click(); });
+    await w.page.locator(hook('lesson-accepted')).waitFor();
+    const kept = () => w.page.evaluate(() => JSON.parse(localStorage.getItem('yap-sample-lesson-v1')));
+    if (!/thumbnail/.test((await kept()).text)) throw new Error('Try this did not keep the lesson');
     await w.page.reload();
-    await w.page.locator(hook('trial-saved')).waitFor();
-    if (await count() !== 1) throw new Error('after a reload there is not exactly one trial');
+    await w.page.locator(hook('lesson-accepted')).waitFor();
+    if (await w.page.locator(hook('use-lesson')).count() !== 0) throw new Error('after a reload the suggestion can be used a second time');
+    if ('carriedLesson' in (readData(w.dataDir, 'memory.json') || {})) throw new Error('a sample lesson entered the person\'s own data');
+    await w.shot('review-detail-used');
   },
   'review-waiting': async w => {
     await Promise.all([w.page.waitForURL(`${w.base}/review`), w.page.click(hook('nav-review'))]);
@@ -405,7 +460,7 @@ export const LEGS = {
     if (!(played.duration > 1) || !(played.time > 0)) throw new Error('the own video did not play: ' + JSON.stringify(played));
     const text = await w.page.evaluate(() => document.body.innerText);
     if (/\(sample\)|2\.4%|1\.12|0\.62|Proposed trial|metric-ctr/i.test(text) || await w.page.locator(hook('metrics')).count()) throw new Error('a sample number is on an own video\'s screen');
-    if (!/not uploaded/.test(text) || !/not available/i.test(text)) throw new Error('the storage line or the not-available lines are missing');
+    if (!/not uploaded/.test(text)) throw new Error('the storage line is missing');
   },
   'review-own-words': async w => {
     await w.page.fill(hook('creator-transcript'), 'Hello, this is my own transcript.');
@@ -509,23 +564,17 @@ export const LEGS = {
   },
 
   // The prepare stand-in of the sample idea: the idea's title, its kept beats as talking points, the six cue chips,
-  // and the button that plays the bundled sample take, which says it is a different video (D-122, D-123, D-126).
+  // and the button that plays the bundled sample take (D-122, D-123, D-126).
   'prepare-stand-in': async (walk) => {
     walk.expectAddress('/prepare/sample');
-    // The prepare view is the Rehearsal now: a small cue card over the camera; the detailed beats and chips sit in the closed "Edit beats & cues" drawer.
-    await walk.page.locator(hook('rehearsal-card')).waitFor({ state: 'visible' });
+    await walk.page.locator(hook('beat')).first().waitFor({ state: 'visible' });
     const shown = await walk.page.evaluate(() => ({
       views: ['home', 'compose', 'prepare'].filter((id) => !document.getElementById(id).hidden),
       title: document.getElementById('prepare-title').textContent,
       labels: [...document.querySelectorAll('[data-testid="beat-label"]')].map((label) => label.textContent),
       chips: document.querySelectorAll('[data-testid="cue-chip"]').length,
-      pressed: document.querySelectorAll('[data-testid="cue-chip"][aria-pressed="true"]').length,
+      pressed: [...document.querySelectorAll('[data-testid="cue-chip"][aria-pressed="true"]')].map((chip) => chip.textContent).join(' and '),
       sample: [...document.querySelectorAll('[data-testid="try-sample-take"]')].map((button) => button.textContent),
-      card: (() => { const r = document.querySelector('[data-testid="rehearsal-card"]').getBoundingClientRect(); return { w: r.width, h: r.height, y: r.y, vw: innerWidth, vh: innerHeight }; })(),
-      cardTitle: document.querySelector('[data-testid="rehearsal-beat-title"]')?.textContent,
-      cardPoints: [...document.querySelectorAll('[data-testid="rehearsal-point"]')].map((point) => point.textContent),
-      drawerOpen: !document.getElementById('beat-list').offsetParent ? false : true,
-      sampleShown: [...document.querySelectorAll('[data-testid="try-sample-take"]')].some((button) => button.offsetParent !== null),
     }));
     if (shown.views.join(' ') !== 'prepare') throw new Error(`the stand-in shows ${shown.views.join(' and ') || 'nothing'}, not the prepare view alone`);
     if (shown.title !== SAMPLE_IDEA_TITLE) throw new Error(`the stand-in is titled "${shown.title}", not the idea's "${SAMPLE_IDEA_TITLE}"`);
@@ -533,18 +582,11 @@ export const LEGS = {
     if (kept.length === 0 || shown.labels.join(' | ') !== kept.join(' | ')) {
       throw new Error(`the stand-in shows the beats [${shown.labels.join(', ')}], not the kept beats [${kept.join(', ')}]`);
     }
-    if (!(shown.card.w <= 470 && shown.card.h <= shown.card.vh * 0.32 && shown.card.y > shown.card.vh * 0.5)) {
-      throw new Error(`the rehearsal card is not a small card in the lower half (${Math.round(shown.card.w)}x${Math.round(shown.card.h)} at y ${Math.round(shown.card.y)} of ${shown.card.vh})`);
-    }
-    if (shown.drawerOpen || shown.sampleShown) throw new Error('the beat list or the sample take is showing before the person opened Edit beats & cues or Settings');
-    const keptFull = keptBeatsOf(walk.dataDir, 'sample');
-    if (shown.cardTitle !== keptFull[0].title) throw new Error(`the rehearsal card shows "${shown.cardTitle}", not the first kept beat "${keptFull[0].title}"`);
-    if (shown.cardPoints.length === 0 || shown.cardPoints.some((point) => !point.trim())) throw new Error('the rehearsal card shows no talking points for the first kept beat');
     if (shown.chips !== 6) throw new Error(`the stand-in shows ${shown.chips} delivery cue chips, not 6`);
-    if (shown.pressed !== 0) throw new Error('a delivery cue is chosen before the person pressed one');
+    // Slow down and Smile start on, so a take recorded as it comes is coached; the four reminders wait to be asked for.
+    if (shown.pressed !== 'Slow down and Smile') throw new Error(`the cues on before the person pressed one are [${shown.pressed}], not Slow down and Smile`);
     if (!(await walk.page.locator(hook('start-recording')).isVisible())) throw new Error('Start recording is not shown');
-    // Settings holds the sample take; its label carries the current "Sample: " prefix.
-    if (shown.sample.length !== 1 || (shown.sample[0] !== SAMPLE_TAKE_LABEL && shown.sample[0] !== `Sample: ${SAMPLE_TAKE_LABEL}`)) {
+    if (shown.sample.length !== 1 || shown.sample[0] !== SAMPLE_TAKE_LABEL) {
       throw new Error(`the sample take's button reads [${shown.sample.join(' | ')}], not "${SAMPLE_TAKE_LABEL}"`);
     }
     const said = `${kept.length} kept beats shown as talking points under the idea's title, 6 cue chips, and the sample take's button`;
@@ -560,8 +602,6 @@ export const LEGS = {
 
   // Try the sample take makes the bundled sample take's Recording and opens its record address, marked as the sample (D-123, D-124).
   'try-the-sample-take': async (walk) => {
-    await walk.page.click(hook('rehearsal-settings'));
-    await walk.page.locator(hook('try-sample-take')).waitFor({ state: 'visible' });
     const made = await startTake(walk, 'try-sample-take', SAMPLE_RECORD_ADDRESS);
     if (made.meta.sample !== true) throw new Error(`the Recording ${made.id} is not marked as the sample take`);
     return `opened ${made.address} with the Recording saved as the sample take, "${made.recording.title}"${made.notBuilt}`;
@@ -569,15 +609,13 @@ export const LEGS = {
 
   // Start recording, with one delivery cue chosen, makes the person's own Recording and opens its record address (D-126, D-127).
   'start-recording': async (walk) => {
-    await walk.page.click(hook('rehearsal-edit-toggle'));
+    // Slow down and Smile start on. Set up is opened and Slow down switched off, so the take carries the one cue left on.
+    await walk.page.locator(hook('setup-open')).click();
     await walk.page.locator(hook('cue-chip')).first().click();
-    await walk.page.click(hook('rehearsal-edit-close'));
-    await walk.page.locator(hook('rehearsal-card')).waitFor({ state: 'visible' });
-    if ((await walk.page.locator(hook('rehearsal-cue')).count()) !== 1) throw new Error('the pressed cue is not shown as one pill on the rehearsal card');
     const made = await startTake(walk, 'start-recording', RECORD_ADDRESS);
     if (made.meta.sample !== false) throw new Error(`the Recording ${made.id} is marked as the sample take, and it is the person's own`);
     const cues = made.recording.deliveryCues.length;
-    if (cues !== 1) throw new Error(`the Recording ${made.id} has ${cues} delivery cues, and one chip was pressed`);
+    if (cues !== 1) throw new Error(`the Recording ${made.id} has ${cues} delivery cues, and one of the two that start on was switched off`);
     return `opened ${made.address} with the Recording saved as the person's own take, with 1 delivery cue${made.notBuilt}`;
   },
 };
@@ -991,19 +1029,13 @@ function isLetThrough(state, url) {
   return address !== url && state.letThroughLike.some((like) => like.test(address));
 }
 
-// Edit probes for an optional second recording. A take made without "Record
-// Live UI too" correctly has no file; only this take's metadata probe may 404.
-function isOptionalLiveUi(state, url) {
-  return Boolean(state.facts.id) && url === `${state.base}/api/app/recordings/${state.facts.id}/live-ui`;
-}
-
 /** Hear everything on a page that fails a walk. */
 function watchPage(page, state) {
   page.on('console', (message) => {
     if (message.type() !== 'error') return;
     const where = message.location() && message.location().url;
     // The browser's own line about a "not found" that was let through.
-    if ((isLetThrough(state, where) || isOptionalLiveUi(state, where)) && /\b404\b/.test(message.text())) return;
+    if (isLetThrough(state, where) && /\b404\b/.test(message.text())) return;
     state.problems.push(`console error: ${message.text()}`);
   });
   page.on('pageerror', (e) => state.problems.push(`page error: ${e && e.message ? e.message : e}`));
@@ -1017,7 +1049,6 @@ function watchPage(page, state) {
   });
   page.on('response', (response) => {
     if (response.status() < 400) return;
-    if (response.status() === 404 && response.request().method() === 'GET' && isOptionalLiveUi(state, response.url())) return;
     if (response.status() === 404 && isLetThrough(state, response.url()) && response.request().isNavigationRequest()) {
       state.notBuilt.add(response.url());
       return;

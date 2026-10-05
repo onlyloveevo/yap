@@ -1,13 +1,14 @@
 import {takeReady,takeLoadFailed} from '../lib/take-loading.js';
 import {containBeatLabel} from '../lib/laptop-layout.js';
-import { isShellMode, sayQuietly, go, comingSoon } from '../lib/app.js';
+import { isShellMode, sayQuietly, go } from '../lib/app.js';
 import { getRecording, getMemory, saveMemory, getTrials, answerTrialCheckIn, createRecordingFor, exportRecording } from '../lib/api.js';
 import { createCheckIn } from './check-in.js';
 import { matchRoute, routeFor } from '../lib/routes.js';
-import { returnView, decisionLine, memoryMetaForTake, betFor, pendingNote, memoryDecision, take2Request, restartCount, betResultView } from '../lib/return-model.js';
+import { returnView, decisionLine, memoryMetaForTake, betFor, pendingNote, memoryDecision, take2Request, restartCount, takeChange } from '../lib/return-model.js';
 import { checkBet, logLine } from '../../src/engine/prediction.js';
 import { emptyMemory } from '../../src/engine/memory.js';
 import { createReturnPreview } from '../lib/return-preview.js';
+import { mountCarriedLesson } from '../lib/carried-lesson.js';
 const $ = id => document.querySelector(`[data-testid="${id}"]`);
 const shell = document.querySelector('.live-shell');
 const shellMode = isShellMode(location);
@@ -24,6 +25,16 @@ function phase(value) {
  show($('record'), value === 'ready');
  for (const name of ['delivery-cue','story-card','pause','stop','timer','tick','end-take']) show($(name), value === 'recording');
  show($('bet-result'), value === 'result');
+ // Take 2 ends on one sentence and one button: the bar's own Edit and export step aside for it.
+ for (const name of ['edit','export']) $(name).style.visibility = value === 'result' ? 'hidden' : '';
+}
+// What the person picked in Review, with the review it came from and a way to remove it.
+async function showLesson() {
+ const slot = $('carry-forward');
+ const cue = await mountCarriedLesson(slot, { sample: Boolean(meta?.sample), removable: true, heading: 'From your review', onRemove: showLesson }).catch(() => undefined);
+ $('lesson-empty').hidden = Boolean(cue);
+ $('lesson-open-review').href = `/review/${id}`;
+ slot.dataset.ready = 'true';
 }
 function render() {
  const view = returnView({ memory, trials, bet, recording, meta, note });
@@ -47,11 +58,7 @@ function render() {
 
  $('trial-status').lastElementChild.textContent = view.trialStatus || '';
  show($('trial-status'), Boolean(view.trialStatus));
- $('bet').textContent = view.betLine;$('bet').hidden=view.betOptional;
- let details=$('restart-check-details');
- if(!details){details=document.createElement('details');details.dataset.testid='restart-check-details';details.style.cssText='font-size:13px;line-height:1.5;color:var(--white-dim);margin:0';const summary=document.createElement('summary');summary.textContent='About this review';summary.style.cursor='pointer';const explanation=document.createElement('p');explanation.style.margin='8px 0 0';details.append(summary,explanation);$('bet').after(details);}
- details.hidden=!view.betOptional;details.lastElementChild.textContent=view.betExplanation;
-
+ $('bet').textContent = view.betLine;$('bet').hidden=view.betOptional||!view.betLine;
  $('memory-keep').disabled = !note || busy || Boolean(view.exact && note.stored);
  $('memory-drop').disabled = !note || busy;
  $('memory-drop').textContent = view.dropLabel;
@@ -147,12 +154,14 @@ async function open() {
   if (!saved) throw new Error('There is no saved take at this address.');
   ({recording, meta} = saved);
   meta = await memoryMetaForTake(meta, getRecording);
+  if (meta?.sample) shell.dataset.sample = 'true';
   if (settled[1].status !== 'fulfilled') throw settled[1].reason;
   if (settled[2].status !== 'fulfilled') throw settled[2].reason;
   memory = settled[1].value || emptyMemory(); trials = settled[2].value || [];
   note = pendingNote(recording, memory, meta);
   bet = betFor(recording, (memory.predictionLog || []).filter(entry => meta.sample ? entry.sample !== false : entry.sample !== true));
   render();
+  await showLesson();
   const completed = new URLSearchParams(location.search).get('completed');
   // A completed child is shown only once it is proved to belong to this return; until then nothing unrelated appears.
   if (!completed) preview?.show(id, 'previous');
@@ -163,15 +172,14 @@ async function open() {
    const logged = (memory.predictionLog || []).find(entry => entry.recordingId === completed && entry.actual === null);
    const savedBet = logged ? { kind: logged.kind, forTake: logged.forTake, predicted: logged.predicted, slack: logged.slack } : bet;
    const actual = restartCount(take.recording);
-   const result = betResultView(savedBet, actual);
    if (savedBet && actual != null && !(memory.predictionLog || []).some(entry => entry.recordingId === completed && entry.actual != null)) {
     memory = { ...memory, predictionLog: [...(memory.predictionLog || []), { ...logLine(savedBet, checkBet(savedBet, actual), new Date().toISOString()), recordingId: completed, sourceRecording: id, sample: Boolean(meta.sample) }] };
     await saveMemory(memory);
    }
-   document.querySelector('.result-line').textContent = result.line;
-   document.querySelector('.result-next').textContent = result.nextLine || '';
-   $('edit').onclick = () => go(routeFor('edit', {id:completed}));
-   $('export').onclick = () => go(routeFor('edit', {id:completed}));
+   // One sentence about what changed since the take before, from what YAP measured in both.
+   const n = meta.sample ? 1 : (meta.lineageIds?.length || 1);
+   $('result-line').textContent = takeChange(recording, take.recording, { previous: `take ${n}`, current: `Take ${n + 1}` });
+   $('result-next').onclick = () => go(routeFor('edit', {id:completed}));
    phase('result');
   }
   takeReady(document);
@@ -188,8 +196,6 @@ if (!shellMode) {
  $('record').addEventListener('click', start);
  $('edit').onclick = () => go(routeFor('edit', {id}));
  $('export').onclick = () => go(routeFor('edit', {id}));
- $('help').lastElementChild.textContent = 'About this take'; $('help').setAttribute('aria-label', 'About this take');
-$('help').addEventListener('click', () => quiet(meta?.sample ? 'Keep or drop the delivery note, then press Record to start a new take. Your previous take stays saved.' : 'The correction already happened in the finished take. Keep for future takes carries it into the next take and later takes of this idea or recording. Finished take only does not carry it forward. Your finished take stays saved.'));
  open();
 } else {
  // Isolated visual fixture only: no device permission, API writes or real outcome claims.

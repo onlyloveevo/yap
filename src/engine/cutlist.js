@@ -38,6 +38,7 @@ export const COPY = Object.freeze({
   exchange: 'talk with YAP',
   restart: 'restart',
   deadAir: 'dead air',
+  filler: 'filler word',
   edit: 'removed by you',
   trimStart: 'trimmed start',
   trimEnd: 'trimmed end',
@@ -159,7 +160,9 @@ export function addRestartCuts(list, proposals) {
 
 /**
  * Enter the dead-air proposals (src/engine/dead-air.js; CUT-05, D-47): a long
- * pause sits in this same list beside the talk with YAP and the restarts. Sure
+ * pause sits in this same list beside the talk with YAP and the restarts. A
+ * proposal marked `kind: 'filler'` (an "um" between the words) goes in as its
+ * own kind, so the editor can name it and the person can put it back. Sure
  * cuts are applied, unsure (amber) cuts are listed and wait for one tap, and
  * either can be undone like any other cut.
  * @param {CutList} list
@@ -174,14 +177,15 @@ export function addDeadAirCuts(list, proposals) {
     }
     checkRange(p.start, p.end, 'A dead-air cut');
     const sure = p.certainty === 'sure';
+    const why = p.kind === 'filler' ? COPY.filler : COPY.deadAir;
     out.cuts.push({
       id: nextId(out),
-      kind: 'dead-air',
+      kind: p.kind === 'filler' ? 'filler' : 'dead-air',
       start: p.start,
       end: p.end,
       certainty: p.certainty,
       applied: sure,
-      reason: sure ? COPY.deadAir : `${COPY.deadAir} (${COPY.amber})`,
+      reason: sure ? why : `${why} (${COPY.amber})`,
     });
   }
   return out;
@@ -331,9 +335,16 @@ export function listCuts(list) {
 }
 
 /**
+ * The picture of a recording runs a few frames past its sound, so a pause cut to the end of the sound leaves a
+ * sliver before the end of the take. A last piece shorter than this, after a cut, goes with that cut.
+ */
+export const END_SLIVER = 0.25;
+
+/**
  * What stays in the rough cut: the complement of the applied cuts over
  * [0, duration], with overlapping or touching cuts merged so no time is
- * counted twice. Ascending order.
+ * counted twice. Ascending order. A sliver left at the very end after a cut
+ * (shorter than END_SLIVER) is not kept, unless it is all that is kept.
  * @param {CutList} list
  * @param {number} duration seconds
  * @returns {[number, number][]}
@@ -359,7 +370,7 @@ export function keptRanges(list, duration) {
     if (s > cursor) kept.push([cursor, s]);
     cursor = Math.max(cursor, e);
   }
-  if (cursor < duration) kept.push([cursor, duration]);
+  if (cursor < duration && !(kept.length && duration - cursor < END_SLIVER)) kept.push([cursor, duration]);
   return kept;
 }
 

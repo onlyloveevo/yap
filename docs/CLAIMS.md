@@ -2,12 +2,12 @@
 
 **First-pass prototype — 5 October 2026.** This ledger separates the intended product from what the supplied build demonstrates. It covers the broad claims in Deth's community explanation, including the long-term vision beyond video creation.
 
-The repository's 244 selected deterministic checks and offline replay demonstrate specific software behaviour. They do not measure audience growth, personal development, model superiority, commercial readiness or replacement of entire competing products. “Current evidence” below describes source-supported behaviour and these limited checks; it is not a completed human walkthrough of every feature. The [Loom map](LOOM_MAP.md) supplies timestamps and highlights unverified paths.
+The repository's 237 selected deterministic checks and offline replay demonstrate specific software behaviour. They do not measure audience growth, personal development, model superiority, commercial readiness or replacement of entire competing products. “Current evidence” below describes source-supported behaviour and these limited checks; it is not a completed human walkthrough of every feature. The [Loom map](LOOM_MAP.md) supplies timestamps and highlights unverified paths.
 
 | Claim / ambition | Current evidence and limits | Work and evidence needed before a stronger statement |
 | --- | --- | --- |
 | **Every video, Loom or meeting makes the next one better.** | Accepted cues and explicit trials can persist into later takes. Sample Review numbers illustrate the flow. Meetings and real platform analytics are not implemented here. | Link actual sessions, interventions and outcomes; compare successive sessions against an appropriate baseline. Report uncertainty and failures. The literal guarantee that every session improves is too strong: the testable promise is that every permitted session can inform the next recommendation. |
-| **Freedom to flow while keeping your own voice.** | Editable beats, rehearsal, optional conversation and explicit Apply/Undo preserve user choice. | Test unscripted use, correction latency, interrupt/resume, missed speech and recovery with real users. Compare distraction, effort and user-rated voice fidelity against their normal workflow. |
+| **Freedom to flow while keeping your own voice.** | Editable beats, rehearsal, optional conversation and suggestions you accept one at a time preserve user choice. | Test unscripted use, correction latency, interrupt/resume, missed speech and recovery with real users. Compare distraction, effort and user-rated voice fidelity against their normal workflow. |
 | **Become a better storyteller and communicator.** | Tools for preparation, cues and review; no measured improvement in human skill. | Repeated practice with independent, blinded assessment on predefined communication tasks. Test retention and performance without YAP's prompts, alongside user feedback, so an assisted take is not confused with a learned skill. |
 | **Improve interviews, presentations and difficult conversations.** | A broader intended use of the future coaching system; the current prototype centres on video creation and presentation recording. | Build context-specific rehearsal and user-controlled feedback, then validate with intended users. Evaluate clarity, listening and self-reported usefulness; do not promise a job offer, relationship outcome or ability to infer another person's feelings. |
 | **A personal strategy that compounds through data-driven experimentation.** | Saved preferences, named trials and keep/revert choices. No measured compounding advantage. | Record a hypothesis and prediction before an intervention; obtain traceable outcomes; carry the result into the next recommendation. Compare against no-memory and no-experiment versions, including negative/inconclusive results. |
@@ -37,9 +37,9 @@ Release the prompts, model versions, settings, scoring definitions, anonymised o
 ## What a reviewer can verify immediately
 
 - Read [README.md](../README.md) and run the prototype locally.
-- Run `npm run test:review`: 244 selected checks passed when this review snapshot was prepared.
+- Run `npm run test:review`: 237 selected checks passed when this review snapshot was prepared.
 - Run `npm run replay -- --fast`: a labelled synthetic sample, not a live model-performance benchmark.
 - Inspect [ROADMAP.md](../ROADMAP.md) for modules, dependencies and delivery gates.
-- Inspect [NOTICE](../NOTICE) for reused components and [INSTALL.md](../INSTALL.md) for model/data boundaries.
+- Inspect [NOTICE](../NOTICE) for reused components and the [README](../README.md#your-data-and-model-use) for model/data boundaries.
 
 The intended distinction is simple: this first pass is inspectable evidence of the starting point; the roadmap and these checks define the route toward the full claims.

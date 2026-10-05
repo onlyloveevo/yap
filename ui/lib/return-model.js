@@ -108,7 +108,7 @@ export function returnView({ memory, trials = [], bet, recording, meta, note = p
     decisionLine: decided ? decisionLine(decided, meta) : null,
     betOptional: !meta?.sample && !recording?.transcript?.length,
     betExplanation: 'This finished take has no transcript, so YAP cannot compare restarts between takes. Your correction choice still works.',
-    betLine: bet?.text || 'A restart bet needs a take with a transcript first.',
+    betLine: goalLine(bet, recording),
     note,
   };
 }
@@ -124,6 +124,12 @@ export function memoryDecision(memory, note, keep, now) {
   next.notes = next.notes.map(n => n.id === note.id ? { ...n, ...(typeof note.sample === 'boolean' ? { sample: note.sample } : {}), ...(note.recordingId ? {recordingId: note.recordingId} : {}), ...(note.ideaId ? {ideaId: note.ideaId} : {}), ...(note.scopeId ? {scopeId: note.scopeId} : {}) } : n);
   return next;
 }
+/** What to aim for on the next take, from the last take's own restart count. Empty when YAP has no count. */
+export function goalLine(bet, recording) {
+  const last = restartCount(recording);
+  if (!bet || last == null) return '';
+  return last === 0 ? 'Last take had no restarts. Aim for the same.' : `Last take had ${last} restart${last === 1 ? '' : 's'}. Aim for fewer.`;
+}
 export function betResultView(bet, actual) {
   if (!bet || actual == null) return { line: BET_OPEN_LINE, nextLine: null };
   const result = checkBet(bet, actual);
@@ -135,4 +141,189 @@ export function take2Request(recording, meta, memory = null) {
   const cues = structuredClone((recording.deliveryCues || []).filter(c => c.kind !== 'memory' && memory?.returnDecisions?.[`cue-${recording.id}-${c.id || c.kind}`] !== 'once'));
   if (remembered) cues.unshift({ id: 'return-memory', kind: 'memory', text: remembered.text, beatId: recording.beats?.[0]?.id || null });
   return { ideaId: meta?.ideaId || null, sample: Boolean(meta?.sample), title: recording.title, idea: recording.idea, beats: recording.beats.map(b => ({ id: b.id, pointId: b.pointId, title: b.title || b.label, label: b.label || b.title, points: [...(b.points || [])], ...preparedAngleFields(b.preparedAngles), takes: [], chosenTakeId: null, tick: { ticked: false, by: null, reason: null } })), deliveryCues: cues };
+}
+
+// ---- the carried lesson: what a person picked in Review to use in their next video ----
+//
+// It sits beside the kept notes above, as one optional field of memory.json, `carriedLesson`. A kept
+// note is a correction a take already applied; a carried lesson is advice accepted in Review. There is
+// one at a time. A lesson from a sample review never enters memory.json: it is kept in a file of its own in the
+// YAP folder (sample-lesson.json), with a copy in this browser, so a fresh browser on the same folder carries it too.
+
+/**
+ * @typedef {object} CarriedLesson
+ * @property {string} text                              the lesson, as the person accepted it
+ * @property {{ id: string, title: string }} source     the review it came from: its address id and its name
+ * @property {string} acceptedAt                        when it was accepted (ISO time)
+ */
+export const LESSON_MAX_CHARS = 240;
+export const SAMPLE_LESSON_KEY = 'yap-sample-lesson-v1';
+/** A review of a bundled sample video. Its lessons stay apart from the person's own. */
+export const isSampleReview = id => /^sample-/.test(String(id ?? ''));
+const lessonError = (name, message) => Object.assign(new Error(message), { name });
+const oneLine = value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+
+/** A whole lesson, or null: half a lesson is no lesson. */
+function lessonFrom(value) {
+  const text = oneLine(value?.text).slice(0, LESSON_MAX_CHARS), id = oneLine(value?.source?.id), title = oneLine(value?.source?.title);
+  const at = new Date(value?.acceptedAt ?? NaN);
+  if (!text || !id || !title || Number.isNaN(at.getTime())) return null;
+  return { text, source: { id, title }, acceptedAt: at.toISOString() };
+}
+const sameLesson = (a, b) => Boolean(a && b && a.text === b.text && a.source.id === b.source.id);
+function newLesson(lesson, now, sample) {
+  if (isSampleReview(lesson?.source?.id) !== sample) throw lessonError('SampleLessonError', 'A sample lesson stays with the sample, and your own lesson stays with you.');
+  const next = lessonFrom({ ...lesson, acceptedAt: now });
+  if (!next) throw lessonError('EmptyLessonError', 'A lesson needs its words and the review it came from.');
+  return next;
+}
+
+/** @returns {CarriedLesson | null} the lesson this memory carries */
+export const carriedLessonOf = memory => lessonFrom(memory?.carriedLesson);
+/** Accept a lesson from a person's own review. The same lesson accepted twice stays as first accepted; another replaces it. */
+export function acceptLesson(memory, lesson, now = new Date().toISOString()) {
+  const base = memory || emptyMemory(), next = newLesson(lesson, now, false);
+  return sameLesson(carriedLessonOf(base), next) ? base : { ...base, carriedLesson: next };
+}
+export function removeLesson(memory) {
+  const { carriedLesson: _removed, ...rest } = memory || emptyMemory();
+  return rest;
+}
+/**
+ * Where the lesson is kept: memory.json for a person's own (through getMemory and saveMemory), this
+ * browser's storage for a sample. A page picks one by what it is showing, a sample or the person's own.
+ * @param {{ sample: boolean, getMemory?: Function, saveMemory?: Function, storage?: Storage, now?: () => string }} deps
+ */
+/** The YAP folder's keeping of the sample lesson, asked through the app's own API. None outside a page. */
+export const SAMPLE_LESSON_API = '/api/app/sample-lesson';
+function pageFolder() {
+  if (typeof document === 'undefined' || typeof fetch !== 'function') return null;
+  const call = async (init) => {
+    const res = await fetch(SAMPLE_LESSON_API, { mode: 'same-origin', credentials: 'same-origin', cache: 'no-store', ...init });
+    if (!res.ok) throw lessonError('LessonNotKeptError', 'the YAP folder did not keep it');
+    return (await res.json()).lesson ?? null;
+  };
+  return { read: () => call({}), write: (lesson) => call({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lesson }) }) };
+}
+/**
+ * @param {{ sample: boolean, getMemory?: Function, saveMemory?: Function, storage?: Storage, now?: () => string, folder?: null | { read: () => Promise<object | null>, write: (lesson: object | null) => Promise<unknown> } }} deps
+ *   `folder`: where the sample lesson is kept beside the browser. Left out, a page uses the YAP folder.
+ */
+export function lessonStore({ sample, getMemory, saveMemory, storage, now = () => new Date().toISOString(), folder = pageFolder() }) {
+  if (!sample) return {
+    read: async () => carriedLessonOf(await getMemory()),
+    async accept(lesson) { const next = acceptLesson(await getMemory(), lesson, now()); await saveMemory(next); return carriedLessonOf(next); },
+    async remove() { await saveMemory(removeLesson(await getMemory())); },
+  };
+  const read = async () => {
+    // The folder is the record: what it holds replaces this browser's copy. When it does not answer, the copy stands.
+    if (folder) try {
+      const kept = lessonFrom(await folder.read());
+      if (kept) storage.setItem(SAMPLE_LESSON_KEY, JSON.stringify(kept)); else storage.removeItem(SAMPLE_LESSON_KEY);
+    } catch { /* this browser's copy stands */ }
+    try { const kept = lessonFrom(JSON.parse(storage.getItem(SAMPLE_LESSON_KEY))); return kept && isSampleReview(kept.source.id) ? kept : null; } catch { return null; }
+  };
+  return {
+    read,
+    async accept(lesson) {
+      const next = newLesson(lesson, now(), true), kept = await read();
+      if (sameLesson(kept, next)) return kept;
+      if (folder) await folder.write(next);
+      storage.setItem(SAMPLE_LESSON_KEY, JSON.stringify(next));
+      return next;
+    },
+    async remove() { if (folder) await folder.write(null); storage.removeItem(SAMPLE_LESSON_KEY); },
+  };
+}
+/** True when `kept` is this very suggestion, already accepted. */
+export const carriesLesson = (kept, lesson) => sameLesson(kept, lessonFrom({ ...lesson, acceptedAt: kept?.acceptedAt }));
+
+// ---- what YAP is trying with you: the carried lesson and the running experiments, read as one list ----
+//
+// A lesson is advice the person accepted in Review. An experiment is a wording they asked for in a take
+// ("Try for 3 videos"). To the person both are one thing, so every screen reads them through here.
+
+/**
+ * The lesson a screen shows and the store it is kept in. A sample take reads the sample's lesson. A
+ * person's own screen reads their own, and the one they picked in the sample review when they have none.
+ * @param {{ sample: boolean, getMemory?: Function, saveMemory?: Function, storage?: Storage }} deps
+ * @returns {Promise<{ lesson: CarriedLesson | null, store: ReturnType<typeof lessonStore> }>}
+ */
+export async function lessonInUse({ sample, getMemory, saveMemory, storage }) {
+  const fromSample = lessonStore({ sample: true, storage });
+  if (sample) return { lesson: await fromSample.read(), store: fromSample };
+  const own = lessonStore({ sample: false, getMemory, saveMemory });
+  const lesson = await own.read();
+  if (lesson) return { lesson, store: own };
+  const picked = storage ? await fromSample.read() : null;
+  return picked ? { lesson: picked, store: fromSample } : { lesson: null, store: own };
+}
+
+/** Where a wording experiment stands, in the person's words. */
+function experimentDetail(trial) {
+  if (trial.status === 'kept') return 'Kept. It is your wording now.';
+  if (trial.status === 'check-in due') return `${trial.trialLength} of ${trial.trialLength} videos done.`;
+  const done = trial.recordings?.length || 0;
+  return `Video ${Math.min(done + (trial.status === 'accepted' ? 1 : 0), trial.trialLength) || 1} of ${trial.trialLength}. YAP asks you after video ${trial.trialLength}.`;
+}
+
+/**
+ * @typedef {object} TryingItem
+ * @property {'lesson' | 'experiment'} kind
+ * @property {string} id
+ * @property {string} name      the thing being tried, by name
+ * @property {string} detail    where it came from or where it stands
+ * @property {boolean} sample   it came from the sample review
+ * @property {{ trialId: string, ask: string, keepLabel: string, revertLabel: string } | null} checkIn  the question a finished experiment asks
+ */
+/**
+ * Everything YAP is trying with the person, newest experiment first, the lesson on top.
+ * @param {{ lesson?: CarriedLesson | null, trials?: object[] }} state
+ * @returns {TryingItem[]}
+ */
+export function tryingItems({ lesson = null, trials = [] } = {}) {
+  const items = [];
+  if (lesson) items.push({ kind: 'lesson', id: 'lesson', name: lesson.text, detail: `From your review of ${lesson.source.title}`, sample: isSampleReview(lesson.source.id), checkIn: null });
+  const asked = new Map(checkInQuestions(trials.filter(t => t?.status === 'check-in due')).map(q => [q.experimentId, q]));
+  for (const t of [...trials].reverse()) {
+    if (!t?.change?.to || !['accepted', 'running', 'check-in due', 'kept'].includes(t.status)) continue;
+    const ask = asked.get(t.id);
+    items.push({
+      kind: 'experiment', id: t.id, sample: !t.scope,
+      name: `Say ${quoted(t.change.to)} instead of ${quoted(t.change.from)}`,
+      detail: experimentDetail(t),
+      checkIn: ask ? { trialId: t.id, ask: ask.ask, keepLabel: `Keep ${quoted(t.change.to)}`, revertLabel: `Return to ${quoted(t.change.from)}` } : null,
+    });
+  }
+  return items;
+}
+
+const mmss = seconds => { const s = Math.max(0, Math.floor((Number(seconds) || 0) + 1e-6)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const restartsOf = n => n === 0 ? 'no restarts' : `${n} restart${n === 1 ? '' : 's'}`;
+/** The length of a take after its applied cuts. */
+function cutLength(recording) {
+  const cuts = (recording?.cuts?.cuts || []).filter(c => c.applied !== false && c.end > c.start).sort((a, b) => a.start - b.start);
+  let removed = 0, at = 0;
+  for (const c of cuts) { const from = Math.max(c.start, at); if (c.end > from) { removed += c.end - from; at = c.end; } }
+  return Math.max(0, (recording?.duration || 0) - removed);
+}
+/**
+ * One sentence about what changed between a take and the one after it, from what YAP measured in both:
+ * restarts when both takes have words, else the length after the cut.
+ * @param {object} previous the earlier take's recording
+ * @param {object} current the take just finished
+ * @param {{ previous?: string, current?: string }} [names] what to call them
+ */
+export function takeChange(previous, current, { previous: was = 'take 1', current: now = 'Take 2' } = {}) {
+  const a = restartCount(previous), b = restartCount(current);
+  const Was = was.charAt(0).toUpperCase() + was.slice(1);
+  if (a != null && b != null && (a > 0 || b > 0)) {
+    if (b === a) return `${now} had ${restartsOf(b)}, the same as ${was}.`;
+    if (b === 0) return `${now} had no restarts. ${Was} had ${a}.`;
+    return b < a ? `${now} had ${restartsOf(b)}, down from ${a} in ${was}.` : `${now} had ${restartsOf(b)}, up from ${a} in ${was}.`;
+  }
+  const before = cutLength(previous), after = cutLength(current), diff = Math.round(after - before);
+  if (!(after > 0)) return `${now} is saved.`;
+  if (!(before > 0) || diff === 0) return `${now} runs ${mmss(after)} after the cut${before > 0 ? `, the same as ${was}` : ''}.`;
+  return `${now} runs ${mmss(after)} after the cut, ${Math.abs(diff)} second${Math.abs(diff) === 1 ? '' : 's'} ${diff < 0 ? 'shorter' : 'longer'} than ${was}.`;
 }

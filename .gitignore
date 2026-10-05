@@ -1,18 +1,7 @@
 node_modules/
 .DS_Store
-/data/
-/.tmp/
-/dist/
-.env
-.env.*
-*.pem
-*.key
-*.p12
-*.pfx
-credentials*.json
-*.log
-.claude/
-.planning/
-/evidence/
-/submission/
-/recordings/
+data/
+# The bundled idea bank is part of the app, not a person's data: keep it tracked.
+!/ui/data/
+.tmp/
+dist/

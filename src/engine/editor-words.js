@@ -24,7 +24,7 @@ export const WORD_SLACK_SECONDS = 0.25;
 /** The kinds of cut YAP proposes by itself; trims and removed words are the person's own. */
 export const AUTO_KINDS = Object.freeze(['exchange', 'restart', 'dead-air']);
 
-const KIND_LABEL = Object.freeze({ exchange: 'Talk with YAP', restart: 'Restart', 'dead-air': 'Long pause' });
+const KIND_LABEL = Object.freeze({ exchange: 'Talk with YAP', restart: 'Retake', 'dead-air': 'Pause' });
 
 const isNum = (x) => typeof x === 'number' && Number.isFinite(x);
 const round3 = (x) => Math.round(x * 1000) / 1000;
@@ -209,8 +209,8 @@ export function autocutReview(cutList, words, duration) {
   let message = '';
   if (!items.length) {
     message = status.state === 'empty' || status.state === 'untimed'
-      ? 'No automatic cuts were saved with this recording, and it has no timed words, so YAP has nothing to base restart or false-start cuts on. Nothing is invented: trim by time, or record another take.'
-      : 'No automatic cuts were saved with this recording. YAP shows restarts, talks with YAP and long pauses here, with the reason and how sure it was, when it proposes them. It does not re-run detection on this page.';
+      ? 'YAP heard no words in this take, so it made no cuts. You can still shorten it by hand.'
+      : 'YAP found nothing to cut in this take.';
   }
   return {
     items,

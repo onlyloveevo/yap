@@ -1,29 +1,39 @@
-// What every screen shares (Plan 02-01): shell mode, go(), the nav and the
-// quiet line (coming soon, and since Plan 02-04 any other one line a screen
-// must say). A screen's own wire.js imports from here, so no screen carries
-// nav code of its own.
+// What every screen shares (Plan 02-01): shell mode, go(), the nav, the quiet
+// line (any one line a screen must say) and the shared look (theme.css). A
+// screen's own wire.js imports from here, so no screen carries nav code or a
+// ground and a typeface of its own.
 //
 // Nothing here builds markup from words: every line is written with
-// textContent (threat T-02-02). Nothing here reads, prints or sends a key.
+// textContent, and the nav's icons are built node by node (threat T-02-02).
+// Nothing here reads, prints or sends a key.
 
 /** The query that opens a page in shell mode (QUESTIONS.md Q148). Any value counts: `?shell` and `?shell=1` alike. */
 export const SHELL_QUERY = 'shell';
 
 /**
- * Where the nav's links go (D-110). Ideas, Create and Review open a screen; Home
- * and Grow say coming soon. Kept in one place so a link can be moved
- * from one list to the other when its screen is built.
+ * The nav: Ideas, Create and Review, in that order, and the screen each opens
+ * (D-110). Every link opens a screen. Kept in one place so every screen with a
+ * sidebar draws the same three links.
  */
 export const NAV_OPENS = Object.freeze({ 'nav-ideas': '/', 'nav-create': '/create', 'nav-review': '/review' });
-export const NAV_SOON = Object.freeze(['nav-home', 'nav-grow']);
 
-/** How long the coming-soon line stays, in milliseconds. The edit shell's own toast stays this long. */
-export const SOON_MS = 2500;
+/** Each link's icon, as the paths of a 24 by 24 drawing. The same on every screen. */
+export const NAV_ICONS = Object.freeze({
+  'nav-ideas': ['M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z'],
+  'nav-create': ['M11 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V13', 'm18.5 3.5 2 2L12 14l-3 1 1-3z'],
+  'nav-review': ['M4 21h16M5 14l3 3 5-6 3 3M7 4v2M3.5 5h7M17 3v3M15.5 4.5h3'],
+});
+
+/** The stylesheet that draws the sidebar, and the mark a page carries once it has it. */
+export const NAV_STYLES = '/ui/lib/nav.css';
+
+/** The stylesheet every screen shares: the ground, the glass and the type (ui/lib/theme.css). */
+export const THEME_STYLES = '/ui/lib/theme.css';
 
 /** How long any other quiet line stays, in milliseconds: long enough to read a sentence. */
 export const SAY_MS = 8000;
 
-/** The hook of the line comingSoon appends on a page that has no toast of its own. */
+/** The hook of the quiet line on a page that has no toast of its own. */
 export const SOON_HOOK = 'coming-soon';
 
 const soonTimers = new WeakMap();
@@ -59,8 +69,8 @@ export function go(path, scope = globalThis) {
 }
 
 /**
- * Say one line in the quietest part the page already has: what YAP cannot do
- * yet, why it cannot hear, or the words its own server refused something with.
+ * Say one line in the quietest part the page already has: why YAP cannot
+ * hear, or the words its own server refused something with.
  *
  * A page with a toast (an element with data-testid="toast", as the edit shell
  * draws) shows the line there. Any other page gets the line in one polite
@@ -126,47 +136,81 @@ export function sayQuietly(document, line, ms = SAY_MS) {
 }
 
 /**
- * Say that a control is coming soon, through sayQuietly. The line is the
- * control's own label followed by "is coming soon", and it goes after SOON_MS.
- * On a page with no toast of its own the control, when given, also gets the
- * line as its title and "coming soon" after its label for a screen reader.
- *
+ * Give the page the shared look: mark the html element with the page's screen
+ * folder (data-yap-screen, read off the page's own base line), and add the one
+ * stylesheet after the page's own, so its rules win. A page that already links
+ * it is left as it is. Every screen imports this module, so every screen gets it.
  * @param {Document} document
- * @param {string} label the control's own label
- * @param {Element} [control] the control that was pressed
- * @returns {Element} the element the line was written into
  */
-export function comingSoon(document, label, control) {
-  const name = String(label || '').replace(/\s+/g, ' ').trim();
-  const line = name ? `${name} is coming soon` : 'Coming soon';
-  if (control && !document.querySelector('[data-testid="toast"]')) {
-    control.setAttribute('title', line);
-    control.setAttribute('aria-label', name ? `${name}, coming soon` : 'Coming soon');
-  }
-  return /** @type {Element} */ (sayQuietly(document, line, SOON_MS));
+export function loadTheme(document) {
+  const root = document.documentElement;
+  const folder = /\/ui\/([a-z]+)\//.exec(String(document.baseURI || ''));
+  if (folder && !root.dataset.yapScreen) root.dataset.yapScreen = folder[1];
+  if (document.querySelector('link[href$="lib/theme.css"]')) return;
+  const sheet = document.createElement('link');
+  sheet.rel = 'stylesheet';
+  sheet.href = THEME_STYLES;
+  document.head.appendChild(sheet);
 }
 
 /**
- * Wire the nav the shells draw (D-110). Its links carry the hooks nav-home,
- * nav-ideas, nav-create, nav-review and nav-grow. Ideas opens `/` and Create
- * opens `/create`, Review opens `/review`, each through go(). Home and Grow say coming soon
- * and change no address. Every other link drawn with href="#" is stopped, so
- * a press on one never leaves the page.
+ * Draw the sidebar as every screen draws it: Ideas, Create, Review, each with
+ * its icon from NAV_ICONS, and the one stylesheet that sizes them. A link that
+ * opens nothing leaves. A page whose own file already holds exactly this is
+ * left as it is.
+ * @param {Document} document
+ */
+export function drawNav(document) {
+  const nav = document.querySelector('nav[data-testid="nav"]');
+  if (!nav) return;
+  if (!document.querySelector(`link[href$="lib/nav.css"]`)) {
+    const sheet = document.createElement('link');
+    sheet.rel = 'stylesheet';
+    sheet.href = NAV_STYLES;
+    document.head.appendChild(sheet);
+  }
+  const SVG = 'http://www.w3.org/2000/svg';
+  for (const link of nav.querySelectorAll('a')) {
+    const paths = NAV_ICONS[link.dataset.testid];
+    if (!paths) {
+      link.remove();
+      continue;
+    }
+    const drawn = [...link.querySelectorAll('svg path')].map((path) => path.getAttribute('d'));
+    if (drawn.length === paths.length && drawn.every((d, i) => d === paths[i])) continue;
+    const icon = document.createElementNS(SVG, 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    for (const d of paths) {
+      const path = document.createElementNS(SVG, 'path');
+      path.setAttribute('d', d);
+      icon.appendChild(path);
+    }
+    const old = link.querySelector('svg');
+    if (old) old.replaceWith(icon);
+    else link.prepend(icon);
+  }
+}
+
+/**
+ * Wire the nav (D-110). Its links carry the hooks nav-ideas, nav-create and
+ * nav-review: Ideas opens `/`, Create opens `/create`, Review opens `/review`,
+ * each through go(). Every other link drawn with href="#" is stopped, so a
+ * press on one never leaves the page. Outside shell mode the sidebar is drawn
+ * by drawNav; in shell mode a page stays as its reference shell drew it.
  * @param {Document} document
  */
 export function wireNav(document) {
   const scope = document.defaultView || globalThis;
+  if (!isShellMode(scope.location)) drawNav(document);
   document.addEventListener('click', (event) => {
     const target = /** @type {any} */ (event.target);
     const link = target && typeof target.closest === 'function' ? target.closest('a') : null;
     if (!link || link.getAttribute('href') !== '#') return;
     event.preventDefault();
     const hook = link.dataset.testid;
-    if (Object.prototype.hasOwnProperty.call(NAV_OPENS, hook)) {
-      go(NAV_OPENS[hook], scope);
-    } else if (NAV_SOON.includes(hook)) {
-      // Its own label, read before the first press adds anything to it.
-      comingSoon(document, link.textContent, link);
-    }
+    if (Object.prototype.hasOwnProperty.call(NAV_OPENS, hook)) go(NAV_OPENS[hook], scope);
   });
 }
+
+// The shared look goes on as soon as a screen loads this module. Node loads it too, with no page.
+if (typeof document !== 'undefined') loadTheme(document);

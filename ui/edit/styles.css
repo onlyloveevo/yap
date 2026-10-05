@@ -185,13 +185,11 @@ button:disabled{cursor:default}
  font-size:var(--size-15);
  font-weight:500}
 
-/* 16:9 box centred in the free height. The video inside is object-fit:contain, so no recorded pixel is cropped; other aspect ratios sit on the matte. */
+/* The player is the full width of the shell and takes the free height, as in the approved still. The picture fills it; fullscreen shows the whole frame. */
 .player{position:relative;
  flex:1 1 0;
  min-height:0;
- align-self:center;
- aspect-ratio:16/9;
- max-width:100%;
+ align-self:stretch;
  border:var(--line) solid var(--glass-border);
  border-radius:var(--radius-card);
  overflow:hidden;
@@ -556,3 +554,55 @@ svg{width:var(--icon);
 .broll-band{position:absolute;top:0;bottom:0;border-radius:6px;background:rgba(244,198,107,.2);border:1px solid rgba(244,198,107,.65);pointer-events:none}
 .broll-band[hidden]{display:none}
 @media(max-width:1180px){.actions{flex-wrap:wrap;justify-content:center}.actions button{padding:var(--space-2) var(--space-4)}}
+
+/* The picture fills the wide player, held a little above centre so a face stays in it. */
+.player>video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;background:var(--camera-dark)}
+.player:fullscreen>video{object-fit:contain}
+/* The sample take: the bundled footage has its own label along the top edge. The picture is set a little taller than the player so that edge is off it, and one quiet tag says Sample. */
+.player>video.is-sample{top:-9.5%;height:109.5%}
+.player:fullscreen>video.is-sample{object-fit:cover}
+.sample-tag{position:absolute;z-index:2;left:var(--player-pad);top:var(--player-pad);padding:3px 10px;border:var(--line) solid var(--glass-border);border-radius:var(--radius-pill);background:var(--label-bg);font-size:var(--size-12);font-weight:500;letter-spacing:.02em;color:var(--white-soft)}
+/* The selected clip's bubble, as drawn: purple, a little tilted. */
+.kept-bubble{background:var(--purple);border-color:var(--transparent);color:var(--white);font-weight:600;transform:translateX(-50%) rotate(-4deg);box-shadow:0 6px 18px rgba(122,99,196,.35)}
+/* Nothing inside the shell can scroll it sideways: the ambient fill is wider than the shell, and a focus move used to drag the whole editor left. */
+.edit-shell{overflow:clip}
+
+/* Export works in its own place: the button shows it is working, then becomes one Download control with the other formats behind it. */
+.export[data-state="working"]{opacity:.9}
+.export[data-state="working"] [data-icon]{display:none}
+.export[data-state="working"]:before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid rgba(23,20,20,.28);border-top-color:var(--cut-text);animation:export-spin .8s linear infinite}
+@keyframes export-spin{to{transform:rotate(360deg)}}
+.export[hidden]{display:none}
+.export-ready{position:absolute;right:var(--space-0);display:flex;align-items:stretch;z-index:20;border-radius:var(--radius-pill);box-shadow:0 6px 22px var(--amber-glow)}
+.export-main{min-height:var(--tap);box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-4) var(--space-2) var(--space-5);border-radius:var(--radius-pill) 0 0 var(--radius-pill);background:var(--amber);color:var(--cut-text);font-size:var(--size-14);font-weight:600;text-decoration:none}
+.export-main svg,.export-more svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.export-more{min-height:var(--tap);width:42px;padding:0;border:0;border-left:1px solid rgba(23,20,20,.22);border-radius:0 var(--radius-pill) var(--radius-pill) 0;background:var(--amber);color:var(--cut-text);display:grid;place-items:center}
+.export-main:focus-visible,.export-more:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+.export-menu{position:absolute;right:0;top:calc(100% + var(--space-2));width:264px;padding:6px;border-radius:14px;background:rgba(24,20,18,.97);border:var(--line) solid var(--glass-border);box-shadow:0 18px 48px rgba(0,0,0,.5);display:grid;gap:2px}
+.export-menu[hidden]{display:none}
+.export-item{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);padding:var(--space-2) var(--space-3);border-radius:var(--radius-small);color:var(--white);text-decoration:none}
+.export-item:hover,.export-item:focus-visible{background:rgba(255,255,255,.09);outline:0}
+.export-item strong{font-size:var(--size-13);font-weight:600}
+.export-item small{font-size:var(--size-11);color:var(--white-dim)}
+.export-note{margin:4px var(--space-3) 6px;font-size:var(--size-11);line-height:1.4;color:var(--white-dim)}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media(max-width:700px){.export-ready{position:relative}}
+/* Where YAP suggests B-roll: a dashed stretch on the waveform. */
+.broll-suggestion{position:absolute;top:0;bottom:0;z-index:2;min-width:0;padding:0;border:1px dashed var(--amber);border-radius:6px;background:rgba(244,198,107,.07);color:var(--amber);display:flex;align-items:flex-start;gap:4px;font-size:var(--size-10);font-weight:600;overflow:hidden;cursor:pointer}
+.broll-suggestion svg{width:11px;height:11px;margin:4px 0 0 5px;flex:none;fill:none;stroke:currentColor;stroke-width:2}
+.broll-suggestion span{margin-top:3px;white-space:nowrap}
+.broll-suggestion:hover,.broll-suggestion:focus-visible,.broll-suggestion[aria-pressed="true"]{background:rgba(244,198,107,.2);border-style:solid;outline:0}
+.review-link{display:inline-flex;align-items:center;gap:var(--space-2);min-height:36px;padding:0 var(--space-4);border-radius:var(--radius-pill);border:var(--line) solid var(--glass-border);font-size:var(--size-13);font-weight:500;color:var(--white);text-decoration:none}
+.review-link svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.review-link:hover,.review-link:focus-visible{border-color:rgba(255,255,255,.4);outline:0}
+/* A removed clip is often narrow: its tag ends at its right edge, so it does not run into the tag of the take kept after it. */
+.clip[data-state="removed"]:not(:first-child) .clip-label{left:auto;right:0;transform:none}
+/* The editor fills the window, as in his Loom at 04:08. */
+@media(min-width:1001px){:root{--outer-x:1.4vw;--outer-y:1.4vh;--shell-height:97.2vh}}
+/* A removed filler or pause is short, and its tag is the point of it: the tag stays on a narrow removed clip. */
+@container (max-width:48px){.clip[data-state="removed"] .clip-label{display:flex}}
+/* A tag that has no room on the line gives way; its words stay on the clip's own label. */
+.clip-label[hidden],.kept-bubble[hidden]{display:none!important}
+/* A caption is drawn where the export burns it in, low on the picture. The beat card stands clear above it. */
+.story-card{transition:bottom .18s ease}
+.player[data-caption="on"] .story-card{bottom:calc(var(--story-bottom) + 19%)}

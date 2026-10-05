@@ -137,8 +137,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: var(--sp
 .controls .record { border-color: var(--white); background: var(--red); box-shadow: 0 6px 24px rgba(241,70,66,.35); }
 .end-take:hover { color: var(--white); }
 .bet-result { width: 100%; padding: var(--space-4) var(--space-5); border-radius: var(--radius-card); text-align: center; margin-bottom: var(--space-3); }
-.result-line { margin: 0 0 var(--space-1); font-size: 18px; font-weight: 500; }
-.result-next { margin: 0; font-family: "Bradley Hand", "Segoe Print", cursive; font-size: 19px; color: var(--white-soft); }
+.result-line { margin: 0 0 var(--space-4); font-size: 20px; font-weight: 500; line-height: 1.35; }
+.result-next { margin: 0 auto; min-width: 200px; }
 /* The capsule frames the running take only; before Record there is one button, not a toolbar. */
 .controls:has(.stop:not([hidden])) { min-height: 0; border-radius: var(--radius-pill); border: 1px solid var(--glass-border); padding: var(--space-1); background: var(--glass); border-color: var(--glass-border); box-shadow: var(--shadow); backdrop-filter: blur(var(--blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3); }
 .track-done, .track-current { width: 0; }
@@ -172,3 +172,29 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: var(--sp
 
 /* Return shares the live prompt position and leaves the saved speaker visible. */
 .memory-card::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px; border-radius: 4px; background: var(--amber); }
+
+/* Next take: what YAP noticed, what it carries forward, one button to record. */
+.memory-card { left: auto; right: var(--page-pad); top: calc(50% - var(--bar-height) / 2 + var(--space-4)); bottom: auto; transform: translateY(-50%); width: min(460px, calc(100vw - var(--mobile-gutter))); max-height: calc(100dvh - var(--bar-height) - 150px); padding: var(--space-7) var(--space-8); gap: var(--space-5); }
+.noticed, .carry { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.carry { padding-top: var(--space-5); border-top: 1px solid var(--glass-border); }
+.section-label { margin: 0; text-transform: uppercase; letter-spacing: .14em; font-size: 11px; font-weight: 600; color: var(--amber); }
+.memory-title { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 500; }
+.memory-line { overflow-wrap: anywhere; }
+.carry-slot { display: flex; flex-direction: column; min-width: 0; }
+.carry-slot .carried-lesson { padding: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.carry-slot .carried-lesson .cl-text { font-size: 17px; line-height: 1.3; }
+.carry-slot { padding-top: var(--space-3); border-top: 1px solid var(--glass-border); }
+.lesson-empty { margin: 0; font-size: 15px; line-height: 1.5; color: var(--white-soft); }
+.lesson-empty[hidden] { display: none; }
+.lesson-empty a { color: var(--amber); text-underline-offset: 3px; white-space: nowrap; }
+.memory-card .record, .memory-card .record.has-label { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; gap: var(--space-3); width: 100%; height: 52px; padding: 0 var(--space-6); border: 0; border-radius: var(--radius-pill); background: var(--amber); color: var(--amber-ink); box-shadow: none; font-size: 17px; font-weight: 600; }
+.memory-card .record > span[aria-hidden="true"] { flex: 0 0 12px; width: 12px; height: 12px; border-radius: var(--radius-round); background: var(--red); }
+.memory-card .record .record-label { display: block; width: auto; height: auto; background: none; border-radius: 0; color: inherit; font-size: inherit; font-weight: inherit; white-space: nowrap; }
+.memory-card .record:disabled { opacity: .6; cursor: progress; }
+.memory-card .record[hidden] { display: none; }
+@media (max-height: 820px) { .memory-card { padding: var(--space-5) var(--space-7); gap: var(--space-4); } .carry { padding-top: var(--space-4); } }
+/* The card stands beside the person, as the assistant does in Review; on a narrow screen it centres. */
+@media (max-width: 1000px) { .memory-card { left: 50%; right: auto; transform: translate(-50%, -50%); } }
+@media (max-width: 700px) { .memory-card { padding: var(--space-5); } }
+/* The bundled sample footage has a label burned into its top-left corner, under the brand: the frame is drawn a little larger so it falls outside. */
+.live-shell[data-sample="true"] video.camera.is-ready { transform: scale(1.1); transform-origin: 50% 100%; }

@@ -124,3 +124,141 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--amber); 
   .shell[data-presentation="true"] .primary { padding: var(--space-3) var(--space-6); }
   .shell[data-presentation="true"] .actions { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Ready is the Live screen used as a rehearsal (his Loom at 07:42, frame L10): the camera fills the window, the YAP mark
+   and one quiet label sit top left, the beat card sits low in the centre with a step button either side, the cue YAP
+   raises floats right of the face, the beats run along the bottom bar and the pill under the card starts the recording.
+   The cue switches, the cue wording, the camera and the microphone are one overlay, opened top right. Every measure
+   below is Live's own (ui/record/styles.css). None of it applies to the presentation path (/prepare/new?presentation=1),
+   which keeps the camera-first dock drawn above. */
+.shell[data-presentation="true"] .pnew { display: none !important; }
+.shell:not([data-view="prepare"]) .top-bar .pnew { display: none; }
+.shell[data-presentation="true"] .pill, .shell[data-presentation="true"] .stage, .shell[data-presentation="true"] .side { display: contents; }
+.sample-row { flex-wrap: wrap; }
+
+.shell[data-view="prepare"]:not([data-presentation="true"]) { --white-soft: rgba(255,255,255,.78); --white-dim: rgba(255,255,255,.58); --glass: rgba(14,12,11,.46); --glass-strong: rgba(14,12,11,.66); --glass-border: rgba(255,255,255,.16); --bar: rgba(12,11,10,.62); --bar-border: rgba(255,255,255,.1); --track-base: rgba(255,255,255,.24); --green: #66ba82; --blue: #4b93ff; --blue-glow: rgba(75,147,255,.2); --red: #f14642; --grey: #8a8886; --camera-glow: #3a2f27; --camera-mid: #231b16; --camera-dark: #0d0a09; --shade-top: rgba(0,0,0,.28); --shade-middle: rgba(0,0,0,.04); --shade-bottom: rgba(0,0,0,.5); --shadow: 0 10px 32px rgba(0,0,0,.26); --blur: 22px; --radius-card: 20px; --space-7: 28px; --page-pad: 40px; --bar-height: 76px; --control-size: 48px; --step-size: 44px; --card-width: 460px; --cue-clearance: 20px; --top-offset: 32px; min-height: 560px; }
+/* With no camera the room is still warm: Live's own glow with a few soft lights in it, never a black box. */
+.shell[data-view="prepare"]:not([data-presentation="true"]) .camera-fallback { background: radial-gradient(circle at 17% 30%, rgba(214,128,44,.2) 0 4%, transparent 13%), radial-gradient(circle at 84% 22%, rgba(214,128,44,.17) 0 3.5%, transparent 11%), radial-gradient(circle at 72% 68%, rgba(176,98,34,.15) 0 5%, transparent 15%), radial-gradient(circle at 29% 76%, rgba(150,90,36,.16) 0 5%, transparent 14%), radial-gradient(ellipse at 50% 42%, #5b4431 0%, var(--camera-glow) 30%, var(--camera-mid) 62%, var(--camera-dark) 100%); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .camera-shade { background: linear-gradient(to bottom, var(--shade-top), transparent 22%, transparent 55%, var(--shade-middle) 62%, var(--shade-bottom)); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .top-bar { top: var(--top-offset); left: var(--page-pad); right: var(--page-pad); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .brand-line { display: flex; align-items: center; gap: var(--space-3); font-size: 17px; font-weight: 400; letter-spacing: .01em; color: var(--white-soft); white-space: nowrap; text-shadow: 0 1px 8px rgba(0,0,0,.4); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .brand-line strong { font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: -.045em; color: var(--white); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .brand-dot { font-size: 14px; line-height: 1; opacity: .7; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .tagline { display: flex; flex-direction: column; margin: var(--space-6) 0 0 var(--space-7); color: var(--white-dim); font-size: 22px; line-height: 1.15; opacity: 1; text-shadow: 0 1px 8px rgba(0,0,0,.45); }
+
+.shell[data-view="prepare"]:not([data-presentation="true"]) #prepare { inset: 0; left: 0; top: 0; transform: none; width: auto; max-height: none; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; overflow: hidden; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .phead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .prepare-grid { display: contents; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .header-actions { position: absolute; z-index: 2; top: var(--top-offset); right: var(--page-pad); display: flex; gap: var(--space-3); align-items: center; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .help { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; border-radius: var(--radius-pill); padding: var(--space-2) var(--space-5); font-size: 16px; font-weight: 500; backdrop-filter: blur(var(--blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .help svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+/* The cue floats to the right of the face, where Live shows it. */
+.shell[data-view="prepare"]:not([data-presentation="true"]) .delivery-cue { position: absolute; z-index: 2; left: min(70.6%, calc(100% - 200px)); top: 41.6%; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5) var(--space-3) var(--space-4); min-height: 56px; border-radius: var(--radius-pill); font-size: 18px; font-weight: 500; backdrop-filter: blur(var(--blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3); animation: cue-in .28s ease-out; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .live-cue-mark { display: grid; place-items: center; min-width: 26px; font-size: 26px; line-height: 1; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .live-cue-mark:empty::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 10px var(--amber-glow); }
+@keyframes cue-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* The beat card, as Live's story card: the label, the beat, its line. A step button sits either side of it. */
+.shell[data-view="prepare"]:not([data-presentation="true"]) .stage { position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(var(--bar-height) + var(--cue-clearance) + var(--control-size) + 10px + clamp(16px, 9dvh, 84px)); width: min(calc(var(--card-width) + 2 * (var(--step-size) + var(--space-4))), calc(100vw - var(--space-9))); margin: 0 auto; display: flex; align-items: center; gap: var(--space-4); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .pill { flex: 1; min-width: 0; max-height: min(34dvh, 280px); overflow-y: auto; scrollbar-width: thin; display: flex; align-items: stretch; gap: var(--space-4); padding: var(--space-5) var(--space-6); border: 1px solid var(--glass-border); border-radius: var(--radius-card); background: var(--glass); box-shadow: var(--shadow); backdrop-filter: blur(var(--blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3); text-shadow: 0 1px 6px rgba(0,0,0,.35); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .story-rule { width: 3px; flex: 0 0 3px; border-radius: var(--radius-pill); background: var(--amber); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-list { display: block; flex: 1; min-width: 0; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat { display: block; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat:not(.is-current) { display: none; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-rule { display: none; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-step { margin: 0 0 var(--space-1); text-transform: uppercase; letter-spacing: .14em; font-size: 11px; font-weight: 600; color: var(--white-dim); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-label { margin: 0; font-size: 26px; font-weight: 500; line-height: 1.2; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-points { display: grid; gap: var(--space-1); margin: var(--space-2) 0 0; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-points:empty { display: none; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-point { display: flex; align-items: center; gap: var(--space-3); font-size: 15px; font-weight: 400; line-height: 1.3; color: var(--white); overflow-wrap: anywhere; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-point::before { content: ""; width: 7px; height: 7px; flex: 0 0 7px; border: 1px solid var(--white); border-radius: 50%; background: var(--white); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-point:only-child { color: var(--white-soft); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-point:only-child::before { display: none; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .step { flex: 0 0 var(--step-size); width: var(--step-size); height: var(--step-size); display: grid; place-items: center; padding: 0; border: 1px solid var(--glass-border); border-radius: 50%; background: var(--glass); color: var(--white); box-shadow: var(--shadow); backdrop-filter: blur(var(--blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .step svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .step:hover:not(:disabled) { background: rgba(255,255,255,.14); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .step:disabled { opacity: .35; cursor: default; }
+
+/* The pill in the place of Live's pause, stop and clock: its one button starts the recording. Its glass is drawn on a
+   layer of its own so that Back, a child of the same row, can sit in the bottom bar. */
+.shell[data-view="prepare"]:not([data-presentation="true"]) .actions:not(.sample-row) { position: absolute; z-index: 4; left: 0; right: 0; bottom: calc(var(--bar-height) + var(--cue-clearance)); width: fit-content; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: var(--space-1); padding: var(--space-1); border: 1px solid var(--glass-border); border-radius: var(--radius-pill); box-shadow: var(--shadow); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .actions:not(.sample-row)::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--glass); backdrop-filter: blur(var(--blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .primary { display: inline-flex; align-items: center; gap: var(--space-3); height: var(--control-size); padding: 0 var(--space-5) 0 0; border: 0; border-radius: var(--radius-pill); background: transparent; box-shadow: none; color: var(--white); font-size: 19px; font-weight: 500; white-space: nowrap; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .primary::before { content: ""; flex: none; width: var(--control-size); height: var(--control-size); border-radius: 50%; background: radial-gradient(circle, #fff 0 7.5px, transparent 8.5px), var(--red); box-shadow: 0 4px 14px rgba(241,70,66,.35); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .primary:hover { filter: none; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .primary:hover:not(:disabled)::before { filter: brightness(1.1); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .primary:disabled { opacity: .5; cursor: default; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) #back-home { position: fixed; z-index: 4; left: var(--page-pad); bottom: calc((var(--bar-height) - 44px) / 2); min-height: 44px; padding: var(--space-2) var(--space-2) var(--space-2) 0; font-size: 22px; font-weight: 600; color: var(--white); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .sample-row { position: absolute; z-index: 4; right: var(--page-pad); bottom: calc((var(--bar-height) - 44px) / 2); display: flex; margin: 0; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .sample-row .text-button { min-height: 44px; padding: var(--space-2) 0; font-size: 15px; font-weight: 500; color: var(--amber); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .sample-row .text-button:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The beats along the bottom bar, as Live's timeline: the same bar, dots and labels. */
+.shell[data-view="prepare"]:not([data-presentation="true"]) .bottom-bar { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; height: var(--bar-height); display: flex; align-items: center; justify-content: center; padding: 0 calc(var(--page-pad) + 180px); background: linear-gradient(to top, rgba(10,9,8,.82), var(--bar)); border-top: 1px solid var(--bar-border); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur)); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .rail { position: relative; flex: 1; max-width: 850px; height: 56px; display: flex; justify-content: space-between; align-items: flex-start; padding-top: var(--space-1); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-track { position: absolute; top: 14px; height: 2px; background: var(--track-base); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .track-done, .shell[data-view="prepare"]:not([data-presentation="true"]) .track-current { position: absolute; top: 0; height: 100%; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .track-done { left: 0; background: var(--green); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .track-current { background: var(--blue); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .tl-beat { position: relative; z-index: 1; flex: 1 1 0; min-width: 0; min-height: 44px; display: flex; flex-direction: column; align-items: center; gap: var(--space-1); border: 0; padding: var(--space-1) 0 0; background: transparent; color: var(--white-dim); font-size: 13px; font-weight: 400; white-space: nowrap; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .beat-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .node { width: 16px; height: 16px; border: 2px solid var(--grey); border-radius: 50%; display: grid; place-items: center; background: #1a1613; color: var(--white); font-size: 10px; font-weight: 700; line-height: 1; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .tl-beat[data-state="ahead"] .node { background: var(--grey); transform: scale(.75); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .tl-beat[data-state="done"] { color: var(--white-soft); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .tl-beat[data-state="done"] .node { border-color: var(--green); background: var(--green); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .tl-beat[data-state="current"] { color: var(--white); font-weight: 500; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .tl-beat[data-state="current"] .node { border-color: var(--blue); background: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+
+/* Set up: one overlay in the place of Live's Help panel. It holds the six cue switches, each cue's wording, and the
+   camera and microphone the take will use. One press opens it and one closes it. */
+.shell[data-view="prepare"]:not([data-presentation="true"]) .side { display: none; }
+.shell[data-view="prepare"]:not([data-presentation="true"])[data-setup="open"] .side { display: block; position: absolute; z-index: 5; top: var(--top-offset); right: var(--page-pad); width: min(380px, calc(100vw - 2 * var(--page-pad))); max-height: calc(100dvh - var(--bar-height) - var(--top-offset) - var(--space-4)); overflow-y: auto; border: 1px solid var(--glass-border); border-radius: var(--radius-card); background: var(--glass-strong); box-shadow: 0 24px 60px rgba(0,0,0,.36); backdrop-filter: blur(28px) saturate(1.3); -webkit-backdrop-filter: blur(28px) saturate(1.3); scrollbar-width: thin; }
+.shell[data-view="prepare"]:not([data-presentation="true"])[data-setup="open"] .header-actions, .shell[data-view="prepare"]:not([data-presentation="true"])[data-setup="open"] .delivery-cue, .shell[data-view="prepare"]:not([data-presentation="true"])[data-setup="open"] .carried { display: none; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .panel-heading { display: flex; align-items: center; justify-content: space-between; min-height: 60px; margin: 0 var(--space-5); border-bottom: 1px solid rgba(255,255,255,.12); font-size: 20px; letter-spacing: -.01em; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .panel-heading strong { font-weight: 600; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .panel-icon { border: 0; background: transparent; width: 36px; height: 36px; padding: 0; color: var(--white); font-size: 26px; line-height: 1; font-weight: 300; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .cues { padding: var(--space-4) var(--space-5) var(--space-4); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .cue-title { margin: 0 0 var(--space-3); font-size: 15px; font-weight: 400; color: var(--white-dim); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .chips { display: flex; flex-direction: column; gap: 2px; flex-wrap: nowrap; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .cue-group { margin: var(--space-3) 0 var(--space-1); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--white-dim); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .cue-group:first-child { margin-top: 0; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .chip { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 36px; padding: 3px 0; border: 0; border-radius: 0; background: transparent; font-size: 17px; text-align: left; color: var(--white-soft); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .chip:hover { background: transparent; color: var(--white); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .chip::after { content: ""; flex: none; width: 42px; height: 24px; border-radius: 999px; background-color: rgba(255,255,255,.16); background-image: radial-gradient(circle at 12px 12px, #fff 0 8.5px, transparent 9.5px); transition: background-color .15s ease; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .chip[aria-pressed="true"] { background: transparent; color: var(--white); font-weight: 400; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .chip[aria-pressed="true"]::after { background-color: var(--amber); background-image: radial-gradient(circle at 30px 12px, #1c140a 0 8.5px, transparent 9.5px); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .cue-note { margin: -4px 50px 4px 0; font-size: 13px; line-height: 1.35; color: var(--white-dim); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .hint { margin: var(--space-3) 0 0; padding: var(--space-3) 0 0; border-top: 1px solid rgba(255,255,255,.12); font-size: 13px; color: var(--white-soft); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .cue-limit { margin: var(--space-3) 0 0; font-family: inherit; font-size: 14px; color: var(--amber); transform: none; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .cue-edit { margin-top: 14px; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .pbar { display: grid; gap: var(--space-3); margin: 0 var(--space-5); padding: var(--space-4) 0 var(--space-5); border-top: 1px solid rgba(255,255,255,.12); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .dev { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: center; gap: var(--space-3); font-size: 15px; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .dev-k { color: var(--white-dim); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .dev-v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .level { grid-template-columns: 104px minmax(0, 1fr) auto; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .meter { display: flex; gap: 3px; height: 16px; align-items: stretch; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .meter i { flex: 1; border-radius: 2px; background: rgba(255,255,255,.14); transition: background .08s linear; }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .meter i.is-on { background: var(--amber); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .dev-s { font-size: 13px; color: var(--white-dim); white-space: nowrap; }
+
+/* What the person kept in Review, where Live shows a saved experiment: top right, under Set up. */
+.shell[data-view="prepare"]:not([data-presentation="true"]) .carried { position: absolute; z-index: 2; top: calc(var(--top-offset) + 60px); right: var(--page-pad); width: min(360px, calc(100vw - 2 * var(--page-pad))); }
+.shell[data-view="prepare"]:not([data-presentation="true"]) .carried:empty { display: none; }
+
+@media (max-height: 820px) {
+  .shell[data-view="prepare"]:not([data-presentation="true"]) { --bar-height: 60px; --top-offset: 24px; --cue-clearance: 16px; }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .pill { padding: var(--space-3) var(--space-5); }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .beat-label { font-size: 22px; }
+}
+@media (max-width: 900px) {
+  .shell[data-view="prepare"]:not([data-presentation="true"]) { --page-pad: 20px; --control-size: 44px; }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .tagline { font-size: 19px; margin-left: var(--space-2); }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .brand-line { font-size: 14px; gap: var(--space-2); }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .brand-line strong { font-size: 26px; }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .help span { display: none; }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .bottom-bar { padding: 0 calc(var(--page-pad) + 64px); }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) #back-home { font-size: 16px; }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .tl-beat { font-size: 11px; }
+  .shell[data-view="prepare"]:not([data-presentation="true"]) .sample-row { bottom: calc(var(--bar-height) + var(--cue-clearance) + var(--control-size) + 20px + clamp(16px, 9dvh, 84px) + 120px); }
+}

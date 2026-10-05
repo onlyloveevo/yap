@@ -12,6 +12,8 @@
 //
 // Pure and browser-safe: imports nothing from `node:`, never mutates its inputs.
 
+import { keptRanges } from './cutlist.js';
+
 /** @typedef {{ id: string, bytes: number, sha256: string, duration: number, width: number, height: number, name: string, container: 'mp4' | 'webm' }} BrollAsset */
 /** @typedef {{ asset: BrollAsset | null, start: number, end: number, inPoint: number, revision: number }} BrollState */
 
@@ -172,4 +174,119 @@ export function brollFfmpegArgs(base, { file, windows, width, height }) {
   const g = args.indexOf('-filter_complex');
   args[g + 1] = `${args[g + 1].replace(/\[v\]\[a\]$/, '[vbase][a]')};${parts.join(';')}`;
   return { args, inputs: inputs + 1 };
+}
+
+/** Where a suggestion may sit: the face stays on the opening and on the last words. */
+export const SUGGEST = Object.freeze({ max: 3, minSeconds: 2.5, maxSeconds: 6, hookSeconds: 4, closeSeconds: 1, apart: 3 });
+
+const endsSentence = (text) => /[.!?]["')\]]?$/.test(String(text).trim());
+
+/**
+ * Moments of the take where B-roll fits: a whole sentence or two the person keeps, long enough to show a clip and
+ * short enough to hold it, after the opening and before the close. A moment may run across a cut between sentences. Read from the saved words and the cut, nothing
+ * else. A take with no heard words gets no suggestion: there is nothing said for a clip to sit over.
+ * @param {any} recording
+ * @returns {{ start: number, end: number, text: string }[]} in time order, in original recording time
+ */
+export function suggestBrollMoments(recording, options = {}) {
+  const o = { ...SUGGEST, ...options };
+  const duration = recording && recording.duration;
+  if (!isNum(duration) || duration <= 0) return [];
+  const kept = keptRanges(recording.cuts && Array.isArray(recording.cuts.cuts) ? recording.cuts : { cuts: [], undoStack: [] }, duration);
+  const total = kept.reduce((n, [s, e]) => n + (e - s), 0);
+  const words = (Array.isArray(recording.transcript) ? recording.transcript : [])
+    .filter((w) => w && typeof w.text === 'string' && isNum(w.start) && isNum(w.end) && w.end > w.start)
+    .sort((a, b) => a.start - b.start);
+  // The kept words on the cut's own clock. A moment may run across a cut (a filler or a pause taken out between two
+  // sentences): covering that join is what B-roll is for, so its length is measured in the cut, not in the original.
+  /** @type {{ text: string, start: number, end: number, at: number, to: number }[]} */
+  const said = [];
+  let before = 0;
+  for (const [s, e] of kept) {
+    for (const w of words) if (w.start >= s - 1e-6 && w.end <= e + 1e-6) said.push({ text: w.text, start: w.start, end: w.end, at: before + (w.start - s), to: before + (w.end - s) });
+    before += e - s;
+  }
+  // Sentences: closed by punctuation or by a pause that is still in the cut.
+  const sentences = [];
+  let run = [];
+  for (const w of said) {
+    if (run.length && w.at - run[run.length - 1].to > 0.6) { sentences.push(run); run = []; }
+    run.push(w);
+    if (endsSentence(w.text)) { sentences.push(run); run = []; }
+  }
+  if (run.length) sentences.push(run);
+  /** @type {{ start: number, end: number, text: string, cutStart: number, cutSeconds: number }[]} */
+  const found = [];
+  for (let i = 0; i < sentences.length; i++) {
+    const from = sentences[i][0];
+    let taken = [];
+    let j = i;
+    while (j < sentences.length && sentences[j][sentences[j].length - 1].to - from.at <= o.maxSeconds) taken = taken.concat(sentences[j++]);
+    if (!taken.length) taken = sentences[i].filter((w) => w.to - from.at <= o.maxSeconds);
+    if (!taken.length) continue;
+    const last = taken[taken.length - 1];
+    if (last.to - from.at < o.minSeconds) continue;
+    found.push({ start: round3(from.start), end: round3(last.end), text: taken.map((w) => w.text.trim()).join(' '), cutStart: from.at, cutSeconds: last.to - from.at });
+    i = Math.max(i, j - 1);
+  }
+  const fits = (hook) => found.filter((m) => m.cutStart >= hook - 1e-6 && m.cutStart + m.cutSeconds <= total - o.closeSeconds + 1e-6);
+  let pool = fits(o.hookSeconds);
+  if (!pool.length) pool = fits(Math.min(o.hookSeconds, 1.5));
+  // The longest first, then spaced apart, then back in time order.
+  const chosen = [];
+  for (const m of [...pool].sort((a, b) => b.cutSeconds - a.cutSeconds || a.start - b.start)) {
+    if (chosen.length >= o.max) break;
+    if (chosen.some((c) => m.start < c.end + o.apart && m.end > c.start - o.apart)) continue;
+    chosen.push(m);
+  }
+  return chosen.sort((a, b) => a.start - b.start).map(({ start, end, text }) => ({ start, end, text }));
+}
+
+const keyOf = (word) => String(word).toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(?<=[a-z]{3})s$/, '');
+
+/**
+ * Library clips in the order they suit some spoken words: a clip whose tags or name are said comes first, and the
+ * rest keep the order they came in. `matches` counts the tag words found, so a caller can tell a real match from none.
+ * @template {{ name?: string, tags?: string[] }} T
+ * @param {string} text
+ * @param {T[]} clips
+ * @returns {(T & { matches: number })[]}
+ */
+export function rankBrollClips(text, clips) {
+  const said = new Set(String(text || '').split(/\s+/).map(keyOf).filter(Boolean));
+  return (Array.isArray(clips) ? clips : [])
+    .map((clip, at) => {
+      const own = new Set([...(Array.isArray(clip.tags) ? clip.tags : []), ...String(clip.name || '').split(/\s+/)].map(keyOf).filter((k) => k.length > 2));
+      return { clip: { ...clip, matches: [...own].filter((k) => said.has(k)).length }, at };
+    })
+    .sort((a, b) => b.clip.matches - a.clip.matches || a.at - b.at)
+    .map((x) => x.clip);
+}
+
+/**
+ * Search the library by what the person typed: every typed word must be in a clip's name or tags.
+ * @template {{ name?: string, tags?: string[] }} T
+ * @param {string} query
+ * @param {T[]} clips
+ * @returns {T[]}
+ */
+export function searchBrollClips(query, clips) {
+  const wanted = String(query || '').toLowerCase().split(/\s+/).map((w) => w.replace(/[^a-z0-9]/g, '')).filter(Boolean);
+  if (!wanted.length) return [...(clips || [])];
+  return (clips || []).filter((clip) => {
+    const hay = [String(clip.name || ''), ...(Array.isArray(clip.tags) ? clip.tags : [])].join(' ').toLowerCase();
+    return wanted.every((w) => hay.includes(w));
+  });
+}
+
+/** Tags as the person typed them, made safe to keep: lower case, short, no duplicates, twelve at most. */
+export function cleanTags(input) {
+  const list = Array.isArray(input) ? input : String(input || '').split(',');
+  const out = [];
+  for (const raw of list) {
+    const tag = String(raw).toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, ' ').trim().slice(0, 24);
+    if (tag && !out.includes(tag)) out.push(tag);
+    if (out.length >= 12) break;
+  }
+  return out;
 }

@@ -176,6 +176,47 @@ export function parseTryInstead(remark, settings) {
   return null;
 }
 
+/**
+ * The short form of a request, the new wording alone: "let's try grab a
+ * coffee instead", "say X instead", "change it to X". What it replaces is the
+ * caller's to find (the greeting, or the first line of the beat on screen).
+ * Null for the full form ("... instead of Y") and for anything else.
+ * @param {string} remark
+ * @param {{ maxWords?: number }} [settings]
+ * @returns {{ to: string } | null}
+ */
+export function parseTryShort(remark, settings) {
+  const { maxWords } = { ...EXPERIMENT_DEFAULTS, ...(settings || {}) };
+  const words = wordsOf(remark);
+  const taken = (list) => {
+    const to = clean(list.map((w) => w.raw).join(' '));
+    return to && wordCount(to) <= maxWords ? { to } : null;
+  };
+  for (let v = words.length - 1; v >= 0; v -= 1) {
+    if (['try', 'say', 'use'].includes(words[v].key)) {
+      const s = words.findIndex((w, j) => j > v + 1 && w.key === 'instead');
+      if (s === -1 || words[s + 1]?.key === 'of') continue;
+      const first = words.slice(v + 1, s);
+      if (first.some((w) => ENDS_SENTENCE.test(w.raw))) continue;
+      return taken(first);
+    }
+    if (words[v].key === 'change' && ['it', 'this', 'that'].includes(words[v + 1]?.key) && words[v + 2]?.key === 'to') {
+      return taken(words.slice(v + 3));
+    }
+  }
+  return null;
+}
+
+/** The first sentence of a text, the marks around it removed: "Grab a tea. Let's get into it." gives "Grab a tea". */
+export function firstLine(text) {
+  const words = wordsOf(text);
+  const end = words.findIndex((w) => ENDS_SENTENCE.test(w.raw));
+  return clean((end === -1 ? words : words.slice(0, end + 1)).map((w) => w.raw).join(' '));
+}
+
+/** A wording as it opens a line: its first letter a capital. */
+export const asLine = (text) => (text ? text[0].toUpperCase() + text.slice(1) : text);
+
 /** Whether the words of `part` stand together, in order, inside `whole` (case and punctuation aside). */
 function holds(whole, part) {
   const a = keysOf(whole);
@@ -249,8 +290,26 @@ function buildProposal(change, remark, { brief, trialLength, id = 'p1', exchange
  */
 export function proposeExperiment(remark, options = {}) {
   const trialLength = checkedLength(options.trialLength);
-  const change = parseTryInstead(remark);
+  let change = parseTryInstead(remark);
+  if (!change) {
+    // The short form changes the greeting the take opens on. A take with no greeting has no proposal here:
+    // the page reads it against the beat on screen (ui/lib/take-run.js).
+    const short = parseTryShort(remark);
+    const from = short ? firstLine(options.brief?.greeting) : '';
+    if (from && keysOf(from).join(' ') !== keysOf(short.to).join(' ')) change = { from, to: asLine(short.to) };
+  }
   return change ? buildProposal(change, remark, { ...options, trialLength }) : null;
+}
+
+/**
+ * A proposal for a change the page read itself (a beat's own line), in the same shape as proposeExperiment's.
+ * @param {{ from: string, to: string }} change
+ * @param {string} remark
+ * @param {{ brief?: Brief, trialLength?: number, id?: string, exchangeId?: string | null }} [options]
+ * @returns {Proposal}
+ */
+export function proposeChange(change, remark, options = {}) {
+  return buildProposal(change, remark, { ...options, trialLength: checkedLength(options.trialLength) });
 }
 
 /** A model's wording: edges cleaned, cut to maxWords words. */
@@ -467,6 +526,17 @@ function replaceWording(text, from, to, adaptCase = false) {
     i += target.length - 1;
   }
   return out + text.slice(at);
+}
+
+/**
+ * A line with one wording swapped for another, whole words, case aside, the marks around kept.
+ * @param {string} text
+ * @param {string} from
+ * @param {string} to
+ * @returns {string}
+ */
+export function swapWording(text, from, to) {
+  return replaceWording(String(text ?? ''), from, clean(to), true);
 }
 
 /**

@@ -4,7 +4,7 @@
 // The spike's isolated re-transcription is replaced by an injectable transcribeWindow.
 
 import {
-  normToken, isStartOf, restartsSentence, repeatsItself, isRestartPhrase, onlyFillers, findSpokenRestarts, sharedOpening, talksAboutSpeech, hasSpeechRestartVerb,
+  normToken, isStartOf, restartsSentence, repeatsItself, isRestartPhrase, onlyFillers, findSpokenRestarts, sharedOpening, talksAboutSpeech, hasSpeechRestartVerb, OPENERS,
 } from './retake-text.js';
 
 export { normToken };
@@ -285,7 +285,14 @@ export function detectRestarts({ silences, duration, words = [], transcribeWindo
   // A restart phrase said inside continuous speech has no island of its own; read it from the word stream.
   for (const proposal of spokenRestartCuts({ words, silences: sil, S })) {
     const span = /** @type {Span} */ ([proposal.start, proposal.end]);
-    if (cuts.some((c) => overlap(span, [c.start, c.end]) > 0)) continue;
+    const clash = cuts.filter((c) => overlap(span, [c.start, c.end]) > 0);
+    if (clash.length) {
+      // "Let me start that again" with its repeated opening is stronger evidence than a pause with no word match:
+      // a sure spoken retake that takes in every unsure suggestion it touches replaces them. Anything else stands.
+      const replaces = proposal.certainty === 'sure' && clash.every((c) => c.certainty === 'unsure' && c.start >= proposal.start - 1e-6 && c.end <= proposal.end + 1e-6);
+      if (!replaces) continue;
+      for (const c of clash) cuts.splice(cuts.indexOf(c), 1);
+    }
     if (repeats.some((g) => overlap(span, g.first) + overlap(span, g.second) > S.repeat_overlap)) continue;
     cuts.push(proposal);
   }
@@ -351,6 +358,12 @@ export function spokenRestartCuts({ words, silences, S }) {
       pick ||= { s, open, boundary, sa };
     }
     if (!pick) continue;
+    // A retake often drops the word the sentence opened with ("The first habit is ... sorry, let me start that again.
+    // First habit is ..."), and the recogniser drops it too. The attempt then starts at that opener, at its sentence start.
+    if (!pick.boundary && pick.s > 0 && OPENERS.has(t[pick.s - 1]) && (pick.s === 1 || seq[pick.s - 2].stop)) {
+      const p = pick.s - 1;
+      pick = { s: p, open: { ...pick.open, skipA: pick.open.skipA + 1 }, boundary: true, sa: silenceBefore(seq[p].start, p ? seq[p - 1].start : -Infinity, p ? seq[p - 1].start : 0) };
+    }
     const { s, open } = pick;
     const first = seq[s];
     const lastPhrase = seq[run.end - 1];
@@ -370,7 +383,9 @@ export function spokenRestartCuts({ words, silences, S }) {
     // phrase (leftover words): it still places the cut, but the cut is only a suggestion.
     const endCovers = Boolean(sb && edgeEnd(sb) >= lastPhrase.end);
     const tail = (run.start - s) - open.skipA - open.words;
-    const inner = seq.slice(s, run.start - 1).some((w) => w.stop);
+    // A full stop the recogniser put inside the words both attempts share ("habit. I almost skipped") ends no sentence:
+    // the retake says those words straight through. Only a stop from the last shared word on means a second sentence.
+    const inner = seq.slice(s + Math.max(0, open.skipA + open.words - 1), run.start - 1).some((w) => w.stop);
     // A finished sentence right before the phrase counts as abandoned only if the phrase names a speech restart.
     const finished = seq[run.start - 1].stop && !hasSpeechRestartVerb(t.slice(run.start, run.end));
     // Talk about speech, reporting verbs or quote marks anywhere in the abandoned stretch or the phrase: suggestion only.

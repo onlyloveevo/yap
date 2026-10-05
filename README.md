@@ -8,72 +8,93 @@ YAP is the creative partner I'm building to help you turn what's in your head in
 
 Start with the app, then read the [modular roadmap](ROADMAP.md), [Loom claim map](docs/LOOM_MAP.md) and [claim-by-claim delivery plan](docs/CLAIMS.md). They connect the demo's timestamps to the seven modules, the original four-week plan and the evidence needed before each larger claim can be made.
 
+The demo video: https://www.loom.com/share/fa69dbc3d8f2413a80f135eaf3a472c2
+
 ## The modular plan
 
 **Prep → Live → Cut → Publish → Review → Experiments → the next Prep**, with **Coach** supporting preparation and delivery. A shared learning layer will connect the user's choices, predictions and real outcomes across those modules.
 
 The original four-week plan moves from recording/editing, to voice preparation/coaching/publishing, to real analytics/experiments, then outside-user testing. Each module must connect into the same real-video journey. Later work adds evaluated personalisation, opt-in learning across users, and communication beyond content. The roadmap preserves the original target dates and acceptance checks; those dates are planning targets, not evidence of completion or guaranteed releases.
 
-## Run it
+## Start it
 
-You need **macOS, Google Chrome, Node.js 18 or newer**, and internet for the first setup. Use **Code → Download ZIP**, unzip it, then double-click **Start YAP.command**. Alternatively, open Terminal in the extracted folder:
+1. On GitHub press **Code**, then **Download ZIP**, and unzip it.
+2. Double-click **Start YAP.command**.
 
-```sh
-npm run setup
-```
+A Terminal window opens, then YAP opens in Google Chrome. The first start sets YAP up inside its folder and takes about a minute. Later starts take a few seconds. YAP opens on port 4317, or the next free one.
 
-Setup installs dependencies inside this folder and opens the app at `http://127.0.0.1:4317`. Nothing is installed globally. If that port is occupied, run `YAP_PORT=4318 npm run setup`. Stop your instance with **Stop YAP.command** or `npm run setup -- --stop`.
+From Terminal, `npm run setup` in the folder does the same, and `npm run setup -- --stop` stops it.
 
-For Claude Code, open this folder and ask:
+## Three minutes with YAP
 
-> Read README.md and INSTALL.md, run npm run setup, and show me the local app. Keep the existing source unchanged. Do not configure a paid API or call a model unless I ask.
+1. Press **Watch YAP work**. A sample take plays by itself for about 40 seconds. YAP ticks each beat as the presenter says it and saves a change the presenter asks for out loud as an experiment. Then the take stops and the editor opens with the cut ready. Press **Review this take** there to read what YAP found in it.
+2. Type an idea of your own and send it. YAP asks about it, then proposes a format and a few beats.
+3. Record it. Open your idea, start recording, and allow the camera and the microphone when Chrome asks.
 
-The bundled sample and manual recording/editing path need no model account or API key. AI conversations use your own local Claude Code connection and allowance. Some optional beat suggestions can fall back to OpenAI if you have configured an API key; details are in [INSTALL.md](INSTALL.md).
+## Stop it
 
-## A short review
+Double-click **Stop YAP.command**. Your ideas and recordings stay in the YAP folder.
 
-1. Open **Saved ideas → Try the sample**. The sample presenter, media and review numbers are explicitly synthetic.
-2. Follow the sample through recording, inspect the proposed cuts, restore a cut, and export the MP4.
-3. Try your own idea and edit its talking points. Rehearse before starting a recording.
-4. Record a short take, make a cut, export, and carry an accepted cue into your next take.
+## What it needs
 
-Camera/microphone permission is requested by Chrome. Natural wake-word control is experimental; typed controls and the held-key option are available. The full walkthrough, presentation mode and optional AI setup are in [INSTALL.md](INSTALL.md).
+A Mac, Google Chrome, and an internet connection for the first start. YAP installs nothing outside its folder. On a Mac without Node, YAP fetches its own copy of Node into the folder. YAP's coach uses Claude Code when it is on the Mac, and its built-in coach otherwise.
 
-## What to assess
+## If macOS blocks the file
 
-This is an inventory of the snapshot's implemented paths, not a claim that every path has passed a human walkthrough. Preparation checks covered fresh setup, the local server, offline sample replay and 244 selected deterministic tests. Real microphone/camera use, natural wake, every export format and outside-user usability still need validation on the exact package.
+macOS stops a downloaded .command file the first time you open it. Press **Done** on the warning. Open **System Settings**, choose **Privacy & Security**, scroll to **Security**, press **Open Anyway** beside "Start YAP.command", and confirm with Touch ID or your password. Then double-click the file again.
 
-| Area | In this prototype | Remaining work |
-| --- | --- | --- |
-| Ideas and preparation | Editable talking points, camera-first rehearsal, optional AI conversation and accepted changes | Validate with outside users |
-| Recording | Camera/microphone capture; optional screen presentation and separate Live UI recording | Broader physical-device and unfamiliar-user testing |
-| Editing | Reviewable cuts, trim, original retained, MP4 export; transcript/caption controls and local B-roll | Broad media compatibility and production hardening |
-| Review and next take | Labelled sample analytics; own-video transcript/notes; explicit saved trials and cues | Real platform analytics and measured improvement |
-| Learning vision | Explicit user-approved preferences and trials | Personalised trained models, cross-user learning and a demonstrated data moat |
+Or open Terminal, type `zsh` and a space, drag **Start YAP.command** into the window, and press Return.
+
+## What works today
+
+On 4 Oct, AI judges that had built none of it walked the app against the 25 things the demo video shows, by doing each one on the page with real speech and a camera feed. 22 worked and 3 worked in part. They judged the 21:53 build; this one adds the small repairs made after it.
+
+| Part | What you can do in this build |
+| --- | --- |
+| Ideas | Type a rough thought. YAP asks one question at a time, suggests a platform and a format from its format library, lays out the structure, and turns it into a few beats you accept one by one. |
+| Live | Record with one beat beside the lens. A beat ticks on the timeline when you have said it. Go back and say a beat again. Change the content mid-take without stopping. Set your own wake word. |
+| Edit | Stop goes straight to the editor with a cut ready. Retakes, filler words and the best take are tagged, and every cut can be put back. B-roll moments are suggested; add and tag your own clips. Export an MP4, Premiere XML and a Resolve EDL. |
+| Coach | Rehearse on camera with nothing saved. Switch each cue on or off. Smile and Slow down cues come from what the camera and microphone pick up. |
+| Review | On the labelled sample: five numbers, a retention chart, key moments and one experiment to try. Add your own video for a transcript and notes. |
+| Experiments | "Try this" in Review shows up in your next idea and your next take. |
+
+Worked in part, and other known faults:
+
+- The beat card ticks when you finish a beat, then waits on it until you speak again.
+- Chrome's speech recognition often hears "YAP" as "yeah", so the spoken wake word is unreliable. Typing the change works, and so does another wake word such as "coach".
+- A spoken change that names a beat can land on the wrong beat.
+- Most sample ideas and Review cards open the same sample content.
+- The cut preview can freeze for about 7 seconds after you add an uploaded B-roll clip.
+- Presentation mode, which records your screen with a camera bubble, is in the build but was not part of the judged walk.
+- The sample presenter, footage and numbers are synthetic. See [sample/README.md](sample/README.md).
+
+## What is not in this build
+
+Posting to YouTube or Instagram. Real platform numbers. Models trained on your results or on anyone else's. Meetings. These are the plan in [ROADMAP.md](ROADMAP.md), and [docs/CLAIMS.md](docs/CLAIMS.md) gives the evidence each claim needs.
 
 A sample loop demonstrates software behaviour. It is not evidence of audience growth, model superiority or a measured improvement in someone's content. This repository is a review build, not a hosted production service.
 
 ## Check the code
 
-No model account is needed for the included deterministic review tests:
+No model account is needed for the included review tests:
 
 ```sh
 npm run test:review
 npm run replay -- --fast
 ```
 
-These tests cover setup boundaries, Node compatibility checks, licences, sample consistency, saved memory/trials, storage, preparation and mocked model endpoints. They are a **selected smoke suite**, not the complete private development regression suite or a replacement for trying the app. The original `npm test` command intentionally refuses to claim a full regression run from this reduced export.
+These 237 tests cover setup boundaries, Node compatibility checks, licences, sample consistency, saved memory and trials, storage, preparation and mocked model endpoints. They are a **selected smoke suite**, not the complete private development regression suite or a replacement for trying the app. The original `npm test` command intentionally refuses to claim a full regression run from this reduced export. The full development suite passed on this build on 4 October 2026 (2,393 tests); it needs fixtures that are not published here, so you cannot rerun it from this repository.
 
 Source layout: `ui/` contains the interface; `server/` the local server and model adapters; `src/engine/` the recording/creative loop; `src/node/` storage and local media operations; `sample/` the synthetic sample; `test/` the selected review tests.
 
-## Data and model use
+## Your data and model use
 
-Ideas and recordings are saved locally in `data/`, which is excluded from Git. Review uploads stay in your browser. Optional AI requests send the relevant text/context to the model connection you configure. Chrome speech recognition may send audio to its provider. Speech alignment downloads a model on first use and then runs locally. See [INSTALL.md](INSTALL.md) for the specific boundaries.
+Ideas and recordings are saved locally in `data/`, which is excluded from Git. With Claude Code on the Mac, YAP's coach uses your own Claude Code connection and allowance; without it, YAP uses its built-in coach. Chrome speech recognition may send audio to its provider. Word timing uses a Whisper model that runs in the browser. An `OPENAI_API_KEY` is optional and never required.
 
 Never commit recordings, API keys, `.env` files or generated local data. No credentials are supplied in this repository.
 
 ## Build and credits
 
-Prepared from YAP development revision `220eb8195f31cf31613a6162250c33f47d3b9fe1` on 5 October 2026. This is a fresh source snapshot: private development history and restricted historical test media are excluded. The app source is unchanged; repository documentation, ignore rules and a review-test command have been added.
+Prepared on 5 October 2026 from YAP development revision `d06535f6e12eee0f0eb623b504ed6bddb38ac0c9` (4 October 2026, 22:37). This is a fresh source snapshot: private development history and restricted historical test media are excluded. The app source is unchanged; repository documentation, ignore rules, a review-test command and the selected tests have been added. The two earlier commits in this repository hold a previous snapshot from a different development branch (revision `220eb81`, 18:13 the same day).
 
 YAP's existing [MIT licence](LICENSE) is retained. [NOTICE](NOTICE) credits reused teleprompter/editing code and third-party dependencies; [sample/README.md](sample/README.md) documents synthetic media. YAP does not claim to have invented those underlying components.

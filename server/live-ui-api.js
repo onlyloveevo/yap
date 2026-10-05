@@ -51,14 +51,14 @@ export async function handleLiveUiApi({req,res,rest,method,answer,refuse,recordi
  const m=/^recordings\/([^/]+)\/live-ui(?:\/(media|timing))?$/.exec(rest||'');if(!m)return false;
  const [,id,part]=m;if(!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)){req.resume();refuse(400,'Invalid recording id.');return true;}
  const {store,meta}=recordings();if(!store.load(id)){req.resume();refuse(404,'No recording has that id.');return true;}
- if(meta.load(id).sample){req.resume();refuse(409,'Live UI capture belongs to your own recording.');return true;}
+ if(meta.load(id).sample){req.resume();if(['GET','HEAD'].includes(method)&&!part){answer(200,{saved:false});return true;}refuse(409,'Live UI capture belongs to your own recording.');return true;}
  const dir=resolveDataDir(root,path.join(resolveDataDir(root,dataDir),'live-ui',id));
  fs.mkdirSync(dir,{recursive:true});if(fs.lstatSync(path.dirname(dir)).isSymbolicLink()||fs.lstatSync(dir).isSymbolicLink())throw bad(400,'Invalid Live UI storage.');
  const index=path.join(dir,'current.json');
  const urlsFor=version=>({downloadUrl:`/api/app/recordings/${id}/live-ui/media?version=${version}`,timingUrl:`/api/app/recordings/${id}/live-ui/timing?version=${version}`});
  if(['GET','HEAD'].includes(method)) {
   if(fs.existsSync(index)&&fs.lstatSync(index).isSymbolicLink())throw bad(400,'Invalid Live UI storage.');
-  const current=readJson(index,null);if(!current){refuse(404,'No Live UI recording has been saved.');return true;}
+  const current=readJson(index,null);if(!current){if(!part){answer(200,{saved:false});return true;}refuse(404,'No Live UI recording has been saved.');return true;}
   if(!/^[a-f0-9]{24}$/.test(current.version))throw bad(500,'Invalid Live UI version.');
   if(!part){answer(200,{...urlsFor(current.version),...current});return true;}
   const versions=new URL(req.url,'http://localhost').searchParams.getAll('version');

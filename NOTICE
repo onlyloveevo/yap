@@ -6,7 +6,8 @@ Each copied file keeps its copyright line in its
 own header ("Ported from ..."), and is listed below with the file it came from
 and the full licence text of its source.
 
-The source zip excludes node_modules, model weights and runtime binaries.
+The source zip excludes node_modules, runtime binaries and model weights,
+except the face model named below.
 The following pinned dependencies are fetched into the app during setup:
 - ffmpeg-static 5.3.0: GPL-3.0-or-later. Its FFmpeg binary is a separate
   executable downloaded from eugeneware/ffmpeg-static release b6.1.1.
@@ -15,6 +16,24 @@ The following pinned dependencies are fetched into the app during setup:
 - @huggingface/transformers 4.3.0: Apache-2.0.
   https://github.com/huggingface/transformers.js
 Their transitive dependencies retain their original package licence files.
+The face model the Smile cue reads the camera with is bundled in ui/lib/face
+and runs in the browser on this Mac. Nothing is fetched when the app runs.
+- @mediapipe/tasks-vision 0.10.14: Apache-2.0. Copyright The MediaPipe Authors.
+  https://github.com/google-ai-edge/mediapipe
+  Package tarball sha256 3122ba7a70d414ffbb3a1bd194c370594a1bf1c90e467c375a5b8bd25be2c004
+  ui/lib/face/vision_bundle.js (the package's vision_bundle.mjs, unchanged)
+    sha256 e77f281f9619150d937023c355bae170e9120e3b9e43f1e23a2a7bee07197669
+  ui/lib/face/vision_wasm_internal.js
+    sha256 9440cf0cc0cea21800e31581ec32aeedcc5fbf9df4509796bbc7d3f99e52ab9c
+  ui/lib/face/vision_wasm_internal.wasm
+    sha256 f82a8e6c05e08a44cc9f9e7ec5f845935bcbb1b1500ebe8c2f4812fb4e2917dc
+- MediaPipe Face Landmarker model (float16, version 1): Apache-2.0.
+  https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
+  Model card: https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker
+  ui/lib/face/face_landmarker.task
+    sha256 64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff
+  Both were fetched once, on 4 October 2026. The Apache-2.0 text is at
+  https://www.apache.org/licenses/LICENSE-2.0
 The bundled sample pictures (sample/take1.mp4 and take2.mp4) are already-generated
 illustrative footage of a fictional presenter, with a "Synthetic demo" label added.
 They are not a recording of a real person. Their generation record (Seedance 2.0,
@@ -25,6 +44,14 @@ audio is Kokoro-82M (Apache-2.0), described in sample/README.md.
 The browser downloads the Xenova/whisper-tiny.en model on first speech
 alignment. Model card: https://huggingface.co/Xenova/whisper-tiny.en
 No FFmpeg code is copied into the app source. FFmpeg runs as a subprocess.
+
+The typeface on every screen (ui/lib/fonts) is Kumbh Sans, Copyright 2020 The
+KumbhSans Project Authors (https://github.com/xconsau/KumbhSans), with the quote
+marks of Albert Sans, Copyright 2021 The Albert Sans Project Authors
+(https://github.com/usted/Albert-Sans). Both are under the SIL Open Font
+License, Version 1.1; its full text is ui/lib/fonts/OFL.txt. The files are the
+latin subsets published by Fontsource 5.3.0, unchanged. Neither name is used to
+promote YAP.
 
 
 ------------------------------------------------------------------------------

@@ -1,79 +1,98 @@
-#!/bin/bash
-# Start YAP: set up (first time only), start YAP and open it in Google Chrome.
-# Double-click this file in Finder. It works from whatever folder it sits in
-# (spaces in the path are fine). It installs nothing outside this folder.
+#!/bin/zsh
+# Start YAP: double-click this file.
+#
+# It finds Node 18 or newer on this Mac, runs scripts/setup.js (which installs
+# only inside this folder on the first start and reuses that install after) and
+# opens YAP in the browser. When the Mac has no usable Node, it fetches the
+# official Node build from nodejs.org into data/node inside this folder, checks
+# it against the SHA-256 pinned below and uses that copy. Nothing is installed
+# on the Mac, no administrator password is asked for and no other program is
+# stopped.
+#
+#   "Start YAP.command" --stop   stop the server this folder started (Stop YAP.command)
+#   YAP_NO_OPEN=1                start without opening a browser
+#   YAP_PORT=<n>                 the first port to try (default 4317)
 
-pause_if_terminal() {
-  if [ -t 0 ] && [ -z "${YAP_NO_PAUSE:-}" ]; then
-    printf '\nPress Return to close this window. '
-    read -r _ || true
-  fi
-}
-fail() { printf '\n%s\n' "$1"; pause_if_terminal; exit "${2:-1}"; }
+cd "${0:A:h}" || exit 1
 
-case "$0" in */*) here="${0%/*}" ;; *) here="." ;; esac
-cd -- "$here" 2>/dev/null || fail "YAP could not open its own folder ($here)."
-cd -P . || fail "YAP could not open its own folder."
+# The Node LTS this launcher fetches, with the checksums nodejs.org publishes
+# for it in https://nodejs.org/dist/v24.21.0/SHASUMS256.txt (read 4 Oct 2026).
+NODE_VERSION=v24.21.0
+NODE_SHA_ARM64=bed7eea5325e1108f32ce5228ddd6a5f0f08a499ee42aa7442aea583702f6057
+NODE_SHA_X64=1462cb3b3046b815cf8ea436d3da450ec1a9f11dac7e5a46b0ada5305d7e8097
+NODE_DIST=${YAP_NODE_DIST:-https://nodejs.org/dist}
 
-# --- find Node 18+ (identical in Start YAP.command and Stop YAP.command; a test keeps them in step) ---
-# Looks on the ordinary PATH, then in common Mac install places. It only looks:
-# nothing is installed, and no shell profile or global setting is changed.
-NODE=""
-OLD_NODE=""
+# An Apple-silicon Mac reports arm64 here even when this shell runs under Rosetta.
+if [[ "$(/usr/sbin/sysctl -n hw.optional.arm64 2>/dev/null)" == 1 ]]; then
+  node_name=node-$NODE_VERSION-darwin-arm64; node_sha=$NODE_SHA_ARM64
+else
+  node_name=node-$NODE_VERSION-darwin-x64; node_sha=$NODE_SHA_X64
+fi
+own_node=$PWD/data/node/$node_name/bin/node
+
 node_ok() {
-  [ -x "$1" ] || return 1
-  local major
-  major="$("$1" -p 'process.versions.node.split(".")[0]' 2>/dev/null)" || return 1
-  case "$major" in ''|*[!0-9]*) return 1 ;; esac
-  if [ "$major" -ge 18 ]; then return 0; fi
-  OLD_NODE="$1 (Node $major)"
-  return 1
+  [[ -x "$1" ]] && "$1" -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 18 ? 0 : 1)' 2>/dev/null
 }
+
+# The Mac's own Node first, then the copy an earlier start fetched.
 find_node() {
-  local dir pat common i
-  local -a dirs pats matches
-  IFS=: read -r -a dirs <<< "$PATH"
-  for dir in "${dirs[@]}"; do
-    [ -n "$dir" ] || continue
-    if node_ok "$dir/node"; then NODE="$dir/node"; return 0; fi
-  done
-  if [ "${YAP_COMMON_NODE_PATHS+set}" = set ]; then common="$YAP_COMMON_NODE_PATHS"
-  else common="/opt/homebrew/bin/node:/usr/local/bin/node:/opt/local/bin/node:$HOME/.volta/bin/node:$HOME/.local/bin/node:$HOME/.nvm/versions/node/*/bin/node:$HOME/.fnm/node-versions/*/installation/bin/node:$HOME/Library/Application Support/fnm/node-versions/*/installation/bin/node:$HOME/.asdf/installs/nodejs/*/bin/node:/usr/local/n/versions/node/*/bin/node"; fi
-  IFS=: read -r -a pats <<< "$common"
-  for pat in "${pats[@]}"; do
-    [ -n "$pat" ] || continue
-    matches=()
-    while IFS= read -r dir; do matches+=("$dir"); done < <(compgen -G "$pat" || true)
-    # Newest version folder sorts last, so try the last match first.
-    for (( i=${#matches[@]}-1; i>=0; i-- )); do
-      if node_ok "${matches[$i]}"; then NODE="${matches[$i]}"; return 0; fi
-    done
+  local found
+  for found in "$(whence -p node)" "$own_node"; do
+    if node_ok "$found"; then NODE=$found; return 0; fi
   done
   return 1
 }
-# --- end finder ---
 
-find_node || {
-  if [ -n "$OLD_NODE" ]; then
-    fail "YAP needs Node.js 18 or newer, but the only Node found was $OLD_NODE.
-YAP has not changed anything. Install the current LTS from https://nodejs.org (a normal macOS installer you run yourself), then double-click this file again." 1
+fetch_node() {
+  local dir=$PWD/data/node
+  local part=$dir/$node_name.tar.gz.part unpack=$dir/unpack.part
+  print "Fetching Node $NODE_VERSION from nodejs.org into this folder (about 50 MB). Nothing is installed on your Mac."
+  # Start clean: an earlier start may have stopped halfway.
+  /bin/mkdir -p "$dir" && /bin/rm -rf "$part" "$unpack" "$dir/$node_name"
+  if ! /usr/bin/curl -fsL --retry 2 --max-time 900 -o "$part" "$NODE_DIST/$NODE_VERSION/$node_name.tar.gz"; then
+    /bin/rm -rf "$part"
+    print "The download from nodejs.org did not finish. Check the internet connection, then start YAP again."
+    return 1
   fi
-  fail "YAP needs Node.js 18 or newer, and none was found on this Mac.
-YAP has not installed anything. Install the current LTS from https://nodejs.org (a normal macOS installer you run yourself), then double-click this file again." 1
+  if [[ "$(/usr/bin/shasum -a 256 "$part" | /usr/bin/cut -d ' ' -f 1)" != "$node_sha" ]]; then
+    /bin/rm -rf "$part"
+    print "The Node download did not match its pinned SHA-256, so YAP removed it and started nothing. Start YAP again to retry."
+    return 1
+  fi
+  if ! { /bin/mkdir -p "$unpack" && /usr/bin/tar -xzf "$part" -C "$unpack" && /bin/mv "$unpack/$node_name" "$dir/$node_name" }; then
+    /bin/rm -rf "$part" "$unpack" "$dir/$node_name"
+    print "The Node download could not be unpacked in this folder. Check that the disk has space, then start YAP again."
+    return 1
+  fi
+  /bin/rm -rf "$part" "$unpack"
+  if ! node_ok "$own_node"; then
+    print "Node $NODE_VERSION did not run on this Mac. It needs macOS 13.5 or newer."
+    return 1
+  fi
+  NODE=$own_node
 }
-# npm's own scripts look for "node" on PATH, which a Finder launch may lack.
-# This only affects this one run.
-PATH="${NODE%/*}:$PATH"; export PATH
 
-if [ ! -f scripts/launch.js ]; then
-  fail "This does not look like the unzipped YAP folder (scripts/launch.js is missing). Unzip yap.zip again and double-click Start YAP.command inside it." 1
+if [[ "$1" == --stop ]]; then
+  if ! find_node; then
+    print "Node was not found on this Mac or in this folder, so nothing was stopped."
+    exit 1
+  fi
+  export PATH="${NODE:h}:$PATH"
+  "$NODE" scripts/setup.js --stop
+  exit $?
 fi
-extra=()
-[ -n "${YAP_LAUNCH_DRY_RUN:-}" ] && extra+=(--dry-run)
-"$NODE" scripts/launch.js start "${extra[@]}" "$@"
-status=$?
-if [ "$status" -ne 0 ]; then
-  printf '\n(YAP exit code %s)\n' "$status"
-  pause_if_terminal
+
+find_node || fetch_node || exit 1
+# npm starts through "env node": put the chosen Node first on PATH.
+export PATH="${NODE:h}:$PATH"
+
+setup_args=(--launcher)
+[[ "$YAP_NO_OPEN" == 1 ]] && setup_args+=(--no-open)
+"$NODE" scripts/setup.js $setup_args || exit $?
+
+# Opened by a double-click, the window stays until YAP stops. Closing it leaves YAP running.
+if [[ -t 1 && -r data/server.pid ]]; then
+  server_pid=$(<data/server.pid)
+  while kill -0 "$server_pid" 2>/dev/null; do /bin/sleep 2; done
+  print "YAP has stopped."
 fi
-exit "$status"

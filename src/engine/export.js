@@ -160,3 +160,97 @@ export function cutListDocument({ source, sourceSha256, duration, keptRanges, cu
   if (sourceVideo !== undefined) Object.assign(doc, { sourceVideo, sourceVideoSha256 });
   return doc;
 }
+
+// ---- Timelines other editors open (the cut on the ORIGINAL recording, so every cut can still be moved there) ----
+
+/** Timelines are written at this frame rate; the original is offered as a constant-rate MP4 at the same rate. */
+export const TIMELINE_FPS = 30;
+/** The sequence starts at one hour, as editors expect. */
+const RECORD_START_FRAMES = 3600 * TIMELINE_FPS;
+
+/** Non-drop-frame timecode for a frame count. */
+export function timecode(frame, fps = TIMELINE_FPS) {
+  const f = Math.max(0, Math.round(frame));
+  const two = (n) => String(n).padStart(2, '0');
+  return `${two(Math.floor(f / (3600 * fps)))}:${two(Math.floor(f / (60 * fps)) % 60)}:${two(Math.floor(f / fps) % 60)}:${two(f % fps)}`;
+}
+
+/**
+ * The kept ranges as timeline events in whole frames: where each comes from in the original and where it lands in
+ * the cut. Record times follow one another with no gap. A range shorter than one frame is left out.
+ * @param {[number, number][]} keptRanges
+ * @returns {{ sourceIn: number, sourceOut: number, recordIn: number, recordOut: number }[]}
+ */
+export function timelineEvents(keptRanges, fps = TIMELINE_FPS) {
+  const events = [];
+  let record = 0;
+  for (const [s, e] of keptRanges || []) {
+    const sourceIn = Math.round(s * fps);
+    const sourceOut = Math.round(e * fps);
+    if (!(sourceOut > sourceIn)) continue;
+    events.push({ sourceIn, sourceOut, recordIn: record, recordOut: record + (sourceOut - sourceIn) });
+    record += sourceOut - sourceIn;
+  }
+  return events;
+}
+
+const plainName = (text) => String(text || '').replace(/[\r\n\t]+/g, ' ').replace(/[^\x20-\x7E]/g, '').trim();
+
+/**
+ * A CMX3600 edit decision list of the cut. DaVinci Resolve and Premiere Pro both import it.
+ * @param {{ title: string, clipName: string, keptRanges: [number, number][], fps?: number,
+ *   broll?: { name: string, windows: { cutStart: number, cutEnd: number, clipStart: number, clipEnd: number }[] } | null }} input
+ * @returns {string}
+ */
+export function edlDocument({ title, clipName, keptRanges, fps = TIMELINE_FPS, broll = null }) {
+  const lines = [`TITLE: ${plainName(title) || 'YAP cut'}`, 'FCM: NON-DROP FRAME', ''];
+  timelineEvents(keptRanges, fps).forEach((ev, i) => {
+    const tc = (n) => timecode(n, fps);
+    lines.push(`${String(i + 1).padStart(3, '0')}  AX       AA/V  C        ${tc(ev.sourceIn)} ${tc(ev.sourceOut)} ${tc(RECORD_START_FRAMES + ev.recordIn)} ${tc(RECORD_START_FRAMES + ev.recordOut)}`);
+    lines.push(`* FROM CLIP NAME: ${plainName(clipName)}`, '');
+  });
+  for (const w of (broll && broll.windows) || []) {
+    const at = (seconds) => timecode(RECORD_START_FRAMES + Math.round(seconds * fps), fps);
+    lines.push(`* B-ROLL: ${plainName(broll.name)} FROM ${timecode(Math.round(w.clipStart * fps), fps)} AT ${at(w.cutStart)} TO ${at(w.cutEnd)}`);
+  }
+  return `${lines.join('\n').replace(/\n+$/, '')}\n`;
+}
+
+const xml = (text) => String(text == null ? '' : text).replace(/[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * A Final Cut Pro 7 XML timeline of the cut (xmeml), the XML that Premiere Pro and DaVinci Resolve both import.
+ * Video track 1 and one audio track carry the kept ranges of the original; B-roll, when set, sits on video track 2.
+ * @param {{ title: string, clipName: string, duration: number, keptRanges: [number, number][], width?: number, height?: number, fps?: number,
+ *   broll?: { name: string, duration: number, windows: { cutStart: number, cutEnd: number, clipStart: number, clipEnd: number }[] } | null }} input
+ * @returns {string}
+ */
+export function fcp7XmlDocument({ title, clipName, duration, keptRanges, width = 1920, height = 1080, fps = TIMELINE_FPS, broll = null }) {
+  const events = timelineEvents(keptRanges, fps);
+  const total = events.length ? events[events.length - 1].recordOut : 0;
+  const rate = `<rate><timebase>${fps}</timebase><ntsc>FALSE</ntsc></rate>`;
+  const sourceFrames = Math.max(Math.round(duration * fps), events.reduce((n, ev) => Math.max(n, ev.sourceOut), 0));
+  const fileDef = (id, name, frames, withAudio) => `<file id="${id}"><name>${xml(name)}</name><pathurl>${xml(encodeURI(name))}</pathurl>${rate}<duration>${frames}</duration><media><video><samplecharacteristics>${rate}<width>${width}</width><height>${height}</height></samplecharacteristics></video>${withAudio ? '<audio><samplecharacteristics><depth>16</depth><samplerate>48000</samplerate></samplecharacteristics><channelcount>2</channelcount></audio>' : ''}</media></file>`;
+  const item = (id, name, frames, ev, file, audio) => `<clipitem id="${id}"><name>${xml(name)}</name><enabled>TRUE</enabled><duration>${frames}</duration>${rate}<start>${ev.recordIn}</start><end>${ev.recordOut}</end><in>${ev.sourceIn}</in><out>${ev.sourceOut}</out>${file}${audio ? '<sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>' : ''}</clipitem>`;
+  const video = events.map((ev, i) => item(`video-${i + 1}`, clipName, sourceFrames, ev, i === 0 ? fileDef('file-1', clipName, sourceFrames, true) : '<file id="file-1"/>', false));
+  const audio = events.map((ev, i) => item(`audio-${i + 1}`, clipName, sourceFrames, ev, '<file id="file-1"/>', true));
+  const brollFrames = broll ? Math.round(broll.duration * fps) : 0;
+  const over = ((broll && broll.windows) || []).map((w, i) => item(`broll-${i + 1}`, broll.name, brollFrames, {
+    recordIn: Math.round(w.cutStart * fps), recordOut: Math.round(w.cutEnd * fps), sourceIn: Math.round(w.clipStart * fps), sourceOut: Math.round(w.clipStart * fps) + (Math.round(w.cutEnd * fps) - Math.round(w.cutStart * fps)),
+  }, i === 0 ? fileDef('file-2', broll.name, brollFrames, false) : '<file id="file-2"/>', false)).filter((_, i) => broll.windows[i].cutEnd > broll.windows[i].cutStart);
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<!DOCTYPE xmeml>',
+    '<xmeml version="4">',
+    `<sequence id="sequence-1"><name>${xml(plainName(title) || 'YAP cut')}</name><duration>${total}</duration>${rate}`,
+    `<timecode>${rate}<string>01:00:00:00</string><frame>${RECORD_START_FRAMES}</frame><displayformat>NDF</displayformat></timecode>`,
+    `<media><video><format><samplecharacteristics>${rate}<width>${width}</width><height>${height}</height><pixelaspectratio>square</pixelaspectratio></samplecharacteristics></format>`,
+    `<track>${video.join('')}</track>`,
+    ...(over.length ? [`<track>${over.join('')}</track>`] : []),
+    '</video>',
+    `<audio><track>${audio.join('')}</track></audio>`,
+    '</media></sequence>',
+    '</xmeml>',
+    '',
+  ].join('\n');
+}

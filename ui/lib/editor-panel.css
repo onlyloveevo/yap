@@ -5,9 +5,10 @@
 
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-/* The stage holds the player and the rail side by side. The player keeps its 16:9 box and takes the height the stage gives it. */
-.editor-stage { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--rail-w); gap: var(--space-4); align-items: center; container-type: size; }
-.editor-stage > .player { flex: none; width: min(100%, calc(100cqh * 16 / 9)); height: auto; max-width: 100%; justify-self: center; align-self: center; }
+/* The stage holds the player. The panel stands beside the whole editor, as tall as the window (his Loom, 04:08). */
+.editor-stage { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); align-items: center; container-type: size; }
+.edit-shell[data-rail="open"] { padding-right: calc(var(--rail-w) + var(--page-pad)); }
+.editor-stage > .player { flex: none; width: 100%; height: 100%; justify-self: stretch; align-self: stretch; }
 .editor-stage > .player[data-playing="true"]:not(:hover):not(:focus-within) .player-controls { opacity: 0; transition: opacity .25s; }
 .editor-stage > .player .player-controls { transition: opacity .15s; }
 
@@ -16,7 +17,12 @@
 .editor-rail[hidden] { display: none; }
 .editor-rail { font-family: inherit; }
 .editor-rail input, .editor-rail button, .editor-rail select, .editor-rail textarea { font-family: inherit; }
-.editor-rail { align-self: stretch; min-width: 0; min-height: 0; display: flex; flex-direction: column; border: var(--line) solid var(--glass-border); border-radius: var(--radius-card); background: var(--glass); overflow: hidden; }
+.editor-rail { position: absolute; top: 0; right: 0; bottom: 0; width: var(--rail-w); box-sizing: border-box; z-index: 4; min-width: 0; min-height: 0; display: flex; flex-direction: column; border: 0; border-left: var(--line) solid var(--glass-border); background: rgba(13,10,9,.72); overflow: hidden; }
+/* B-roll stands alone under its own title; the words panel keeps its three tabs. */
+.editor-rail[data-mode="broll"] .rail-tab:not([data-testid="rail-tab-broll"]), .editor-rail[data-mode="words"] .rail-tab[data-testid="rail-tab-broll"] { display: none; }
+.editor-rail[data-mode="broll"] .rail-tab[data-testid="rail-tab-broll"] { justify-content: flex-start; padding: 0 var(--space-4); font-size: var(--size-15); font-weight: 600; border-bottom-color: var(--transparent); cursor: default; }
+.editor-rail[data-mode="broll"] .rail-tab .rail-badge { display: none; }
+.editor-rail[data-mode="broll"] .rail-close { border-left: 0; }
 .rail-head { display: flex; align-items: stretch; flex: 0 0 auto; border-bottom: var(--line) solid var(--glass-border); }
 .rail-tabs { display: flex; flex: 1 1 auto; min-width: 0; }
 .editor-rail .rail-close { flex: 0 0 44px; min-height: 44px; min-width: 44px; border-radius: 0; border: 0; border-left: var(--line) solid var(--glass-border); background: transparent; color: var(--white-dim); font-size: var(--size-18, 20px); line-height: 1; padding: 0; }
@@ -78,8 +84,8 @@
 .ac-state { font-size: var(--size-11); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--white-dim); }
 .ac-item.pending .ac-state { color: var(--amber); }
 .ac-when { color: var(--white-dim); font-variant-numeric: tabular-nums; }
-.ac-sure.unsure { color: var(--amber); }
-.ac-sure.sure { color: var(--white-dim); }
+.ac-why { color: var(--white-soft); }
+.ac-why.pending { color: var(--amber); }
 .ac-excerpt { font-style: italic; color: var(--white-soft); }
 .ac-actions { display: flex; gap: var(--space-2); margin-top: var(--space-1); }
 
@@ -102,22 +108,54 @@
 .cp-text { font-size: var(--size-14); flex: 1 1 auto; }
 .cp-edited { font-size: var(--size-10); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--amber); }
 
-/* B-roll */
-.bp { display: grid; gap: var(--space-2); align-content: start; }
-.bp-intro { color: var(--white-soft); }
-.bp-intro[hidden] { display: none; }
-.bp-row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
-.editor-rail .bp-choose { min-height: 44px; padding: 0 var(--space-4); }
-.bp-status { color: var(--white); min-height: 1.5em; }
+/* B-roll: shelves, search, clips for the moment, upload, the clip on the picture, recently used */
+.bp { display: flex; flex-direction: column; gap: var(--space-3); }
+.bp [hidden] { display: none !important; }
+.bp-shelves { display: flex; gap: var(--space-5); border-bottom: var(--line) solid var(--glass-border); }
+.editor-rail .bp-shelf { background: none; border: 0; border-bottom: var(--size-2) solid var(--transparent); border-radius: 0; min-height: 40px; padding: 0 2px; font-size: var(--size-13); color: var(--white-dim); }
+.editor-rail .bp-shelf[aria-pressed="true"] { color: var(--white); border-bottom-color: var(--amber); font-weight: 600; }
+.bp-search { min-height: 40px; width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: var(--line) solid var(--glass-border); background: rgba(255,255,255,.05); color: var(--white); padding: 0 var(--space-3); font-size: var(--size-13); }
+.bp-search { padding-left: 38px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b9b2ab' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.6-3.6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 13px 50%; }
+.bp-search::placeholder, .bp-tags::placeholder { color: var(--white-dim); }
+.bp-search:focus-visible, .bp-tags:focus-visible { outline: var(--size-2) solid var(--amber); outline-offset: 1px; }
+.bp-tagrow { display: flex; flex-wrap: wrap; gap: 6px; }
+.bp-tagrow:empty { display: none; }
+.editor-rail .bp-chip { min-height: 26px; font-size: var(--size-11); padding: 0 10px; background: rgba(255,255,255,.05); color: var(--white-soft); }
+.editor-rail .bp-chip[aria-pressed="true"], .editor-rail .bp-moment-pick[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+.bp-headrow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-1); }
+.bp-h { margin: 0; font-size: var(--size-14); font-weight: 600; color: var(--white); }
+.bp-moments { display: flex; gap: 4px; }
+.editor-rail .bp-moment-pick { min-height: 24px; padding: 0 8px; font-size: var(--size-11); font-variant-numeric: tabular-nums; }
+.bp-moment { color: var(--white-dim); font-size: var(--size-12); margin-top: -6px !important; }
+/* The library fills the panel three across, as in his Loom at 04:22. My media keeps two: each of its tiles carries a tag field. */
+.bp-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.bp-tiles[data-shelf="mine"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bp-tiles:not([data-shelf="mine"]) .bp-tile { aspect-ratio: 1 / 1.22; }
+.editor-rail .bp-tile { position: relative; display: block; width: 100%; aspect-ratio: 16 / 10; min-height: 0; padding: 0; overflow: hidden; border-radius: var(--radius-small); border: var(--line) solid var(--glass-border); background: #130f0e; }
+.bp-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bp-tile-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 8px 6px; font-size: var(--size-11); font-weight: 500; text-align: left; color: var(--white); background: linear-gradient(transparent, rgba(0,0,0,.72)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-add { position: absolute; left: 8px; top: 8px; padding: 2px 10px; border-radius: var(--radius-pill); background: var(--amber); color: var(--cut-text); font-size: var(--size-11); font-weight: 700; opacity: 0; transition: opacity .12s; }
+.bp-add:before { content: "+ "; }
+.bp-tile:hover .bp-add, .bp-tile:focus-visible .bp-add, .bp-tile[data-first="true"] .bp-add { opacity: 1; }
+.editor-rail .bp-tile[data-first="true"], .editor-rail .bp-tile:hover, .editor-rail .bp-tile:focus-visible { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber); outline: 0; }
+.bp-cell { display: grid; gap: 4px; min-width: 0; }
+.bp-mine { display: flex; gap: 4px; }
+.bp-tags { flex: 1 1 auto; min-width: 0; min-height: 28px; border-radius: 8px; border: var(--line) solid var(--glass-border); background: rgba(0,0,0,.25); color: var(--white); padding: 0 8px; font-size: var(--size-11); }
+.editor-rail .bp-forget { min-height: 28px; padding: 0 8px; color: var(--white-dim); }
+.bp-empty { color: var(--white-dim); font-size: var(--size-12); }
+.bp-empty:empty { display: none; }
+.bp-drop { border: var(--line) dashed rgba(255,255,255,.26); border-radius: 12px; }
+.bp-drop[data-over="true"] { border-color: var(--amber); background: var(--amber-glow); }
+.editor-rail .bp-choose { width: 100%; min-height: 64px; display: grid; gap: 2px; justify-items: center; align-content: center; background: none; border: 0; border-radius: 12px; }
+.bp-choose strong { font-size: var(--size-13); font-weight: 500; color: var(--white); }
+.bp-choose span { font-size: var(--size-11); color: var(--white-dim); }
+.bp-status { color: var(--white); }
 .bp-status[data-state="problem"], .bp-check[data-state="problem"] { color: var(--amber); }
-.bp-status[data-state="ok"] { color: var(--white); }
 .bp-status:empty { display: none; }
-.bp-form { display: grid; gap: var(--space-2); }
-.bp-form[hidden], .bp-card[hidden] { display: none; }
-.bp-card { display: grid; gap: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-small); border: var(--line) solid var(--glass-border); background: rgba(255,255,255,.04); }
+.bp-form { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: 12px; border: var(--line) solid var(--glass-border); background: rgba(255,255,255,.04); }
+.bp-card { display: grid; gap: 0; }
 .bp-name { color: var(--white); font-weight: 600; overflow-wrap: anywhere; }
 .bp-meta { color: var(--white-dim); font-variant-numeric: tabular-nums; }
-.bp-fields { display: grid; gap: var(--space-2); }
 .bp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
 .bp-uses { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .bp-field { display: grid; gap: 2px; min-width: 0; }
@@ -128,9 +166,9 @@
 .bp-check { color: var(--white-soft); }
 .bp-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .editor-rail .bp-actions button { min-height: 44px; padding: 0 var(--space-4); }
-.bp-actions [hidden] { display: none; }
 .bp-saved { color: var(--white-dim); font-size: var(--size-12); }
-.bp-saved[data-state="saved"] { color: var(--white-soft); }
+.bp-recent { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.bp-tile.small .bp-tile-name, .bp-tile.small .bp-add { display: none; }
 
 /* The B-roll preview: the clip's picture on exactly the picture the camera video occupies, below the captions and the controls. */
 .broll-frame { position: absolute; overflow: hidden; z-index: 1; pointer-events: none; background: #130f0e; }
@@ -146,8 +184,9 @@
 @media (max-width: 1000px) {
   .edit-shell { height: auto; min-height: calc(100dvh - 2 * var(--outer-y)); }
   .editor-stage { display: flex; flex-direction: column; container-type: normal; align-items: stretch; flex: 0 0 auto; gap: var(--space-3); }
-  .editor-stage > .player { width: 100%; flex: 0 0 auto; }
-  .editor-rail { min-height: 360px; max-height: 70vh; }
+  .editor-stage > .player { width: 100%; height: auto; aspect-ratio: 16 / 9; flex: 0 0 auto; }
+  .edit-shell[data-rail="open"] { padding-right: var(--page-pad); }
+  .editor-rail { position: static; width: auto; min-height: 360px; max-height: 80vh; border: var(--line) solid var(--glass-border); border-radius: var(--radius-card); margin: var(--space-3) 0; }
   .editor-stage[data-rail="closed"] { display: block; }
   .tx-words { max-height: 300px; }
 }
@@ -155,3 +194,11 @@
   :root { --rail-w: 300px; }
 }
 @media (prefers-reduced-motion: reduce) { .cp-knob, .cp-knob:after, .editor-stage > .player .player-controls { transition: none !important; } }
+.bp-timing { font-size: var(--size-14); font-weight: 500; color: var(--white); font-variant-numeric: tabular-nums; }
+.bp-exact { display: grid; gap: var(--space-2); }
+.bp-exact-open { cursor: pointer; font-size: var(--size-12); color: var(--white-dim); }
+.bp-exact[open] .bp-exact-open { margin-bottom: var(--space-2); }
+.bp-exact-open:focus-visible { outline: var(--size-2) solid var(--amber); outline-offset: 2px; }
+/* The drop target takes the room the panel has left, so a file can be dropped anywhere below the library. It gives the room back once a clip is on the picture. */
+.bp-drop { flex: 1 1 96px; min-height: 96px; max-height: 320px; display: flex; }
+.editor-rail .bp-choose { height: 100%; }

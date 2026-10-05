@@ -33,7 +33,7 @@ export function mountLiveUiControls({document:doc,primary,id}) {
 
 // Called by the editor after its recording is loaded; no UI claim until server confirmation.
 export async function mountLiveUiDownloads({document:doc,id,container}) {
- const response=await fetch(`/api/app/recordings/${id}/live-ui`);if(response.status===404)return null;if(!response.ok)throw new Error('Live UI download status unavailable. Reload to retry.');const saved=await response.json();
+ const response=await fetch(`/api/app/recordings/${id}/live-ui`);if(response.status===404)return null;if(!response.ok)throw new Error('Live UI download status unavailable. Reload to retry.');const saved=await response.json();if(saved.saved===false)return null;
  const box=doc.createElement('div');box.dataset.testid='live-ui-downloads';style(box,{display:'flex',gap:'14px',flexWrap:'wrap',padding:'10px 14px',background:'#211b15',borderRadius:'12px',font:'14px system-ui'});
  for(const [field,label,name] of [['downloadUrl','Download Live UI',`YAP-${id}-Live-UI.webm`],['timingUrl','Download alignment timing',`YAP-${id}-Live-UI.timing.json`]]){if(!/^\/api\/app\//.test(saved[field]||''))continue;const a=doc.createElement('a');a.textContent=label;a.href=saved[field];a.download=name;a.dataset.testid=field==='downloadUrl'?'live-ui-download':'live-ui-timing';a.style.color='#f4d08a';box.append(a);}
  const hint=doc.createElement('span');hint.textContent=`Separate UI file · starts about ${saved.timing.startOffsetSeconds.toFixed(1)}s into the clean take`;

@@ -11,7 +11,7 @@ const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 // Loaded dynamically so a missing module fails each named test instead of
 // crashing the file at load time.
 const model = await import('../ui/lib/prepare-model.js').catch(() => ({}));
-const { prepareView, SAMPLE_TAKE_LABEL } = model;
+const { prepareView, SAMPLE_TAKE_LABEL, levelBars } = model;
 const { defaultBeats, limitBeats, BEAT_LIMITS } = await import('../src/engine/setup-beats.js');
 
 const bank = JSON.parse(fs.readFileSync(path.join(appRoot, 'ui', 'data', 'idea-bank.json'), 'utf8')).ideas;
@@ -120,11 +120,20 @@ test('prepareView says which idea it shows, changes nothing it is given and give
   assert.deepEqual(prepareView(null).beats, shownDefaults(), 'and the engine\'s default beats are not changed either');
 });
 
-test('SAMPLE_TAKE_LABEL says, character for character, that the sample take is a different video (D-123, D-124)', () => {
-  assert.equal(SAMPLE_TAKE_LABEL, 'Try the sample take (a different video: How I plan a video in twenty minutes)');
-  // The video it names is the bundled sample take's own idea.
-  const brief = JSON.parse(fs.readFileSync(path.join(appRoot, 'sample', 'brief.json'), 'utf8'));
-  assert.ok(SAMPLE_TAKE_LABEL.includes(`a different video: ${brief.idea})`), 'the label names the sample take\'s own idea in full');
+test('the sample take\'s button reads plainly: Try the sample take, with nothing in brackets', () => {
+  assert.equal(SAMPLE_TAKE_LABEL, 'Try the sample take');
+});
+
+test('levelBars lights no bar for silence, every bar near full scale, and more bars for louder sound', () => {
+  assert.equal(levelBars(0, 12), 0);
+  assert.equal(levelBars(Number.NaN, 12), 0);
+  assert.equal(levelBars(0.0005, 12), 0, 'room noise far below speech lights nothing');
+  assert.equal(levelBars(1, 12), 12);
+  assert.equal(levelBars(0.5, 12), 12);
+  const quiet = levelBars(0.01, 12);
+  const speech = levelBars(0.1, 12);
+  assert.ok(quiet > 0 && quiet < speech && speech < 12, `quiet ${quiet}, speech ${speech}`);
+  assert.equal(levelBars(0.1, 0), 0);
 });
 
 // ---------- the Recording the stand-in asks for (Task 2; D-124, D-126, D-127) ----------
@@ -157,9 +166,10 @@ test('recordingRequest for an own take gives the idea\'s title, its beats with t
   const story = view.beats.map((beat, i) => ({ id: `s${i + 1}`, label: beat.label, points: beat.points }));
   const episode = createEpisode({ points: story.map((beat) => ({ id: beat.id, title: beat.label })) });
   assert.deepEqual(request.beats, recordingBeats(story, episode));
-  // The cues: the engine's own choice for these picks, dealt to the beats in order.
-  assert.deepEqual(request.deliveryCues, chooseDeliveryCues([{ kind: 'slow-down' }, { kind: 'land-the-point' }], episode.beats).cues);
-  assert.deepEqual(request.deliveryCues.map((cue) => [cue.kind, cue.text, cue.beatId]), [['slow-down', 'Slow down', 'b1'], ['land-the-point', 'Land the point', 'b2']]);
+  // The cues: the engine's own choice for these picks. Slow down is measured from the voice and sits on no beat (L25);
+  // the reminder is dealt to the beats in order.
+  assert.deepEqual(request.deliveryCues, chooseDeliveryCues([{ kind: 'slow-down', placed: false }, { kind: 'land-the-point' }], episode.beats).cues);
+  assert.deepEqual(request.deliveryCues.map((cue) => [cue.kind, cue.text, cue.beatId]), [['slow-down', 'Slow down', null], ['land-the-point', 'Land the point', 'b1']]);
   const record = asRecord(request);
   assert.deepEqual(validateRecording(record), { ok: true, errors: [] }, 'the engine accepts the record made from it');
   assert.equal(record.status, 'draft');
@@ -174,7 +184,7 @@ test('with no cue pressed the request has no delivery cue, and the engine accept
     assert.deepEqual(request.beats.map((beat) => beat.label), ['Hook', 'Story', 'Point', 'Takeaway']);
     assert.equal(validateRecording(asRecord(request)).ok, true);
   }
-  assert.deepEqual(recordingRequest(view, ['smile', 'pause', 'look-at-lens']).deliveryCues.map((cue) => cue.beatId), ['b1', 'b2', 'b3'], 'three cues, one per beat in order; left out, the take is the person\'s own');
+  assert.deepEqual(recordingRequest(view, ['smile', 'pause', 'look-at-lens']).deliveryCues.map((cue) => cue.beatId), [null, 'b1', 'b2'], 'Smile is read from the face and sits on no beat; the two reminders take a beat each in order; left out, the take is the person\'s own');
   assert.equal(recordingRequest(view, ['smile']).sample, false);
   assert.throws(() => recordingRequest(view, ['smile', 'pause', 'look-at-lens', 'slow-down'], { sample: false }), { name: 'DeliveryCueCountError' });
   assert.throws(() => recordingRequest(view, ['smile', 'smile'], { sample: false }), { name: 'DeliveryCueKindError' });
@@ -257,4 +267,74 @@ test('recentRows gives the saved recordings as the Recent list shows them: the n
   assert.deepEqual(recentRows([], now), [], 'nothing saved, nothing listed');
   for (const nothing of [null, undefined, 'x', {}]) assert.deepEqual(recentRows(nothing, now), []);
   assert.deepEqual(recentRows([null, 7, { title: 'Kept' }], now), [{ title: 'Kept', length: '', date: '' }], 'an entry that is not a record is passed over');
+});
+
+// Round 2 (L24, L25): the cues left on reach the take, the measured ones on no beat.
+import { measuredCueText, rehearsalCues } from '../ui/lib/prepare-model.js';
+
+const REHEARSAL_BEATS = [{ label: 'Hook', points: ['Start here'] }, { label: 'Story', points: ['Then this'] }, { label: 'Point', points: ['Land it'] }];
+
+test('Slow down and Smile reach the take on no beat; a reminder is dealt to the beats in order', () => {
+  const request = recordingRequest({ title: 'A take', beats: REHEARSAL_BEATS }, ['slow-down', 'smile', 'pause']);
+  assert.deepEqual(request.deliveryCues.map((cue) => [cue.kind, cue.beatId]), [['slow-down', null], ['smile', null], ['pause', request.beats[0].id]]);
+  // A cue switched off is not in the take at all.
+  assert.equal(request.deliveryCues.some((cue) => cue.kind === 'more-energy'), false);
+  assert.deepEqual(recordingRequest({ title: 'A take', beats: REHEARSAL_BEATS }, []).deliveryCues, []);
+});
+
+test('the person\'s own wording goes onto the cue they changed, measured or not', () => {
+  const request = recordingRequest({ title: 'A take', beats: REHEARSAL_BEATS }, ['smile', 'pause'], { wording: { smile: 'Warm face', pause: 'Breathe' } });
+  assert.deepEqual(request.deliveryCues.map((cue) => cue.text), ['Warm face', 'Breathe']);
+  assert.equal(measuredCueText(request.deliveryCues, 'smile'), 'Warm face');
+  assert.equal(measuredCueText(request.deliveryCues, 'slow-down'), null);
+  // The sample take keeps its own cues whatever wording is passed.
+  const sample = recordingRequest({ ideaId: 'sample' }, ['smile'], { sample: true, wording: { smile: 'Warm face' } });
+  assert.deepEqual(sample.deliveryCues.map((cue) => cue.kind), ['slow-down', 'land-the-point']);
+});
+
+test('the rehearsal shows on each beat the reminder the take will show there', () => {
+  const cues = rehearsalCues(REHEARSAL_BEATS, ['slow-down', 'pause', 'land-the-point'], { pause: 'Breathe' });
+  assert.deepEqual(cues, [{ kind: 'pause', text: 'Breathe' }, { kind: 'land-the-point', text: 'Land the point' }, null]);
+  const request = recordingRequest({ beats: REHEARSAL_BEATS }, ['slow-down', 'pause', 'land-the-point'], { wording: { pause: 'Breathe' } });
+  for (const [i, beat] of request.beats.entries()) {
+    const inTake = request.deliveryCues.find((cue) => cue.beatId === beat.id);
+    assert.equal(inTake ? inTake.kind : null, cues[i] ? cues[i].kind : null, `beat ${i + 1}`);
+  }
+  assert.deepEqual(rehearsalCues(REHEARSAL_BEATS, []), [null, null, null]);
+  assert.deepEqual(rehearsalCues(REHEARSAL_BEATS, ['smile']), [null, null, null], 'a measured cue shows on no beat');
+  assert.deepEqual(rehearsalCues([], ['pause']), []);
+});
+
+
+// ---------- Ready as the Live screen (round 4, 4 Oct 2026): the default cues, the experiment's wording, the timeline ----------
+
+test('before the person chooses, the cues that are on are the two YAP measures: Slow down and Smile', () => {
+  assert.deepEqual([...model.DEFAULT_CUES], ['slow-down', 'smile']);
+  const request = model.recordingRequest({ beats: REHEARSAL_BEATS }, [...model.DEFAULT_CUES]);
+  assert.deepEqual(request.deliveryCues.map((cue) => cue.kind), ['slow-down', 'smile'], 'a take recorded with the defaults carries both');
+  assert.ok(request.deliveryCues.every((cue) => cue.beatId === null), 'and neither is dealt to a beat: YAP raises them from what it measures');
+});
+
+test('the card shows a beat in the wording of the experiment running on its idea, as Live does, and the kept beats are not changed', () => {
+  const beats = [{ label: 'Hook', points: ['I want to share three reasons I walk every morning before work.'] }, { label: 'Tips', points: ['Walk first'] }];
+  const trial = { id: 'x1', status: 'running', change: { from: 'walk', to: 'grab a coffee' }, scope: { ideaId: 'idea-7' } };
+  const shown = model.shownBeats(beats, [trial], 'idea-7');
+  assert.equal(shown[0].points[0], 'I want to share three reasons I grab a coffee every morning before work.');
+  assert.equal(shown[0].label, 'Hook');
+  assert.equal(beats[0].points[0], 'I want to share three reasons I walk every morning before work.', 'the kept words stand');
+  assert.deepEqual(model.shownBeats(beats, [trial], 'idea-8'), beats, 'another idea keeps its own words');
+  assert.deepEqual(model.shownBeats(beats, [{ ...trial, status: 'reverted' }], 'idea-7').map((b) => b.points), beats.map((b) => b.points), 'an experiment that was returned changes nothing');
+  assert.deepEqual(model.shownBeats(beats, [], 'idea-7'), beats);
+  assert.deepEqual(model.shownBeats(beats, [trial], null), beats);
+});
+
+test('the rehearsal timeline is Live\'s: the beat on the card is current, beats stepped past are done, the rest are ahead', () => {
+  assert.deepEqual(model.timelineView(5, 0, 0), { states: ['current', 'ahead', 'ahead', 'ahead', 'ahead'], inset: 10, done: 0, current: 0 });
+  assert.deepEqual(model.timelineView(3, 1, 1).states, ['done', 'current', 'ahead']);
+  assert.deepEqual(model.timelineView(3, 0, 2).states, ['current', 'done', 'ahead'], 'stepping back keeps what was reached');
+  const third = model.timelineView(3, 2, 2);
+  assert.deepEqual(third.states, ['done', 'done', 'current']);
+  assert.equal(third.done + third.current, 100, 'the track is coloured up to the beat on the card');
+  assert.deepEqual(model.timelineView(0, 0, 0), { states: [], inset: 0, done: 0, current: 0 });
+  assert.deepEqual(model.timelineView(1, 0, 0), { states: ['current'], inset: 50, done: 0, current: 0 });
 });

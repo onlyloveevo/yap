@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="dark">
   <title>YAP · Live mode</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="../lib/live-refine.css">
   <script type="module" src="wire.js"></script>
+<link rel="stylesheet" href="../lib/theme.css">
 </head>
 <body>
   <main class="live-shell" aria-label="YAP live mode">
@@ -31,8 +31,13 @@
       </div>
     </header>
 
+    <div class="delivery-cue glass" data-testid="delivery-cue"><span aria-hidden="true">🙂</span><span>Smile</span></div>
+    <section class="experiment-saved" data-testid="experiment-saved" aria-label="Experiment saved" hidden>
+      <div class="saved-head"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12.5 5.5 5.5L20 6.5"/></svg><strong>Experiment saved</strong><span class="experiment-tag" data-testid="saved-tag">Greeting</span></div>
+      <p class="saved-line" data-testid="trial-saved" role="status">0/3 videos · Check-in after video 3</p>
+      <div class="saved-actions"><button type="button" data-testid="view-experiment">View experiment</button><span class="saved-divider" aria-hidden="true"></span><button type="button" data-testid="dismiss-experiment">Dismiss</button></div>
+    </section>
     <section class="cue-area" aria-label="Live cues and controls">
-      <div class="delivery-cue glass" data-testid="delivery-cue"><span aria-hidden="true">🙂</span><span>Smile</span></div>
       <div class="story-card glass" data-testid="story-card">
         <div class="story-rule" aria-hidden="true"></div>
         <div class="story-content">
@@ -68,7 +73,7 @@
         <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Example, ahead"><span class="node"></span><span class="beat-name">Example</span></button>
         <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Close, ahead"><span class="node"></span><span class="beat-name">Close</span></button>
       </nav>
-      <button class="export glass" type="button" data-testid="export" aria-label="Export recording">
+      <button class="export glass" type="button" data-testid="export" aria-label="Stop and open the editor" title="Stop and open the editor">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M4 14v6h16v-6"/></svg>
       </button>
     </footer>
@@ -88,9 +93,10 @@
           <div class="trial-row"><span>Trial length</span><div class="trial-stepper"><button type="button" data-testid="trial-minus" aria-label="One fewer video">−</button><output data-testid="trial-value">3 videos</output><button type="button" data-testid="trial-plus" aria-label="One more video">+</button></div></div>
           <button class="try-button" type="button" data-testid="try">Try for 3 videos</button>
           <button class="keep-button" type="button" data-testid="keep">Keep tea</button>
+          <p class="experiment-progress" data-testid="experiment-progress" hidden></p>
         </section>
-        <div class="trial-result" data-testid="trial-saved" role="status" hidden></div>
         <form class="say-row" autocomplete="off"><textarea rows="2" data-testid="say-input" aria-label="Say it or type it" placeholder="Say it or type it…"></textarea><button class="mic-button" type="button" data-testid="mic" aria-label="Microphone preview; type your message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3Zm-6-4v1a6 6 0 0 0 12 0v-1M12 18v4m-4 0h8"/></svg></button><button class="send-button" type="submit" data-testid="send" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 9L3 21l3-8 9-1-9-1z"/></svg></button></form>
+        <form class="wake-row" data-testid="wake-row" autocomplete="off" hidden><label for="wake-word">Wake word</label><input id="wake-word" data-testid="wake-input" type="text" value="YAP" maxlength="14" spellcheck="false" autocapitalize="characters"><button type="submit" data-testid="wake-save">Set</button></form>
         <button class="back-button" type="button" data-testid="back">Back to recording</button>
       </div>
     </aside>

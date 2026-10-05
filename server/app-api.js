@@ -7,7 +7,6 @@
 //   POST /api/app/ideas        { thought }  ->  { id }
 //   GET  /api/app/ideas/<id>   the idea
 //   POST /api/app/ideas/<id>   any of { state, format, thumb, ticks, message, keptBeats }  ->  the idea
-//   GET/POST /api/app/ideas/<id>/chat   the idea's saved conversation with YAP (server/idea-chat-api.js)
 //
 // An <id> is a bank id (sample, idea-2 to idea-6) or a created one, and both
 // kinds are read and changed the same way.
@@ -41,11 +40,13 @@
 //   sent, so no other site is let in.
 // - Nothing here writes to the console or reads a setting of the machine.
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { handleTakeApi } from './take-api.js';
+import { handleEditorExtras } from './editor-api.js';
 import { handleLiveUiApi } from './live-ui-api.js';
 import { handleLiveRefineApi } from './live-refine-api.js';
-import { handleIdeaChatApi } from './idea-chat-api.js';
+import { handleIdeaCoachApi } from './idea-coach-api.js';
 
 import { createRecording, isRecordingId } from '../src/engine/recording.js';
 import { createIdeaStore, isIdeaId } from '../src/node/idea-store.js';
@@ -265,6 +266,15 @@ async function ideasRoutes({ req, method, rest, answer, refuse, readJsonBody, id
  *           stores?: Record<string, any>,
  *           now?: () => Date }} deps  `now` is the clock a new recording's id and time are read from; left out, the machine's
  */
+/** A whole lesson from a sample review, or null. The same rule the page applies (ui/lib/return-model.js). */
+function sampleLessonFrom(value) {
+  const line = (v, max) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
+  const text = line(value?.text, 240), id = line(value?.source?.id, 96), title = line(value?.source?.title, 200);
+  const at = new Date(typeof value?.acceptedAt === 'string' ? value.acceptedAt : NaN);
+  if (!text || !/^sample-[a-z0-9-]+$/.test(id) || !title || Number.isNaN(at.getTime())) return null;
+  return { text, source: { id, title }, acceptedAt: at.toISOString() };
+}
+
 export async function handleAppApi(req, res, deps) {
   const { root, dataDir, fromOwnPage, fromOwnPageRead, readBody, sendJson, stores } = deps || {};
   const now = deps && typeof deps.now === 'function' ? deps.now : () => new Date();
@@ -332,8 +342,9 @@ export async function handleAppApi(req, res, deps) {
   try {
     if (await handleLiveUiApi({req,res,rest,method,answer,refuse,recordings,root,dataDir})) return undefined;
     if (await handleLiveRefineApi({req,res,rest,method,answer,refuse,readJsonBody,recordings,root,dataDir})) return undefined;
-    if (await handleIdeaChatApi({req,res,rest,method,answer,refuse,readJsonBody,ideas,root,dataDir,now})) return undefined;
+    if (await handleEditorExtras({req,res,rest,method,answer,refuse,readJsonBody,recordings,root,dataDir})) return undefined;
     if (await handleTakeApi({req,res,rest,method,answer,refuse,readJsonBody,recordings,root,dataDir})) return undefined;
+    if (await handleIdeaCoachApi({req,rest,method,answer,refuse,readJsonBody,ideas,root,dataDir,now})) return undefined;
     if (rest !== null && (rest === 'ideas' || rest.startsWith('ideas/'))) {
       const handled = await ideasRoutes({ req, method, rest: rest.slice('ideas'.length), answer, refuse, readJsonBody, ideas });
       if (handled) return undefined;
@@ -343,6 +354,23 @@ export async function handleAppApi(req, res, deps) {
       if (handled) return undefined;
     }
     req.resume();
+    // Review: the experiment accepted in the sample review. It is kept with the YAP folder, in a file of its own,
+    // so every browser on this folder carries it and it never mixes with the person's own lesson in memory.json.
+    if (rest === 'sample-lesson') {
+      const file = path.join(resolveDataDir(root, dataDir), 'sample-lesson.json');
+      if (method === 'GET') return answer(200, { lesson: sampleLessonFrom(readJson(file, null)) });
+      if (method !== 'POST') return refuse(405, 'Method not allowed.', { Allow: 'GET, POST' });
+      const body = await readJsonBody();
+      if (!body) return undefined;
+      if (body.lesson === null) {
+        fs.rmSync(file, { force: true });
+        return answer(200, { lesson: null });
+      }
+      const lesson = sampleLessonFrom(body.lesson);
+      if (!lesson) return refuse(400, 'A sample lesson needs its words, the sample review it came from and when it was accepted.');
+      writeJsonAtomic(file, lesson);
+      return answer(200, { lesson });
+    }
     return refuse(404, 'Not found.');
   } catch (err) {
     if (res.headersSent) return undefined;

@@ -1,11 +1,14 @@
-// Build dist/yap.zip, the package Jack's team receives (D-28, Q9).
+// Build the zip Jack's team receives (D-28, Q9).
 //
-//   npm run pack     (or: node scripts/pack.js)
+//   node scripts/pack.js --out <file.zip>    write the zip there
+//   npm run pack                             write dist/yap.zip
 //
 // The zip is made by `git archive` from the last commit, so it holds exactly
-// what is committed: the app's files under a yap/ folder. The internal .claude
-// and .planning folders and the internal docs stay out. Uncommitted changes in
-// the packed paths are NOT in the zip; the script says so loudly.
+// what is committed: the app's files under a YAP/ folder, each with the mode
+// it was committed with. The two launchers must be committed executable, or a
+// double-click cannot run them; the script refuses to pack when they are not.
+// The internal .claude and .planning folders and the internal docs stay out.
+// Uncommitted changes in the packed paths stop the pack; the script lists them.
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -17,10 +20,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const PACK_PATHS = Object.freeze([
   'package.json',
   'package-lock.json',
-  'INSTALL.md',
-  'START-HERE.md',
   'Start YAP.command',
   'Stop YAP.command',
+  'README.md',
   'NOTICE',
   'LICENSE',
   'src',
@@ -34,13 +36,16 @@ export const PACK_PATHS = Object.freeze([
   'test/shells',
 ]);
 
+/** The files a judge double-clicks. The zip must carry them as executable. */
+const LAUNCHERS = Object.freeze(['Start YAP.command', 'Stop YAP.command']);
+
 /**
  * The git archive arguments for the given paths (argument array, no shell).
- * @param {string} outFile path relative to the app root
+ * @param {string} outFile absolute, or relative to the app root
  * @param {string[]} paths
  */
 export function archiveArgs(outFile, paths) {
-  return ['archive', '--format=zip', '--prefix=yap/', '-o', outFile, 'HEAD', '--', ...paths];
+  return ['archive', '--format=zip', '--prefix=YAP/', '-o', outFile, 'HEAD', '--', ...paths];
 }
 
 /** @param {string} appRoot @param {string[]} args */
@@ -49,7 +54,8 @@ function git(appRoot, args) {
 }
 
 /**
- * @param {{ appRoot?: string, log?: (line: string) => void }} [options]
+ * @param {{ appRoot?: string, out?: string, log?: (line: string) => void }} [options]
+ *   out: where to write the zip (default dist/yap.zip in the app folder)
  * @returns {{ code: number, zip: string | null }}
  */
 export function pack(options = {}) {
@@ -71,19 +77,31 @@ export function pack(options = {}) {
     return { code: 1, zip: null };
   }
 
-  fs.mkdirSync(path.join(appRoot, 'dist'), { recursive: true });
-  const outRel = path.join('dist', 'yap.zip');
-  const res = git(appRoot, archiveArgs(outRel, present));
+  // git archive copies each file's committed mode into the zip.
+  const plain = LAUNCHERS.filter((p) => present.includes(p) && !git(appRoot, ['ls-tree', 'HEAD', '--', p]).stdout.startsWith('100755'));
+  if (plain.length) {
+    log(`Cannot pack: not executable in the last commit, so a double-click could not run it: ${plain.join(', ')}. Run chmod +x on it and commit.`);
+    return { code: 1, zip: null };
+  }
+
+  const zip = path.resolve(options.out || path.join(appRoot, 'dist', 'yap.zip'));
+  fs.mkdirSync(path.dirname(zip), { recursive: true });
+  const res = git(appRoot, archiveArgs(zip, present));
   if (res.status !== 0) {
     log(`git archive failed: ${(res.stderr || '').trim() || `exit ${res.status}`}`);
     return { code: 1, zip: null };
   }
-  const zip = path.join(appRoot, outRel);
   const size = fs.statSync(zip).size;
   log(`Packed ${zip} (${(size / (1024 * 1024)).toFixed(2)} MB, ${size} bytes)`);
   return { code: 0, zip };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  process.exitCode = pack().code;
+  const at = process.argv.indexOf('--out');
+  if (at !== -1 && !process.argv[at + 1]) {
+    console.log('Cannot pack: --out needs a file path, for example --out /tmp/YAP.zip');
+    process.exitCode = 1;
+  } else {
+    process.exitCode = pack({ out: at === -1 ? undefined : process.argv[at + 1] }).code;
+  }
 }

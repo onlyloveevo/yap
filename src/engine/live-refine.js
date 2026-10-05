@@ -7,6 +7,8 @@
 //
 // It changes only YAP's own beats. It never reads or edits Google Slides or any slide content.
 
+import { parseTryShort, firstLine, asLine } from './experiments.js';
+
 /** Bounds, once. server/model.js enforces these on what it receives; the page uses the same numbers. */
 export const COACH_LIMITS = Object.freeze({
   idChars: 64,
@@ -284,4 +286,128 @@ export function validateSaved(body) {
     kept.push({ cleanSeconds: iv.cleanSeconds, uiStartSeconds: iv.uiStartSeconds ?? null, uiEndSeconds: iv.uiEndSeconds ?? null, wallStartMs: Number(iv.wallStartMs) || 0, wallEndMs: Number(iv.wallEndMs) || 0 });
   }
   return { ok: true, value: { baseRevision: b.baseRevision, conversation, revisions, intervals: kept } };
+}
+
+// ----- A change said or typed mid-take, read on the Mac with no model.
+//
+// The take's own reader (experiments.js, swap.js) is asked first. What it makes nothing of comes here, and is
+// read against the beats on screen: new words for the line being said ("let's try grab a coffee instead"), or a
+// beat made shorter ("make the takeaway shorter"). Anything else gets a plain answer that says what YAP can do.
+
+const PLACES = Object.freeze({ first: 0, second: 1, third: 2, fourth: 3, fifth: 4 });
+const SHORTER = Object.freeze(['shorter', 'short', 'shorten', 'tighter', 'tighten', 'briefer', 'trim']);
+/** Words a line breaks at: what comes after one of them is the part a shorter line drops. */
+const BREAKS = Object.freeze(['and', 'but', 'because', 'so', 'that', 'which', 'when', 'while', 'before', 'after', 'then', 'instead']);
+/** Words a line can lose and still say the same thing. */
+/** Words that open a trailing phrase a line still reads whole without. */
+const TRAILS = Object.freeze(['for', 'with', 'in', 'on', 'at', 'by', 'from', 'every', 'each', 'without', 'until', 'about', 'into', 'through', 'during', 'since', 'over', 'around', 'across', 'if', 'unless', 'as', 'than', 'where', 'today', 'tomorrow']);
+const SOFT = Object.freeze(['really', 'just', 'very', 'actually', 'basically', 'simply', 'quite', 'literally']);
+const tokenOf = (raw) => normalizeWord(raw);
+function normalizeWord(raw) {
+  return String(raw ?? '').toLowerCase().replace(/[^a-z0-9']/g, '').replace(/^'+|'+$/g, '');
+}
+
+/**
+ * A beat's words made shorter by plain rules: the first sentence of several; else the line up to its first
+ * break word or comma (three words at least); else the line without its soft words. Null when none applies.
+ * @param {string} text
+ * @returns {string | null}
+ */
+export function shortenLine(text) {
+  const line = String(text ?? '').trim();
+  const sentences = line.match(/[^.!?]+[.!?]*/g)?.map((s) => s.trim()).filter(Boolean) || [];
+  if (sentences.length > 1) return sentences[0];
+  const mark = /[.!?]$/.test(line) ? line.at(-1) : '';
+  const words = line.split(/\s+/).filter(Boolean);
+  for (let i = 3; i < words.length; i += 1) {
+    if (BREAKS.includes(tokenOf(words[i])) || /[,;:]$/.test(words[i - 1])) {
+      return words.slice(0, i).join(' ').replace(/[,;:]+$/, '') + mark;
+    }
+  }
+  const kept = words.filter((w) => !SOFT.includes(tokenOf(w)));
+  if (kept.length >= 2 && kept.length < words.length) return kept.join(' ');
+  // No clause to drop: the last trailing phrase goes ("… in your own street" off the end), when four words or more stay.
+  for (let i = words.length - 2; i >= 4; i -= 1) {
+    if (TRAILS.includes(tokenOf(words[i]))) return words.slice(0, i).join(' ').replace(/[,;:]+$/, '') + mark;
+  }
+  return null;
+}
+
+/** The beat a remark names: by its place ("the second beat", "the last one"), by its title, else the one on screen. */
+function namedBeat(tokens, beats, current) {
+  for (let i = 0; i < tokens.length; i += 1) {
+    if (tokens[i] in PLACES && PLACES[tokens[i]] < beats.length) return PLACES[tokens[i]];
+    if (tokens[i] === 'last') return beats.length - 1;
+    if (tokens[i] === 'next' && current + 1 < beats.length) return current + 1;
+  }
+  let best = -1, bestLen = 0;
+  beats.forEach((beat, i) => {
+    const title = String(beat.title ?? '').split(/\s+/).map(tokenOf).filter(Boolean);
+    if (title.length > bestLen && title.every((t) => tokens.includes(t))) { best = i; bestLen = title.length; }
+  });
+  return best >= 0 ? best : current;
+}
+
+/**
+ * @param {string} remark  what was heard after the wake word, or typed
+ * @param {{ beats: { id: string, title: string, text: string }[], current: number }} take
+ * @returns {{ kind: 'wording' | 'shorten', beatId: string, title: string, from: string, to: string }
+ *   | { kind: 'none', beatId: string, title: string, reason: 'short' | 'unread' }}
+ */
+/** A greeting is at most this many words; a longer line is new wording for a beat. */
+const GREETING_WORDS = 4;
+/** A line of this many words or fewer is short already. */
+const SHORT_WORDS = 6;
+/** "let's try grab a coffee", when the recogniser dropped the closing "instead". */
+function tryWithoutInstead(remark) {
+  const found = [...String(remark ?? '').matchAll(/\blet'?s try\s+/gi)].at(-1);
+  if (!found) return null;
+  const to = String(remark).slice(found.index + found[0].length).replace(/[.!?\s]+$/, '').replace(/^['"“‘]+|['"”’]+$/g, '');
+  const count = to.split(/\s+/).filter(Boolean).length;
+  return count >= 2 && count <= 6 && !/[.!?]/.test(to) ? { to } : null;
+}
+export function readSpokenChange(remark, { beats = [], current = 0 } = {}) {
+  const tokens = String(remark ?? '').split(/\s+/).map(tokenOf).filter(Boolean);
+  const here = beats[Math.min(Math.max(0, current), beats.length - 1)] || { id: '', title: '', text: '' };
+  const wantsShorter = tokens.some((t) => SHORTER.includes(t));
+  const short = parseTryShort(remark) || (wantsShorter ? null : tryWithoutInstead(remark));
+  if (short) {
+    const to = asLine(short.to), opening = beats[0];
+    // A few words with nothing named to replace ("let's try grab a coffee instead") are a greeting: the opening beat gains
+    // the line and keeps every word of its own. A full line is the person's new wording for the beat on screen.
+    if (opening && short.to.split(/\s+/).length <= GREETING_WORDS) {
+      const greeting = to.replace(/[.!?]+$/, ''), from = firstLine(opening.text);
+      if (from && !opening.text.toLowerCase().startsWith(greeting.toLowerCase())) {
+        return { kind: 'greeting', beatId: opening.id, title: 'Greeting', from, to: `${greeting}. ${from}` };
+      }
+      if (from) return { kind: 'none', beatId: opening.id, title: opening.title, reason: 'same', greeting };
+    } else {
+      const from = firstLine(here.text);
+      if (from && tokenOf(from) !== tokenOf(to)) return { kind: 'wording', beatId: here.id, title: here.title, from, to };
+    }
+  }
+  const beat = beats[namedBeat(tokens, beats, current)] || here;
+  if (wantsShorter) {
+    const to = shortenLine(beat.text);
+    if (to) return { kind: 'shorten', beatId: beat.id, title: beat.title, from: beat.text, to };
+    return { kind: 'none', beatId: beat.id, title: beat.title, reason: beat.text.split(/\s+/).filter(Boolean).length > SHORT_WORDS ? 'whole' : 'short' };
+  }
+  return { kind: 'none', beatId: here.id, title: here.title, reason: 'unread' };
+}
+
+/** YAP's answer to a remark it changed nothing for: what it can do, in the words to say. */
+export function plainAnswer(reading) {
+  if (reading?.reason === 'same') return `“${reading.title}” already opens with “${reading.greeting}”.`;
+  if (reading?.reason === 'whole') return `“${reading.title}” is one thought I can't trim without losing its point. Say “try … instead” with the shorter line you want.`;
+  if (reading?.reason === 'short') return `“${reading.title}” is one short line already. Say “try … instead” with the words you want.`;
+  return 'I can swap a line or shorten a beat. Say “try … instead”, or “make this beat shorter”.';
+}
+
+/** A spoken yes or no to YAP's offer: exactly one of these phrases, nothing else. */
+const YES = Object.freeze(['yes', 'yeah', 'yep', 'yup', 'sure', 'ok', 'okay', 'yes please', 'do it', 'do that', "let's do it", "let's do that", "yeah let's do that", "yes let's do that", 'sounds good', 'go for it', 'try it', "let's try it"]);
+const NO = Object.freeze(['no', 'nope', 'nah', 'no thanks', 'keep it', 'leave it', 'never mind', 'cancel']);
+/** @returns {'accept' | 'keep-old' | null} */
+export function readSpokenAnswer(words) {
+  const phrase = (words || []).map(tokenOf).filter(Boolean).join(' ');
+  return YES.includes(phrase) ? 'accept' : NO.includes(phrase) ? 'keep-old' : null;
 }

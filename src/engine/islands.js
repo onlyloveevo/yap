@@ -52,10 +52,10 @@ export async function transcribeByIslands({ samples, sampleRate, silences, trans
       const reason = err instanceof Error ? err.message : String(err);
       throw new Error(`transcription failed for island ${s.toFixed(2)}-${e.toFixed(2)} s: ${reason}`, { cause: err });
     }
-    for (const w of got || []) {
-      if (!w || !String(w.text).trim()) continue;
-      words.push({ text: String(w.text).trim(), start: s + Number(w.start), end: s + Number(w.end) });
-    }
+    const heard = (got || []).filter((w) => w && String(w.text).trim()).map((w) => ({ text: String(w.text).trim(), start: Number(w.start), end: Number(w.end) }));
+    // Each island's words stay inside it and in the order they were spoken (inSpokenOrder, below).
+    const overflows = heard.some((w, k) => w.start >= e - s || (k > 0 && w.start < heard[k - 1].start));
+    for (const w of overflows ? inSpokenOrder(heard, e - s) : heard) words.push({ text: w.text, start: s + w.start, end: s + w.end });
   }
   return words;
 }
@@ -89,6 +89,29 @@ export function toWhisperAudio(samples, sampleRate) {
 }
 
 /**
+ * Whisper's word times wobble: a word can be stamped later than the word spoken after it. The order of the chunks is
+ * the order the words were spoken, so the times are made to follow it: each start after the one before, each end
+ * no later than the next start. Words already in order with no overlap come back as they were.
+ * @param {Word[]} words in spoken order
+ * @param {number} islandEnd seconds
+ * @returns {Word[]}
+ */
+export function inSpokenOrder(words, islandEnd) {
+  const out = words.map((w) => ({ ...w }));
+  // A word stamped past the end of its island would land among the words of the next one: it is pulled back inside.
+  const last = out[out.length - 1];
+  if (last && Number.isFinite(islandEnd) && last.start >= islandEnd) last.start = Math.max(0, islandEnd - 0.12);
+  for (let k = out.length - 2; k >= 0; k--) if (out[k].start >= out[k + 1].start) out[k].start = Math.max(0, out[k + 1].start - 0.12);
+  for (let k = 1; k < out.length; k++) if (out[k].start <= out[k - 1].start) out[k].start = out[k - 1].start + 0.01;
+  out.forEach((w, k) => {
+    const next = k + 1 < out.length ? out[k + 1].start : Math.max(Number.isFinite(islandEnd) ? islandEnd : w.end, w.start + 0.01);
+    w.end = Math.min(w.end, next);
+    if (!(w.end > w.start)) w.end = next;
+  });
+  return out;
+}
+
+/**
  * Adapt a transformers.js automatic-speech-recognition pipeline (Apache-2.0, injected; not installed in
  * Phase 1) to the transcriber interface. Chunks come back as { text, timestamp: [start, end] }; a null
  * end takes the next chunk's start, or the island's end for the last chunk.
@@ -114,6 +137,6 @@ export function createWhisperTranscriber({ pipeline, options = {} }) {
       const end = rawEnd ?? (next ? next.timestamp[0] : islandEnd);
       words.push({ text, start, end });
     });
-    return words;
+    return inSpokenOrder(words, islandEnd);
   };
 }

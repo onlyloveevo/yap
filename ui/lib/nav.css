@@ -1,0 +1,20 @@
+/* The sidebar of every screen that has one: YAP, then Ideas, Create, Review. One file, so the icons, sizes and gaps
+   are the same on every screen. Sized from the Beats and Ready stills (1585 by 992), the way the Beats screen is.
+   A page links this after its own stylesheet; ui/lib/app.js adds it to a page that has not linked it.
+   The column is almost clear, as in the Loom frames: the lights of the shared ground (theme.css) show through it. */
+/* The shared look comes with the sidebar, so a page that links this file has it before its first paint. */
+@import url("theme.css");
+:root { --nav-u: min(.0631vw, .1008vh); --nav-width: max(124px, calc(157 * var(--nav-u))); }
+.nav { display: flex; flex-direction: column; gap: 0; min-width: 0; padding: 0 calc(9 * var(--nav-u)); border-right: 1px solid rgba(255,255,255,.1); background: var(--yap-nav-glass, rgba(10,8,7,.3)); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.nav .brand { margin: 0 0 calc(46 * var(--nav-u)); padding: calc(76 * var(--nav-u)) 0 0 calc(38 * var(--nav-u)); font-size: calc(30 * var(--nav-u)); font-weight: 700; letter-spacing: -.01em; line-height: 1; text-align: left; color: #fff; }
+.nav .nav-item { display: flex; align-items: center; gap: calc(16 * var(--nav-u)); height: max(48px, calc(64 * var(--nav-u))); margin: 0 0 calc(4 * var(--nav-u)); padding: 0 calc(20 * var(--nav-u)); border: 1px solid transparent; border-radius: 12px; font-size: max(13px, calc(17 * var(--nav-u))); font-weight: 400; line-height: 1; color: rgba(255,255,255,.72); text-decoration: none; white-space: nowrap; }
+.nav .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+.nav .nav-item svg { width: max(20px, calc(26 * var(--nav-u))); height: max(20px, calc(26 * var(--nav-u))); flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.nav .nav-item[aria-current="page"] { color: #fff; border-color: #e8b53a; background: rgba(244,198,107,.14); box-shadow: inset 0 0 18px rgba(244,198,107,.14); }
+.nav .nav-item[aria-current="page"] svg { color: #f4c66b; }
+@media (max-width: 760px) {
+  :root { --nav-width: 60px; }
+  .nav { padding: 0 4px; }
+  .nav .brand { font-size: 18px; padding: 16px 0 0; margin-bottom: 14px; text-align: center; }
+  .nav .nav-item { font-size: 0; justify-content: center; gap: 0; padding: 0; }
+}

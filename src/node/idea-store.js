@@ -54,6 +54,12 @@ export const PATCH_KEYS = Object.freeze(['state', 'format', 'thumb', 'ticks', 'm
  * accident), and `rename` is the one deliberate way to change it.
  */
 export const RENAME_KEY = 'rename';
+/**
+ * The key that keeps the beats YAP wrote for an idea and the person has not
+ * answered yet (ui/beats). Its own key beside PATCH_KEYS, as rename is: each
+ * is { id, title, line }, and a reload offers the same ones again.
+ */
+export const OFFERED_KEY = 'offeredBeats';
 /** A new title is 1 to this many characters. A longer one is refused, never cut. */
 export const TITLE_MAX = 120;
 /** Text is cut to this many characters. */
@@ -62,7 +68,7 @@ export const TEXT_MAX = 500;
 export const LIST_MAX = 12;
 
 /** What a patch can leave on an idea. On a bank id these are the keys laid over the bank's idea. */
-const KEPT_KEYS = Object.freeze(['title', 'state', 'format', 'thumb', 'ticks', 'words', 'keptBeats']);
+const KEPT_KEYS = Object.freeze(['title', 'state', 'format', 'thumb', 'ticks', 'words', 'keptBeats', OFFERED_KEY]);
 /** The name of one tick: a short lower-case word, as the confirm screen's points are named. */
 const TICK_NAME = /^[a-z][a-z0-9-]{0,31}$/;
 const CREATED_ID = /^idea-(\d{1,9})$/;
@@ -173,6 +179,10 @@ function changesOf(idea, patch) {
     if (!Array.isArray(patch.keptBeats)) throw invalid('keptBeats is a list of { id, title, line }');
     changes.keptBeats = patch.keptBeats.slice(0, LIST_MAX).map(keptBeat);
   }
+  if (has(OFFERED_KEY)) {
+    if (!Array.isArray(patch[OFFERED_KEY])) throw invalid('offeredBeats is a list of { id, title, line }');
+    changes[OFFERED_KEY] = patch[OFFERED_KEY].slice(0, LIST_MAX).map((beat) => { const { id, title, line } = keptBeat(beat); return { id, title, line }; });
+  }
   return changes;
 }
 
@@ -192,6 +202,8 @@ function whole(record) {
     desc: typeof record.desc === 'string' ? record.desc : '',
     updated: typeof record.updated === 'string' ? record.updated : '',
     beats: Array.isArray(record.beats) ? record.beats : [],
+    // Only an idea YAP has written suggestions for carries them.
+    ...(Array.isArray(record[OFFERED_KEY]) ? { [OFFERED_KEY]: record[OFFERED_KEY] } : {}),
   };
 }
 

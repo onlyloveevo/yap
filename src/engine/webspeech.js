@@ -100,6 +100,9 @@ const IDLE_CLOCK = Object.freeze({ now: () => 0, setTimeout: () => null, clearTi
  * @param {number} [options.wordSpacingSec=0.3]
  * @param {Partial<import('./wake-settings.js').WakeSettings>} [options.settings]  the hearing
  *   numbers (startWaitSec, noWordsSec, offlineRetrySec, restartBurst); WAKE_SETTINGS by default
+ * @param {(text: string, before?: string) => string} [options.rewrite]  the take's own reading of each
+ *   result's text before it is sent on (the person's wake word, wake-settings.js); `before` is the
+ *   last word of the result before it
  * @param {{ addEventListener: Function, removeEventListener: Function }} [options.onlineTarget]
  *   where the browser's `online` event is heard (the page passes its global object); the
  *   listener is added on start and removed on stop. With none given, nothing is listened for.
@@ -114,6 +117,7 @@ export function createWebSpeechSource({
   wordSpacingSec = 0.3,
   settings = WAKE_SETTINGS,
   onlineTarget,
+  rewrite = null,
 } = /** @type {any} */ ({})) {
   const supported = typeof SpeechRecognition === 'function';
   if (supported && !clock) throw new TypeError('createWebSpeechSource needs a clock');
@@ -240,7 +244,8 @@ export function createWebSpeechSource({
       let interimTranscript = '';
       for (let i = e.resultIndex; i < e.results.length; ++i) {
         const result = e.results[i];
-        const transcript = String(result[0].transcript);
+        const heard = String(result[0].transcript);
+        const transcript = rewrite ? rewrite(heard, i > 0 ? String(e.results[i - 1][0].transcript).trim().split(/\s+/).pop() : '') : heard;
         const final = Boolean(result.isFinal);
         results.push({ index: i, text: transcript, final });
         if (final) transcript.split(/\s+/).filter(Boolean).forEach((text, pos) => finals.push({ text, index: i, pos }));

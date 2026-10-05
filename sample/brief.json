@@ -71,6 +71,13 @@
           "text": "What I do differently since that day",
           "reply": "What changed the next morning?",
           "keywords": ["differently", "since", "day", "changed"]
+        },
+        {
+          "id": "p3-numbers",
+          "label": "numbers",
+          "text": "The rest of the plan comes together in twenty minutes",
+          "reply": "What do you do with the time you get back?",
+          "keywords": ["rest", "plan", "together", "twenty", "minutes"]
         }
       ]
     }

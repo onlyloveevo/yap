@@ -265,3 +265,245 @@ export function decideMoment(moments, id, decision) {
   checkDecision(decision);
   return moments.map((m) => (m.id === id ? { ...copyMoment(m), decision } : copyMoment(m)));
 }
+
+// ---- A finished take, read for the Review screen ----
+//
+// Everything here is measured from the take itself: its length, what the cut removed and why, where
+// the person started again, how fast they spoke, which beats they covered. No platform number is
+// made up and no model is called. `answerFromFacts` answers a typed question from the same facts.
+
+const CUT_NAMES = Object.freeze({ restart: ['retake', 'retakes'], exchange: ['talk with YAP', 'talks with YAP'], 'dead-air': ['pause', 'pauses'], filler: ['filler word', 'filler words'], trim: ['trim', 'trims'] });
+const MOMENT_LIMIT = 6;
+/** The width, in seconds, of the stretch a pace reading is taken over. */
+const PACE_WINDOW = 4;
+
+/** m:ss for a number of seconds. */
+export function takeClock(seconds) {
+  const s = Math.max(0, Math.floor((Number(seconds) || 0) + 1e-6));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+const secondsOf = (n) => { const r = Math.round(n * 10) / 10; return `${Number.isInteger(r) ? r : r.toFixed(1)} second${r === 1 ? '' : 's'}`; };
+const times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
+const listOf = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`);
+const capital = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** The applied cuts of a recording, as ranges inside the take, in time order. */
+function appliedCuts(recording) {
+  const list = Array.isArray(recording?.cuts?.cuts) ? recording.cuts.cuts : [];
+  return list
+    .filter((c) => c && c.applied !== false && isFiniteNumber(c.start) && isFiniteNumber(c.end) && c.end > c.start)
+    .map((c) => ({ kind: String(c.kind || 'trim'), start: c.start, end: c.end }))
+    .sort((a, b) => a.start - b.start);
+}
+
+/** The stretches the cut keeps, given the removed ranges (which may touch or overlap). */
+function keptRangesOf(cuts, duration) {
+  const kept = [];
+  let at = 0;
+  for (const c of cuts) {
+    if (c.start > at) kept.push([at, Math.min(c.start, duration)]);
+    at = Math.max(at, c.end);
+  }
+  if (at < duration) kept.push([at, duration]);
+  return kept.filter(([a, b]) => b - a > 0.05);
+}
+
+const wordsIn = (words, from, to) => words.filter((w) => (w.start + w.end) / 2 >= from && (w.start + w.end) / 2 < to);
+const quoteOf = (words, max = 9) => {
+  const text = words.slice(0, max).map((w) => w.text).join(' ').replace(/[.,;:!?]+$/, '');
+  return text ? `“${text}${words.length > max ? '…' : ''}”` : '';
+};
+
+/** Each beat of a recording as Review reads it: its name, where it ran, its pace and whether it was covered. */
+function beatsRead(recording, coverageMin) {
+  const beats = Array.isArray(recording?.beats) ? recording.beats : [];
+  return beats.map((b, index) => {
+    const takes = Array.isArray(b?.takes) ? b.takes : [];
+    const take = takes.find((t) => t.id === b.chosenTakeId) || takes[takes.length - 1] || null;
+    const coverage = take?.summary?.coverage;
+    return {
+      index,
+      id: b?.id || null,
+      name: plain(b?.label) || plain(b?.title) || `Beat ${index + 1}`,
+      where: whereOf(index, beats.length, plain(b?.label) || plain(b?.title)),
+      start: take && isFiniteNumber(take.start) ? take.start : null,
+      end: take && isFiniteNumber(take.end) ? take.end : null,
+      pace: isFiniteNumber(take?.summary?.paceWpm) ? Math.round(take.summary.paceWpm) : null,
+      covered: Boolean(b?.tick?.ticked) || (Boolean(take) && (!isFiniteNumber(coverage) || coverage >= coverageMin)),
+    };
+  });
+}
+
+/** Words a minute through the take, one reading a step, each over the PACE_WINDOW around it. */
+function paceSeries(words, duration) {
+  if (words.length < 4 || !(duration > 0)) return null;
+  const step = Math.max(0.5, duration / 72);
+  const points = [];
+  for (let t = 0; t <= duration + 1e-6; t += step) {
+    const from = Math.max(0, t - PACE_WINDOW / 2), to = Math.min(duration, t + PACE_WINDOW / 2);
+    points.push([Math.min(t, duration), Math.round(wordsIn(words, from, to + 1e-6).length / ((to - from) / 60))]);
+  }
+  return points;
+}
+
+/**
+ * What YAP knows about one finished take, laid out for the Review screen.
+ * @param {object} recording  the saved recording
+ * @param {{ previous?: object | null, threshold?: number, coverageMin?: number }} [options]  `previous`: the take this one followed
+ */
+export function takeReview(recording, { previous = null, threshold = PACE_DEFAULTS.threshold, coverageMin = EPISODE_DEFAULTS.coverageMin } = {}) {
+  const duration = isFiniteNumber(recording?.duration) && recording.duration > 0 ? recording.duration : 0;
+  const words = (Array.isArray(recording?.transcript) ? recording.transcript : []).filter((w) => w && typeof w.text === 'string' && w.text.trim() && isFiniteNumber(w.start) && isFiniteNumber(w.end));
+  const heard = words.length > 0;
+  const cuts = appliedCuts(recording);
+  const keptRanges = keptRangesOf(cuts, duration);
+  const kept = keptRanges.reduce((sum, [a, b]) => sum + (b - a), 0);
+  const removed = Math.max(0, duration - kept);
+  const beats = beatsRead(recording, coverageMin);
+  const restarts = cuts.filter((c) => c.kind === 'restart');
+  const pauses = cuts.filter((c) => c.kind === 'dead-air');
+  const exchanges = cuts.filter((c) => c.kind === 'exchange');
+  const missing = beats.filter((b) => !b.covered);
+  const covered = beats.filter((b) => b.covered);
+  const wpm = heard && duration > 0 ? Math.round(words.length / (duration / 60)) : null;
+  const fast = heard ? beats.filter((b) => b.pace !== null && b.pace > threshold).sort((a, b) => b.pace - a.pace)[0] || null : null;
+  const beatAt = (t) => beats.find((b) => b.start !== null && t >= b.start - 1e-6 && t < b.end) || null;
+  const clean = keptRanges.map(([a, b]) => ({ start: a, end: b, length: b - a })).sort((a, b) => b.length - a.length)[0] || null;
+
+  // Why the cut removed what it removed, by kind: "2 retakes (7.6 seconds)".
+  const byKind = new Map();
+  for (const c of cuts) {
+    const k = byKind.get(c.kind) || { count: 0, seconds: 0 };
+    byKind.set(c.kind, { count: k.count + 1, seconds: k.seconds + (c.end - c.start) });
+  }
+  const reasons = [...byKind].map(([kind, k]) => {
+    const [one, many] = CUT_NAMES[kind] || CUT_NAMES.trim;
+    return `${k.count} ${k.count === 1 ? one : many} (${secondsOf(k.seconds)})`;
+  });
+  const cutLine = cuts.length ? `YAP removed ${secondsOf(removed)}: ${listOf(reasons)}.` : 'YAP removed nothing from this take.';
+
+  // ---- the numbers ----
+  const before = previous && isFiniteNumber(previous.duration) ? previous : null;
+  const beforeRestarts = before && Array.isArray(before.transcript) && before.transcript.length ? appliedCuts(before).filter((c) => c.kind === 'restart').length : null;
+  const numbers = [
+    { id: 'length', label: 'Length', value: takeClock(duration), note: before ? `Last take ${takeClock(before.duration)}` : heard ? `${words.length} words` : '' },
+    { id: 'cut', label: 'After the cut', value: takeClock(kept), note: removed >= 0.5 ? `${Math.round(removed)} s removed` : 'Nothing removed' },
+  ];
+  if (heard) {
+    numbers.push({ id: 'restarts', label: 'Restarts', value: String(restarts.length), note: beforeRestarts !== null ? `Last take ${beforeRestarts}` : restarts.length ? (restarts.length === 1 ? 'Cut out' : 'All cut out') : 'None' });
+    numbers.push({ id: 'pace', label: 'Pace', value: String(wpm), unit: ' wpm', note: fast ? `${fast.index === 0 ? 'Opening' : 'Peak'} ${fast.pace}` : 'Steady' });
+  }
+  if (beats.length) numbers.push({ id: 'beats', label: 'Beats covered', value: `${covered.length} of ${beats.length}`, note: missing.length ? `${missing.length} not reached` : 'Every beat' });
+
+  // ---- the key moments ----
+  const found = [];
+  const add = (rank, time, kind, label, text) => found.push({ rank, time: Math.min(Math.max(time, 0), duration), kind, label, text });
+  if (heard) {
+    const first = beats[0];
+    const said = quoteOf(wordsIn(words, 0, Math.min(duration, 6)));
+    add(0, 0, 'opening', 'Opening', first && first.pace !== null && first.pace > threshold
+      ? `You opened at ${first.pace} words a minute. The whole take ran at ${wpm}, so the opening is where you rushed.`
+      : `You opened with ${said}.`);
+  }
+  for (const c of restarts) {
+    const said = quoteOf(wordsIn(words, c.start, c.end));
+    add(1, c.start, 'restart', 'Retake', `At ${takeClock(c.start)} you ${said ? `said ${said} and ` : ''}started again. YAP cut that attempt, ${secondsOf(c.end - c.start)}, and kept the next one.`);
+  }
+  const lastOnly = missing.length === 1 && missing[0].index === beats.length - 1;
+  if (missing.length) add(2, duration, 'uncovered', 'Not reached', lastOnly ? `The take stopped before '${missing[0].name}'. The video has no ending yet.` : `The take stopped before ${listOf(missing.map((b) => `'${b.name}'`))}.`);
+  for (const c of exchanges) {
+    const said = quoteOf(wordsIn(words, c.start, c.end), 12);
+    add(3, c.start, 'exchange', 'Talk with YAP', `At ${takeClock(c.start)} you stopped to talk with YAP${said ? `: ${said}` : ''}. Those ${secondsOf(c.end - c.start)} are out of the cut.`);
+  }
+  if (heard && clean && clean.length >= 3 && cuts.length && clean.start >= 1) {
+    add(4, clean.start, 'clean', 'Clean run', `From ${takeClock(clean.start)} you spoke for ${secondsOf(clean.length)} without a stop. It is your longest clean stretch: ${quoteOf(wordsIn(words, clean.start, clean.end))}.`);
+  }
+  for (const b of beats) {
+    if (heard && b.index > 0 && b.pace !== null && b.pace > threshold && b.start !== null) add(5, b.start, 'pace', 'Fast', `You sped up during ${b.where}: ${b.pace} words a minute against ${wpm} for the whole take.`);
+  }
+  for (const c of pauses) add(6, c.start, 'pause', 'Pause', `A pause of ${secondsOf(c.end - c.start)} at ${takeClock(c.start)}. YAP removed it.`);
+  if (!heard) for (const b of covered) if (b.start !== null) add(7, b.start, 'beat', b.name, `'${b.name}' ran from ${takeClock(b.start)} to ${takeClock(b.end)}.`);
+  const moments = found.sort((a, b) => a.rank - b.rank).slice(0, MOMENT_LIMIT).sort((a, b) => a.time - b.time || a.rank - b.rank)
+    .map(({ rank: _rank, ...m }) => ({ ...m, clock: takeClock(m.time) }));
+
+  // ---- the one experiment, drawn from what cost this take the most ----
+  let experiment = null;
+  if (lastOnly) {
+    const b = missing[0];
+    experiment = { category: 'Story', text: `End on '${b.name}'. Say its one line before you stop.`, why: `This take stopped before '${b.name}', so the video has no ending yet.`, now: `Stops before '${b.name}'`, next: `Ends on '${b.name}'` };
+  } else if (missing.length) {
+    const b = missing[0], stayed = covered[covered.length - 1];
+    experiment = { category: 'Story', text: `Move on to '${b.name}'${stayed ? ` as soon as '${stayed.name}' is said` : ''}. One line for each beat is enough.`, why: `This take reached ${covered.length} of its ${beats.length} beats${stayed ? ` and stayed on '${stayed.name}'` : ''}.`, now: `${covered.length} of ${beats.length} beats`, next: `All ${beats.length} beats` };
+  } else if (restarts.length) {
+    const counts = new Map();
+    for (const c of restarts) { const b = beatAt(c.start); if (b) counts.set(b, (counts.get(b) || 0) + 1); }
+    const worst = [...counts].sort((a, b) => b[1] - a[1])[0];
+    const where = worst ? worst[0].where : 'the take';
+    experiment = { category: 'Delivery', text: `Say the first line of ${where} out loud once before you press record.`, why: `You started again ${times(restarts.length)}. YAP cut ${secondsOf(restarts.reduce((s, c) => s + c.end - c.start, 0))} of first attempts.`, now: `${restarts.length} restart${restarts.length === 1 ? '' : 's'}`, next: 'One clean start' };
+  } else if (fast) {
+    experiment = { category: 'Delivery', text: `Slow ${fast.where} down. Take one breath after your first sentence.`, why: `${capital(fast.where)} ran at ${fast.pace} words a minute. The whole take ran at ${wpm}.`, now: `${fast.pace} wpm`, next: `Under ${threshold} wpm` };
+  } else if (pauses.length >= 2) {
+    experiment = { category: 'Delivery', text: 'Know your next line before you finish the one you are on.', why: `YAP removed ${pauses.length} pauses, ${secondsOf(pauses.reduce((s, c) => s + c.end - c.start, 0))} in all.`, now: `${pauses.length} long pauses`, next: 'No gaps' };
+  } else if (heard) {
+    experiment = { category: 'Delivery', text: `Keep these beats and say them in fewer words. Aim for ${takeClock(kept * 0.9)}.`, why: 'No restarts and every beat covered.', now: takeClock(kept), next: takeClock(kept * 0.9) };
+  }
+
+  // ---- the same facts, as sentences a typed question is answered from ----
+  const facts = [
+    { id: 'length', keys: ['long', 'length', 'duration', 'short', 'minutes', 'seconds'], text: `This take runs ${takeClock(duration)}. After the cut it is ${takeClock(kept)}.` },
+    { id: 'cut', keys: ['cut', 'removed', 'remove', 'edit', 'trim', 'took out', 'kept', 'keep'], text: cutLine },
+  ];
+  if (heard) {
+    facts.push({ id: 'restarts', keys: ['restart', 'retake', 'again', 'mistake', 'stumble', 'mess', 'flub'], text: restarts.length ? `You started again ${times(restarts.length)}, at ${listOf(restarts.map((c) => takeClock(c.start)))}. YAP kept the later attempt each time.` : 'You never started a line again in this take.' });
+    facts.push({ id: 'pace', keys: ['pace', 'fast', 'slow', 'speed', 'rush', 'quick', 'wpm', 'words a minute', 'talk'], text: `You spoke at ${wpm} words a minute over the whole take.${fast ? ` ${capital(fast.where)} ran at ${fast.pace}, above the ${threshold} you set as your limit.` : ' No beat ran above your limit.'}` });
+    facts.push({ id: 'said', keys: ['say', 'said', 'open', 'opening', 'hook', 'start', 'begin', 'first', 'intro'], text: `You opened with ${quoteOf(wordsIn(words, 0, Math.min(duration, 6)), 14)}.` });
+    if (clean && clean.length >= 3) facts.push({ id: 'best', keys: ['best', 'strongest', 'worked', 'clean'], text: `Your longest clean stretch starts at ${takeClock(clean.start)}: ${secondsOf(clean.length)} without a stop.` });
+  }
+  if (beats.length) facts.push({ id: 'beats', keys: ['beat', 'cover', 'miss', 'skip', 'structure', 'point', 'ending', 'finish', 'end', ...beats.map((b) => b.name.toLowerCase())], text: `You covered ${listOf(covered.map((b) => `'${b.name}'`)) || 'no beat'}${missing.length ? `. You did not reach ${listOf(missing.map((b) => `'${b.name}'`))}` : ', every beat you planned'}.` });
+  if (pauses.length) facts.push({ id: 'pauses', keys: ['pause', 'silence', 'gap', 'quiet', 'dead'], text: `YAP removed ${pauses.length} long pause${pauses.length === 1 ? '' : 's'}, ${secondsOf(pauses.reduce((s, c) => s + c.end - c.start, 0))} in all.` });
+  if (experiment) facts.push({ id: 'next', keys: ['next', 'try', 'improve', 'better', 'change', 'fix', 'should', 'advice', 'experiment', 'work on'], text: `${experiment.why} Next take: ${experiment.text}` });
+
+  const summary = `${cutLine}${experiment ? ` ${experiment.why}` : ''}`;
+  const notes = [
+    ...numbers.map((n) => ({ time: 0, text: `Measured by YAP. ${n.label}: ${n.value}${n.unit || ''}${n.note ? ` (${n.note})` : ''}.` })),
+    { time: 0, text: `Measured by YAP. ${cutLine}` },
+    ...moments.map((m) => ({ time: Math.round(m.time * 100) / 100, text: `${m.label}. ${m.text}` })),
+    ...(experiment ? [{ time: 0, text: `YAP's experiment for the next take: ${experiment.text} ${experiment.why}` }] : []),
+  ].map((n) => ({ time: n.time, text: n.text.slice(0, 280) }));
+  return {
+    title: plain(recording?.title) || 'Your take',
+    duration, kept, removed, heard,
+    numbers, moments, experiment, facts, summary,
+    pace: heard ? { points: paceSeries(words, duration), limit: threshold, overall: wpm } : null,
+    removedRanges: cuts.map((c) => ({ start: c.start, end: c.end, kind: c.kind })),
+    evidence: { transcript: words.map((w) => w.text).join(' '), notes },
+  };
+}
+
+/**
+ * Answer a typed question from the facts of a review, with no model: the facts whose subject the
+ * question names, the moment at a time it names, or the summary when it names neither.
+ * @param {{ facts: { id: string, keys: string[], text: string }[], moments?: { time: number, text: string }[], summary?: string, experiment?: { text: string } | null }} review
+ * @param {string} question
+ * @returns {string}
+ */
+export function answerFromFacts(review, question) {
+  const q = ` ${plain(question).toLowerCase().replace(/[^a-z0-9:%' ]+/g, ' ')} `;
+  const out = [];
+  const at = /(\d{1,2}):(\d{2})/.exec(q);
+  const moments = Array.isArray(review?.moments) ? review.moments : [];
+  if (at && moments.length) {
+    const t = Number(at[1]) * 60 + Number(at[2]);
+    out.push([...moments].sort((a, b) => Math.abs(a.time - t) - Math.abs(b.time - t))[0].text);
+  }
+  const scored = (review?.facts || [])
+    .map((f, order) => ({ f, order, score: f.keys.filter((k) => new RegExp(`[^a-z0-9]${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(s|es|ed|ing)?[^a-z0-9]`).test(q)).length }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score || a.order - b.order);
+  for (const { f } of scored.slice(0, at ? 1 : 2)) if (!out.includes(f.text)) out.push(f.text);
+  if (!out.length) {
+    if (review?.summary) out.push(review.summary);
+    if (review?.experiment?.text) out.push(`Next take: ${review.experiment.text}`);
+  }
+  return out.join(' ');
+}

@@ -51,6 +51,7 @@ import { mintClientSecret } from './realtime-secret.js';
 import { instructionsFromSecretFields, safeCut } from '../src/engine/realtime.js';
 import { matchRoute } from '../ui/lib/routes.js';
 import {screenForState} from '../ui/lib/idea-model.js';
+import {openStateOf} from './idea-coach-api.js';
 import {createIdeaStore} from '../src/node/idea-store.js';
 
 /** The port setup opens Chrome on. YAP_PORT overrides it. */
@@ -93,6 +94,8 @@ const CONTENT_TYPES = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.svg': 'image/svg+xml',
+  '.wasm': 'application/wasm',
+  '.woff2': 'font/woff2',
 };
 
 /**
@@ -621,6 +624,17 @@ export function createYapServer(options = {}) {
       req.resume();
       return sendText(res, method === 'POST' ? 404 : 405, method === 'POST' ? 'Not found' : 'Method not allowed', { Allow: 'GET, HEAD' });
     }
+    // The tab's icon: a browser asks for it on every page.
+    if (rawPath === '/favicon.ico') {
+      let icon;
+      try {
+        icon = fs.readFileSync(path.join(root, 'server', 'favicon.png'));
+      } catch {
+        return sendText(res, 404, 'Not found');
+      }
+      res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': icon.length, 'Cache-Control': 'max-age=86400' });
+      return res.end(method === 'HEAD' ? undefined : icon);
+    }
     if (rawPath === '/health') return sendJson(res, 200, { ok: true, instance: createHash('sha256').update(root).digest('hex').slice(0,20), pid: process.pid });
     const toDebug = () => {
       res.writeHead(302, { Location: '/debug/', 'Cache-Control': 'no-store', 'Content-Length': 0 });
@@ -650,7 +664,7 @@ export function createYapServer(options = {}) {
         const q=new URLSearchParams(query);
         if(q.has('shell'))route.screen=screenForState(q.get('state'));
         else {
-          try {const idea=createIdeaStore(paths.dataDir,{appRoot:root}).load(route.params.id);if(!idea)return sendText(res,404,'Idea not found');route.screen=screenForState(idea.state);}
+          try {const idea=createIdeaStore(paths.dataDir,{appRoot:root}).load(route.params.id);if(!idea)return sendText(res,404,'Idea not found');route.screen=screenForState(openStateOf(idea,root,paths.dataDir));}
           catch{return sendText(res,500,'Could not open this idea.');}
         }
       }

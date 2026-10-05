@@ -5,39 +5,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>YAP · Return</title>
+  <title>YAP · Next take</title>
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="wire.js"></script>
+<link rel="stylesheet" href="../lib/theme.css">
 </head>
 <body>
-  <main class="live-shell" data-phase="ready" aria-label="YAP return">
+  <main class="live-shell" data-phase="ready" aria-label="YAP next take">
     <div class="camera-fallback" aria-hidden="true"></div>
     <video class="camera" data-testid="camera" autoplay muted playsinline aria-label="Camera preview"></video>
     <div class="camera-shade" aria-hidden="true"></div>
 
     <header class="top-bar">
       <div class="identity">
-        <div class="brand-line" data-testid="brand"><strong>YAP</strong><span class="brand-dot">•</span><span>Take 2</span></div>
+        <div class="brand-line" data-testid="brand"><strong>YAP</strong><span class="brand-dot">•</span><span>Next take</span></div>
         <p class="tagline" data-testid="tagline"><span>Show up.</span><span>Yap.</span><span>Be you.</span></p>
-      </div>
-      <div class="header-actions">
-        <button class="help glass" type="button" data-testid="help" aria-label="Help">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h2m2-5v10m4-14v18m4-14v10m4-8v6m4-3h-2"/></svg>
-          <span>Help</span>
-        </button>
-        <button class="menu glass" type="button" aria-label="More options">···</button>
       </div>
     </header>
 
-    <section class="memory-card glass" data-testid="memory-card" aria-label="From last time">
-      <h2 class="memory-title">From last time</h2>
-      <p class="memory-line">Last time you wanted to slow down during the opening. Keep that cue?</p>
-      <div class="memory-actions">
-        <button class="pill pill-amber" type="button" data-testid="memory-keep">Keep</button>
-        <button class="pill pill-glass" type="button" data-testid="memory-drop">Drop</button>
+    <section class="memory-card glass" data-testid="memory-card" aria-label="Before your next take">
+      <div class="noticed">
+        <p class="section-label">What YAP is trying with you</p>
+        <h2 class="memory-title">From last time</h2>
+        <p class="memory-line">Last time you wanted to slow down during the opening. Keep that cue?</p>
+        <div class="memory-actions">
+          <button class="pill pill-amber" type="button" data-testid="memory-keep">Keep</button>
+          <button class="pill pill-glass" type="button" data-testid="memory-drop">Drop</button>
+        </div>
+        <p class="trial" data-testid="trial-status"><span class="trial-dot" aria-hidden="true"></span><span>Trying 'Grab a coffee' · video 1 of 3</span></p>
+        <div class="carry-slot" data-testid="carry-forward">
+          <p class="lesson-empty" data-testid="lesson-empty">Pick one thing to try from this take. <a href="/review" data-testid="lesson-open-review">Review this take</a></p>
+        </div>
+        <p class="bet" data-testid="bet">Last take had 2 restarts. Aim for fewer.</p>
       </div>
-      <p class="trial" data-testid="trial-status"><span class="trial-dot" aria-hidden="true"></span><span>Trial running: 'Grab a coffee' · video 1 of 3</span></p>
-      <p class="bet" data-testid="bet">My bet: at most 2 restarts this take</p>
+      <button class="control record" type="button" data-testid="record" aria-label="Record the next take"><span aria-hidden="true"></span><span class="record-label">Record the next take</span></button>
     </section>
 
     <section class="cue-area" aria-label="Live cues and controls">
@@ -53,11 +54,10 @@
         </div>
       </div>
       <div class="bet-result glass" data-testid="bet-result" hidden>
-        <p class="result-line">Bet held: 1 restart (I said at most 2)</p>
-        <p class="result-next">Next bet: at most 1 restart</p>
+        <p class="result-line" data-testid="result-line">Take 2 had 1 restart, down from 2 in take 1.</p>
+        <button class="pill pill-amber result-next" type="button" data-testid="result-next">Open the cut</button>
       </div>
       <div class="controls" aria-label="Recording controls">
-        <button class="control record" type="button" data-testid="record" aria-label="Record"><span aria-hidden="true"></span></button>
         <button class="control glass" type="button" data-testid="pause" aria-label="Pause recording" aria-pressed="false" hidden>
           <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M17 5v14"/></svg>
           <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>

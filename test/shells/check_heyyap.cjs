@@ -30,22 +30,33 @@ const url=process.argv[3], origin=url ? new URL(url).origin : null; const shotDi
     need(/grab a coffee/i.test(await txt('experiment-line')), `${w}: experiment line should be "Grab a coffee. Let's get into it."`);
     need(/^\s*3 videos\s*$/i.test(await txt('trial-value')) && /3 videos/i.test(await txt('try')), `${w}: trial should start at 3 videos and the button read "Try for 3 videos"`);
     need(/keep tea/i.test(await txt('keep')), `${w}: fallback button should read "Keep tea"`);
-    need(!(await vis('trial-saved')), `${w}: "Trial saved" must not show before you accept`);
+    need(!(await vis('experiment-saved')), `${w}: "Experiment saved" must not show before you accept`);
     await click('trial-plus'); need(/4 videos/i.test(await txt('trial-value')) && /4 videos/i.test(await txt('try')), `${w}: + should make it 4 videos (value and button)`);
     await click('trial-minus'); need(/3 videos/i.test(await txt('trial-value')), `${w}: - should return to 3 videos`);
     const ph = await p.$eval(T('say-input'), e => e.getAttribute('placeholder') || '').catch(() => ''); need(/say it or type it/i.test(ph), `${w}: input placeholder should be "Say it or type it…"`);
     const bodyTxt = (await p.evaluate(() => document.body.innerText)).toLowerCase();
     need(!/(more views|boost|improv\w* (your )?(views|performance|reach)|guarantee)/.test(bodyTxt), `${w}: must not imply audience-performance improvement`);
     await click('try');
-    need(await vis('trial-saved') && /check-in after 3 videos/i.test(await txt('trial-saved')), `${w}: after Try, "Trial saved · Check-in after 3 videos" should show`);
+    // The Loom's frame L02: accepting closes the talk, the card top right says what was saved, and the beat card reads the new greeting.
+    need(!(await vis('help-panel')), `${w}: accepting should close the panel`);
+    need(await vis('experiment-saved') && /experiment saved/i.test(await txt('experiment-saved')) && /greeting/i.test(await txt('saved-tag')), `${w}: after Try, the "Experiment saved" card with its Greeting tag should show`);
+    need(/^0\/3 videos · Check-in after video 3$/.test((await txt('trial-saved')).trim()), `${w}: the card should read "0/3 videos · Check-in after video 3" (got "${await txt('trial-saved')}")`);
+    const cb = await (await p.$(T('experiment-saved')))?.boundingBox();
+    if (cb) need(cb.x > w * 0.5 && cb.y < h * 0.3 && cb.x + cb.width <= w, `${w}: the saved card should sit at the top right (x=${Math.round(cb.x)} y=${Math.round(cb.y)})`);
+    need(await vis('story-card') && /greeting/i.test(await txt('story-label')) && /^grab a coffee\. let's get into it\.$/i.test((await txt('beat-title')).trim()), `${w}: after the trial the beat card should read GREETING, "Grab a coffee. Let's get into it."`);
+    await p.screenshot({ path: path.join(shotDir, `heyyap-saved-${w}.png`) });
+    await click('view-experiment');
+    need(await vis('help-panel') && /grab a coffee/i.test(await txt('experiment-line')) && /0\/3 videos/.test(await txt('experiment-progress')), `${w}: View experiment should open the experiment with its progress`);
     await click('back');
     need(!(await vis('help-panel')), `${w}: Back to recording should close the panel`);
-    need(await vis('story-card') && /grab a coffee/i.test(await txt('story-card')), `${w}: after the trial the story card should read "Grab a coffee. Let's get into it."`);
+    await click('dismiss-experiment');
+    need(!(await vis('experiment-saved')), `${w}: Dismiss should put the card away`);
+    need(await vis('story-card') && /grab a coffee/i.test(await txt('story-card')), `${w}: the story card keeps "Grab a coffee. Let's get into it."`);
     const sw = await p.evaluate(() => document.documentElement.scrollWidth); need(sw <= w, `${w}: horizontal scroll (${sw}px)`);
     need(errs.length === 0, `${w}: console errors: ${errs.slice(0, 3).join(' | ')}`); need(ext.length === 0, `${w}: network requests: ${ext.slice(0, 3).join(' ')}`);
     await click('help'); await p.screenshot({ path: path.join(shotDir, `heyyap-${w}.png`) }); await p.close();
   }
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS Hey YAP shell: panel, coffee experiment, stepper, accept-then-saved, cues hidden and restored with the new greeting, 2 sizes, no errors, no network');
+  console.log('PASS Hey YAP shell: panel, coffee experiment, stepper, accept-then-Experiment-saved card, cues hidden and restored with the new greeting, 2 sizes, no errors, no network');
 })().catch(e => { console.log('FAIL check crashed: ' + e); process.exit(1); });

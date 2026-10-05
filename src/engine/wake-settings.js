@@ -99,3 +99,52 @@ export function isNever(token, settings = WAKE_SETTINGS) {
   if (!t) return false;
   return (settings.neverList || WAKE_SETTINGS.neverList).some((w) => bare(w) === t);
 }
+
+/** The wake word a take starts with, and how long a person's own may be. */
+export const DEFAULT_WAKE_WORD = 'yap';
+export const WAKE_WORD_LIMITS = Object.freeze({ minLetters: 2, maxLetters: 14 });
+
+/**
+ * A person's own wake word as the wake path compares it: one word, letters
+ * only, lower case. A leading "hey" is not part of it. Null when what was
+ * given cannot be a wake word (empty, two words, digits, or "hey" itself).
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+export function readWakeWord(value) {
+  const words = String(value ?? '').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 2 && isWakeFirst(words[0])) words.shift();
+  if (words.length !== 1) return null;
+  const t = bare(words[0]);
+  if (!/^[a-z]+$/.test(t) || isWakeFirst(t)) return null;
+  if (t.length < WAKE_WORD_LIMITS.minLetters || t.length > WAKE_WORD_LIMITS.maxLetters) return null;
+  return t;
+}
+
+/**
+ * Turns the wake word a person says into the pair the wake path listens for
+ * ("hey yap"), in the text Chrome delivers, before any of it is read:
+ *   - the wake word said on its own ("yap, let's try ...") gets its "hey";
+ *   - a wake word of the person's own ("coach, ...") becomes the pair, and the
+ *     old one stops opening an exchange: the word after its "hey" is left out.
+ * The word is read each time, so a change made mid-take holds from the next
+ * thing heard. `before` is the last word of the result before this one.
+ * @param {() => unknown} [getWord]
+ * @returns {(text: string, before?: string) => string}
+ */
+export function createWakeRewriter(getWord = () => DEFAULT_WAKE_WORD) {
+  return (text, before = '') => {
+    const word = readWakeWord(getWord()) || DEFAULT_WAKE_WORD;
+    const own = word !== DEFAULT_WAKE_WORD;
+    const out = [];
+    let prev = bare(before);
+    for (const raw of String(text ?? '').split(/\s+/).filter(Boolean)) {
+      const t = bare(raw);
+      const afterHey = isWakeFirst(prev);
+      if (t === word) out.push(...(afterHey ? [] : ['hey']), own ? DEFAULT_WAKE_WORD : raw);
+      else if (!(own && afterHey && isYapLike(t) && !isNever(t))) out.push(raw);
+      prev = t;
+    }
+    return out.join(' ');
+  };
+}

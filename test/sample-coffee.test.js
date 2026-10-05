@@ -132,7 +132,11 @@ test('sample/brief.json validates, opens on the tea greeting, and keeps the idea
   const raw = JSON.parse(text);
   const phase1 = readJson('brief.json', fixtureDir);
   assert.equal(raw.idea, phase1.idea);
-  assert.deepEqual(raw.points, phase1.points, 'the three points and their angles are what they were');
+  // The Takeaway carries one more angle, the line take 1's presenter closes on. Everything else is what it was.
+  const closing = raw.points[2].angles.find((a) => a.id === 'p3-numbers');
+  assert.equal(closing.text, 'The rest of the plan comes together in twenty minutes');
+  const before = raw.points.map((p) => ({ ...p, angles: p.angles.filter((a) => a !== closing) }));
+  assert.deepEqual(before, phase1.points, 'the three points and their other angles are what they were');
   assert.equal(raw.label, 'sample');
 });
 

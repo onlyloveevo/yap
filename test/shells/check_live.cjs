@@ -32,14 +32,14 @@ const url=process.argv[3], origin=url ? new URL(url).origin : null; const shotDi
     need(nodes.length === 5, `${w}x${h}: ${nodes.length} beat nodes (want 5)`);
     const done = await p.$$('[data-testid="beat-node"][data-state="done"]'), cur = await p.$$('[data-testid="beat-node"][data-state="current"]');
     need(done.length >= 1 && cur.length === 1, `${w}x${h}: beats need done ticks and exactly one current (done=${done.length} current=${cur.length})`);
-    // the near-axis rule (ChatGPT chat, 3 Oct 01:10): story and delivery cues together on the centre line, never on two sides of the face
+    // The Loom's Live frame (L01): the beat card holds the centre line and the delivery cue floats to the right of the face, clear of the card.
     const s = await box('story-card'), d = await box('delivery-cue');
     if (s && d) {
       const sc = s.x + s.width / 2, dc = d.x + d.width / 2;
       need(Math.abs(sc - w / 2) < w * 0.08, `${w}x${h}: story card is not centred (centre ${Math.round(sc)} vs ${w / 2})`);
-      need(Math.abs(dc - sc) < 120, `${w}x${h}: delivery cue is ${Math.round(Math.abs(dc - sc))}px off the story card's centre line (max 120)`);
-      const gap = d.y > s.y ? d.y - (s.y + s.height) : s.y - (d.y + d.height);
-      need(gap < 60, `${w}x${h}: delivery cue is ${Math.round(gap)}px from the story card (max 60)`);
+      need(dc > w * 0.6 && d.x + d.width <= w, `${w}x${h}: delivery cue should float right of the face (centre ${Math.round(dc)} of ${w})`);
+      need(d.y + d.height <= s.y || d.x >= s.x + s.width, `${w}x${h}: delivery cue overlaps the story card`);
+      need(d.y > h * 0.3 && d.y < h * 0.6, `${w}x${h}: delivery cue should sit at face height (top ${Math.round(d.y)} of ${h})`);
     }
     const sw = await p.evaluate(() => document.documentElement.scrollWidth);
     need(sw <= w, `${w}x${h}: horizontal scroll (${sw}px wide)`);
@@ -50,5 +50,5 @@ const url=process.argv[3], origin=url ? new URL(url).origin : null; const shotDi
   }
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS live-mode shell: all elements, cue rule, 2 sizes, no errors, no network; screenshots shot-1440.png shot-1280.png');
+  console.log('PASS live-mode shell: all elements, cue right of the face, 2 sizes, no errors, no network; screenshots shot-1440.png shot-1280.png');
 })().catch(e => { console.log('FAIL check crashed: ' + e); process.exit(1); });

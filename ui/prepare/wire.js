@@ -21,11 +21,6 @@ import { preparedAngleFields } from '../../src/engine/prepared-angles.js';
 //   changed, kept per idea or start (ui/lib/cue-editor.js) and put on the
 //   recording's cues through the engine's chooseDeliveryCues. The original
 //   wording stays the default, and the sample take never uses a draft.
-// - Outside shell mode a prepared beat list opens as Rehearsal (ui/lib/prepare-rehearsal.js), a simulated Live
-//   mode: the camera is the canvas, a small cue card, a thin beat timeline and Talk to YAP. The stand-in's own beat
-//   list, chips, Start and Back are moved into it, so their ids stay. Nothing is recording and no microphone is
-//   opened until the person presses Start recording, which makes the Recording from the CURRENT edited beats and
-//   opens the existing record page. The camera line (and Retry camera) is shown on every view.
 // - Start recording makes the Recording (D-127) and opens /record/<id>.
 //   recordingRequest (ui/lib/prepare-model.js) turns what is shown and the
 //   pressed chips into the request: the chips become the take's delivery cues
@@ -36,21 +31,30 @@ import { preparedAngleFields } from '../../src/engine/prepared-angles.js';
 //   makes the bundled sample take's Recording and opens /record/<id>?sample=1.
 // - The Recent list shows the saved recordings, the newest two.
 //
+// The prepare view is the Live screen used as a rehearsal (his Loom at 07:42, frame L10): the camera fills the window,
+// and over it sit the beat card with a step button either side, the cue YAP raises, the beats as Live's timeline along
+// the bottom bar and the pill that starts the recording. The person steps through their beats and nothing is saved: no
+// Recording exists until Start recording. Set up, top right, opens the one overlay: the six cues as switches, each
+// cue's wording, and the names of the camera and microphone (Live always uses the browser's defaults) with the audio
+// level. Slow down and Smile start on; a choice the person made stands. The cues left on show here as they will in
+// the take: Slow down when the microphone hears a fast pace (startPaceCoach), Smile when the camera has seen no smile
+// for a while (ui/lib/face-coach.js), both measured on this Mac, and a reminder on the beat the take will show it on
+// (rehearsalCues). A wording experiment running on this idea shows on the card as the take will show it.
+//
 // Words are written with textContent, never as markup: a beat may carry the
 // person's own words or a model's, and a title is the person's own.
-import { go, isShellMode, sayQuietly } from '../lib/app.js';
-import { createRecordingFor, getIdea, listRecordings } from '../lib/api.js';
-import { SAMPLE_TAKE_LABEL, prepareView, recentRows, recordingRequest } from '../lib/prepare-model.js';
+import { go, isShellMode, sayQuietly, wireNav } from '../lib/app.js';
+import { createRecordingFor, getIdea, getTrials, listRecordings } from '../lib/api.js';
+import { DEFAULT_CUES, SAMPLE_TAKE_LABEL, levelBars, prepareView, recentRows, recordingRequest, rehearsalCues, shownBeats as beatsAsShown, timelineView } from '../lib/prepare-model.js';
 import { matchRoute, routeFor } from '../lib/routes.js';
-import { DELIVERY_CUES, DELIVERY_DEFAULTS } from '../../src/engine/delivery.js';
+import { DELIVERY_CUES, DELIVERY_DEFAULTS, MEASURED_CUES } from '../../src/engine/delivery.js';
+import { startFaceCoach, startPaceCoach } from '../lib/face-coach.js';
+import { mountCarriedLesson } from '../lib/carried-lesson.js';
 import { defaultBeats, writeBeats } from '../../src/engine/setup-beats.js';
 import { outlineFromWords, ideaWords } from '../lib/idea-model.js';
 import { EDIT_ADDRESS, recordingView } from '../lib/presentation-model.js';
 import { loadDraft } from '../lib/presentation-store.js';
-import { mountPrepareCard } from '../lib/review-memory.js';
-import { saveTakeFocus, storageOrNull } from '../../src/engine/review-memory.js';
-import { cameraFailureLine, createCameraNote, mountRehearsal } from '../lib/prepare-rehearsal.js';
-import { clearWording, createCueEditor, cuesWithWording, mountCueEditorBox, readWording, resetWording, saveWording } from '../lib/cue-editor.js';
+import { clearWording, createCueEditor, mountCueEditorBox, readWording, resetWording, saveWording } from '../lib/cue-editor.js';
 
 /** `/prepare/new` names no idea: it is the stand-in's own opening (D-104). */
 const NEW_ID = 'new';
@@ -86,13 +90,20 @@ const DRAWN_IDEA_BEATS = [
 
 /** The six delivery cues by their own wording, in the order the person is offered them (DELIV-01). */
 const CUES = DELIVERY_CUES.map((cue) => cue.text);
+/** The two kinds of cue, each with its heading; a measured cue also says when it shows. */
+const GROUP_MEASURED = 'YAP watches for';
+const GROUP_REMINDERS = 'On your beats';
+const CUE_NOTES = { 'slow-down': 'When you speed up', smile: 'When you have not smiled for a while' };
 const MAX_CUES = DELIVERY_DEFAULTS.max;
+/** The label over a beat on the card, as on Live's. */
+const STORY_LABEL = 'Story';
 
 const $ = (id) => document.getElementById(id);
 const shellEl = $('shell');
 const drawnTitle = $('prepare-title').textContent;
 
 const shellMode = isShellMode(location);
+wireNav(document);
 const route = matchRoute(location.pathname, location.search);
 const routeId = route && route.name === 'prepare' ? route.params.id : null;
 /** True when the person came from their presentation (/prepare/new?presentation=1): the camera leads, and the beats are theirs. */
@@ -101,11 +112,6 @@ const presentationMode = !shellMode && routeId === NEW_ID && new URLSearchParams
 let presentation = null;
 /** The idea named in the address. None at /prepare/new, and none in shell mode, where the page is the drawn stand-in. */
 const ideaId = !shellMode && routeId && routeId !== NEW_ID ? routeId : null;
-
-/** The "From your review" card (a cue kept in Review and sent here by the creator). Not built in shell mode or for a presentation. */
-const reviewCard = shellMode || presentationMode ? null : mountPrepareCard({ document, search: location.search });
-/** The Recording a start already made when keeping its reminder failed, so a retry makes no second one. */
-let madeRecordingId = null;
 
 /** The idea the prepare view is showing, once it is known; null at /prepare/new and for an idea nobody has. */
 let openIdea = null;
@@ -121,6 +127,8 @@ let typedWords = '';
 let starting = false;
 /** True while the idea in the address is being fetched: its beats are not shown yet. */
 let ideaPending = false;
+/** The wording experiments in use, once asked for: the card shows a beat as the take of this idea will. */
+let trials = [];
 /** True once the saved recordings were asked for: the Recent list is filled once. */
 let recentAsked = false;
 
@@ -149,11 +157,16 @@ function readCueStore() {
     return { v: 1, entries: {}, order: [] };
   }
 }
-/** The kinds saved for this scope: known, unique, in chip order, at most three. Empty is a real answer. */
+/**
+ * The kinds on for this scope: known, unique, in chip order, at most three. A choice the person made stands, and an
+ * empty one is a real answer. Before any choice, the two cues YAP measures start on (DEFAULT_CUES), so a take recorded
+ * as it comes is coached. The drawn page and the presentation path start with none.
+ */
 function savedCues(scope) {
   if (!scope) return [];
   const list = readCueStore().entries[scope];
-  return Array.isArray(list) ? CUE_KINDS.filter((kind) => list.includes(kind)).slice(0, MAX_CUES) : [];
+  if (!Array.isArray(list)) return presentationMode ? [] : CUE_KINDS.filter((kind) => DEFAULT_CUES.includes(kind));
+  return CUE_KINDS.filter((kind) => list.includes(kind)).slice(0, MAX_CUES);
 }
 function writeCues(scope, kinds) {
   if (!scope) return;
@@ -184,48 +197,10 @@ let wording = {};
 const cueEditor = shellMode ? null : createCueEditor(document, mountCueEditorBox(document), {
   pressed: () => pressedCues(),
   wording: () => wording,
-  save: (kind, text) => { const answer = saveWording(cueStorage(), cueScope(), kind, text); if (answer.ok) { wording = answer.wording; if (rehearsal) rehearsal.wordingChanged(); } return answer; },
-  reset: (kind) => { const answer = resetWording(cueStorage(), cueScope(), kind); if (answer.ok) { wording = answer.wording; if (rehearsal) rehearsal.wordingChanged(); } return answer; },
+  save: (kind, text) => { const answer = saveWording(cueStorage(), cueScope(), kind, text); if (answer.ok) { wording = answer.wording; setTimeout(refreshCue, 0); } return answer; },
+  reset: (kind) => { const answer = resetWording(cueStorage(), cueScope(), kind); if (answer.ok) { wording = answer.wording; setTimeout(refreshCue, 0); } return answer; },
 });
-const refreshEditor = () => { if (cueEditor) cueEditor.render(); };
-/** A shorter request limit for tests only: it can never lengthen the rehearsal's own. */
-const askLimit = Number(globalThis.YAP_REHEARSAL_TIMEOUT_MS);
-
-/** Rehearsal replaces the stand-in's beats screen outside shell mode; in shell mode the drawn page stays exactly as drawn. */
-let rehearsal = null;
-let cameraNote = null;
-/** The kinds of the pressed chips, in the chips' order. */
-function pressedCues() {
-  return [...$('chips').querySelectorAll('[data-testid="cue-chip"]')]
-    .map((chip, i) => (chip.getAttribute('aria-pressed') === 'true' ? DELIVERY_CUES[i].kind : null))
-    .filter((kind) => kind !== null);
-}
-/** Set the chips to exactly these kinds (the coach's plain cue commands): stored, shown and kept like a press. */
-function setPressedCues(kinds) {
-  const chips = [...$('chips').querySelectorAll('[data-testid="cue-chip"]')];
-  const wanted = DELIVERY_CUES.map((cue) => cue.kind).filter((kind) => kinds.includes(kind)).slice(0, MAX_CUES);
-  chips.forEach((chip, i) => chip.setAttribute('aria-pressed', String(wanted.includes(DELIVERY_CUES[i].kind))));
-  $('cue-limit').hidden = true;
-  writeCues(cueScope(), wanted);
-  refreshEditor();
-}
-if (!shellMode) {
-  rehearsal = mountRehearsal({
-    document,
-    shell: shellEl,
-    section: $('prepare'),
-    storage: cueStorage(),
-    ...(Number.isFinite(askLimit) && askLimit >= 20 && askLimit < 95000 ? { timeoutMs: askLimit } : {}),
-    hooks: {
-      cues: () => pressedCues(),
-      texts: () => wording,
-      setCues: (kinds) => setPressedCues(kinds),
-      // What the rehearsal shows is what a take started here is recorded on: the beats as edited.
-      onChange: (beats) => { shownBeats = beats; renderBeats(beats); },
-    },
-  });
-  cameraNote = createCameraNote(document, shellEl, { onRetry: () => { startCamera(); } });
-}
+const refreshEditor = () => { if (cueEditor) cueEditor.render(); if ($('chips').children.length) refreshCue(); };
 
 /** Say what went wrong in the server's own words, or in one plain line when it did not answer. */
 function sayFailure(err, plain) {
@@ -240,11 +215,20 @@ const el = (tag, cls, text) => {
   return e;
 };
 
+/** Open or close Set up, the one overlay with the cue switches, the cue wording, the camera and the microphone. */
+function setSetup(open) {
+  if (open) shellEl.dataset.setup = 'open'; else delete shellEl.dataset.setup;
+  $('setup-open').setAttribute('aria-expanded', String(open));
+  if (open) $('setup-close').focus(); else if (document.activeElement === $('setup-close')) $('setup-open').focus();
+}
+
 function show(view) {
   shellEl.dataset.view = view;
   for (const id of ['home', 'compose', 'prepare']) $(id).hidden = id !== view;
-  if (reviewCard) reviewCard.place(view);
-  if (cameraNote) cameraNote.place(view === 'prepare' ? rehearsal.noteHost : null);
+  if (view !== 'prepare') setSetup(false);
+  if (view === 'prepare' && cameraSettled) startLevel();
+  watchFace();
+  watchVoice();
 }
 
 function renderRecent(rows) {
@@ -261,13 +245,66 @@ function renderRecent(rows) {
   }
 }
 
+/** Which beat the card shows now, from 0. */
+let currentBeat = 0;
+/** The furthest beat this rehearsal reached: the beats before it carry a tick on the timeline. */
+let reachedBeat = 0;
+/** True while the microphone hears a fast pace, and while the camera has seen no smile for a while. */
+const measured = { 'slow-down': false, smile: false };
+
+/** Show one beat on the card and the timeline. The others stay in the list, out of sight. */
+function showBeat(index) {
+  const rows = [...$('beat-list').children];
+  currentBeat = Math.max(0, Math.min(rows.length - 1, index));
+  reachedBeat = Math.max(reachedBeat, currentBeat);
+  rows.forEach((row, i) => row.classList.toggle('is-current', i === currentBeat));
+  const line = timelineView(rows.length, currentBeat, reachedBeat);
+  [...$('rail').querySelectorAll('button')].forEach((dot, i) => {
+    if (i === currentBeat) dot.setAttribute('aria-current', 'step'); else dot.removeAttribute('aria-current');
+    dot.dataset.state = line.states[i];
+    dot.querySelector('.node').textContent = line.states[i] === 'done' ? '\u2713' : '';
+  });
+  const track = $('rail').querySelector('.beat-track');
+  if (track) {
+    Object.assign(track.style, { left: `${line.inset}%`, right: `${line.inset}%` });
+    Object.assign(track.querySelector('.track-done').style, { width: `${line.done}%` });
+    Object.assign(track.querySelector('.track-current').style, { left: `${line.done}%`, width: `${line.current}%` });
+  }
+  $('beat-prev').disabled = currentBeat <= 0;
+  $('beat-next').disabled = currentBeat >= rows.length - 1;
+  refreshCue();
+}
+
+/** The cue's words as the person will read them: their own wording when they changed it. */
+const cueText = (kind) => (wording && wording[kind]) || DELIVERY_CUES.find((cue) => cue.kind === kind).text;
+
+/**
+ * The one cue over the camera now, as the take shows one at a time: Slow down while the pace is fast, else Smile while
+ * there has been no smile, else the reminder the take will show on this beat. A cue switched off never shows.
+ */
+function refreshCue() {
+  const on = pressedCues();
+  const raised = Object.keys(MEASURED_CUES).find((kind) => measured[kind] && on.includes(kind));
+  const reminder = raised ? null : rehearsalCues(shownBeats, on, wording)[currentBeat];
+  const kind = raised || (reminder && reminder.kind) || null;
+  const box = $('live-cue');
+  box.hidden = !kind;
+  if (!kind) { delete box.dataset.cue; return; }
+  box.dataset.cue = kind;
+  box.dataset.reason = raised ? MEASURED_CUES[raised] : 'beat';
+  $('live-cue-mark').textContent = kind === 'smile' ? '\u{1F642}' : '';
+  $('live-cue-text').textContent = cueText(kind);
+}
+
 function renderBeats(beats) {
   const list = $('beat-list');
   list.replaceChildren();
-  for (const b of beats) {
+  // The words on the card are the take's: a wording experiment running on this idea is laid over them, as Live does.
+  for (const b of beatsAsShown(beats, trials, openIdea && openIdea.ideaId)) {
     const li = el('li', 'beat');
     li.setAttribute('data-testid', 'beat');
     const body = el('div', 'beat-body');
+    body.append(el('div', 'beat-step', STORY_LABEL));
     const label = el('div', 'beat-label', b.label);
     label.setAttribute('data-testid', 'beat-label');
     const pts = el('ul', 'beat-points');
@@ -281,6 +318,22 @@ function renderBeats(beats) {
     li.append(el('span', 'beat-rule'), body);
     list.append(li);
   }
+  // The beats as Live's timeline: a track, and one dot with its name per beat.
+  const rail = $('rail');
+  const track = el('div', 'beat-track');
+  track.setAttribute('aria-hidden', 'true');
+  track.append(el('span', 'track-done'), el('span', 'track-current'));
+  rail.replaceChildren(...(beats.length ? [track] : []));
+  for (const [index, b] of beats.entries()) {
+    const dot = el('button', 'tl-beat');
+    dot.type = 'button';
+    dot.setAttribute('data-testid', 'rail-beat');
+    dot.append(el('span', 'node'), el('span', 'beat-name', b.label));
+    dot.addEventListener('click', () => showBeat(index));
+    rail.append(dot);
+  }
+  reachedBeat = 0;
+  showBeat(0);
 }
 
 function renderChips() {
@@ -292,45 +345,78 @@ function renderChips() {
   const restored = savedCues(scope);
   wording = readWording(cueStorage(), scope);
   for (const [i, name] of CUES.entries()) {
+    const kind = DELIVERY_CUES[i].kind;
+    const isMeasured = Object.hasOwn(MEASURED_CUES, kind);
+    if (i === 0 || isMeasured !== Object.hasOwn(MEASURED_CUES, DELIVERY_CUES[i - 1].kind)) box.append(el('p', 'cue-group pnew', isMeasured ? GROUP_MEASURED : GROUP_REMINDERS));
     const b = el('button', 'chip', name);
     b.type = 'button';
     b.setAttribute('data-testid', 'cue-chip');
     b.setAttribute('aria-pressed', String(restored.includes(DELIVERY_CUES[i].kind)));
     b.addEventListener('click', () => {
       const on = b.getAttribute('aria-pressed') === 'true';
-      if (on) { b.setAttribute('aria-pressed', 'false'); note.hidden = true; writeCues(cueScope(), pressedCues()); refreshEditor(); if (rehearsal) rehearsal.cuesChanged(); return; }
+      if (on) { b.setAttribute('aria-pressed', 'false'); note.hidden = true; writeCues(cueScope(), pressedCues()); refreshEditor(); watchFace(); watchVoice(); return; }
       if (box.querySelectorAll('[aria-pressed="true"]').length >= MAX_CUES) { note.hidden = false; return; }
       b.setAttribute('aria-pressed', 'true');
       writeCues(cueScope(), pressedCues());
       refreshEditor();
-      if (rehearsal) rehearsal.cuesChanged();
+      watchFace();
+      watchVoice();
     });
     box.append(b);
+    if (CUE_NOTES[kind]) box.append(el('p', 'cue-note pnew', CUE_NOTES[kind]));
   }
   refreshEditor();
-  if (rehearsal) rehearsal.cuesChanged();
+  watchFace();
+  watchVoice();
+}
+
+/** The microphone the level meter opened, once it has one: the pace is counted from the same sound. */
+let micStream = null;
+/** The pace coach while it runs, or the promise of it. */
+let paceCoach = null;
+/** Listen for the pace only while the Slow down cue is on. Nothing is recognised and nothing is kept. */
+function watchVoice() {
+  const wanted = !shellMode && !presentationMode && shellEl.dataset.view === 'prepare' && pressedCues().includes('slow-down') && Boolean(micStream);
+  if (wanted && !paceCoach) {
+    paceCoach = startPaceCoach(micStream, { onCue: ({ show }) => { measured['slow-down'] = show; refreshCue(); } });
+  } else if (!wanted && paceCoach) {
+    const stopping = paceCoach;
+    paceCoach = null;
+    measured['slow-down'] = false;
+    Promise.resolve(stopping).then((coach) => coach.stop());
+    refreshCue();
+  }
+}
+
+/** The face coach while it runs, or the promise of it while the model loads. */
+let faceCoach = null;
+/**
+ * Watch the camera for a smile only while the Smile cue is on and the camera shows a picture: with the cue off the
+ * model is never loaded and no frame is read. The drawn page and the presentation path never watch.
+ */
+function watchFace() {
+  const wanted = !shellMode && !presentationMode && shellEl.dataset.view === 'prepare' && pressedCues().includes('smile') && Boolean($('camera').srcObject);
+  if (wanted && !faceCoach) {
+    faceCoach = startFaceCoach($('camera'), { onCue: ({ show }) => { measured.smile = show; refreshCue(); } });
+  } else if (!wanted && faceCoach) {
+    const stopping = faceCoach;
+    faceCoach = null;
+    measured.smile = false;
+    Promise.resolve(stopping).then((coach) => coach.stop());
+    refreshCue();
+  }
 }
 
 /**
  * The button that plays the bundled sample take: there only while the sample
  * idea is open (D-123, D-140). It is a button of the stand-in's own
  * Back-button class, in a row of the stand-in's own actions class put under
- * the drawn row, so the page file holds nothing of it and the drawn row, Back
- * and Start recording, stays as it is drawn.
+ * the drawn row, so the page file holds nothing of it. On the prepare view it
+ * sits under Start recording, which moves up to make room.
  */
 function renderSampleButton(wanted) {
-  if (rehearsal) {
-    // Rehearsal: the sample take is a separately labelled option in Settings, never the main journey.
-    rehearsal.sampleSlot.replaceChildren();
-    if (!wanted) return;
-    const sample = el('button', 'text-button', `Sample: ${SAMPLE_TAKE_LABEL}`);
-    sample.type = 'button';
-    sample.setAttribute('data-testid', SAMPLE_HOOK);
-    sample.addEventListener('click', () => { startTake(true); });
-    rehearsal.sampleSlot.append(sample);
-    return;
-  }
-  const drawnRow = $('start-recording').parentElement;
+  const drawnRow = $('start-recording').closest('.actions');
+  $('start-recording').classList.toggle('has-sample', Boolean(wanted));
   const there = document.querySelector(`[data-testid="${SAMPLE_HOOK}"]`);
   if (!wanted) {
     if (there) there.parentElement.remove();
@@ -341,7 +427,7 @@ function renderSampleButton(wanted) {
   button.type = 'button';
   button.setAttribute('data-testid', SAMPLE_HOOK);
   button.addEventListener('click', () => { startTake(true); });
-  const row = el('div', drawnRow.className);
+  const row = el('div', `${drawnRow.className} sample-row`);
   row.append(button);
   drawnRow.after(row);
 }
@@ -353,10 +439,10 @@ function openPrepare(beats, title) {
   $('prepare-title').textContent = title || drawnTitle;
   renderBeats(beats);
   renderChips();
-  // The rehearsal holds the beats from here on: what it restores or edits is what shownBeats becomes (onChange).
-  if (rehearsal) rehearsal.setBeats(beats, cueScope() ? `rh:${cueScope()}` : null);
   renderSampleButton(Boolean(openIdea && openIdea.showSampleButton));
   show('prepare');
+  // What the person kept in Review, shown where they are about to record. The sample idea carries the sample's lesson.
+  if (!shellMode && !presentationMode && !ideaPending) mountCarriedLesson($('carried'), { sample: Boolean(openIdea && openIdea.showSampleButton), removable: true }).catch(() => {});
 }
 
 /** The three starts, with the saved recordings in the Recent list: asked for once, the first time this view is shown. */
@@ -372,6 +458,13 @@ function openHome() {
     .catch((err) => sayFailure(err, 'YAP could not list your recordings: its own server did not answer.'));
 }
 
+/** The kinds of the pressed chips, in the chips' order. */
+function pressedCues() {
+  return [...$('chips').querySelectorAll('[data-testid="cue-chip"]')]
+    .map((chip, i) => (chip.getAttribute('aria-pressed') === 'true' ? DELIVERY_CUES[i].kind : null))
+    .filter((kind) => kind !== null);
+}
+
 /**
  * Make the Recording and open its record address (D-127): the person's own
  * take on Start recording, the bundled sample take on Try the sample take. In
@@ -380,48 +473,24 @@ function openHome() {
 async function startTake(sample) {
   // Nothing is recorded on beats that are not shown yet, and one press makes one Recording.
   if (starting || ideaPending) return;
-  // Rehearsal: an edit typed but not applied is the person's to settle first; a coach turn still in flight is dropped.
-  if (rehearsal && !sample) {
-    const ready = rehearsal.beforeStart();
-    if (!ready.ok) { sayQuietly(document, ready.message); return; }
-  }
-  // The beats the rehearsal now shows (edited, applied) are what is recorded on, for an idea as for a typed start.
-  const view = openIdea ? { ...openIdea, beats: shownBeats } : (presentation ? { ...presentation.view, beats: shownBeats } : { ideaId: null, title: '', idea: typedWords, beats: shownBeats });
+  const view = openIdea || (presentation ? { ...presentation.view, beats: shownBeats } : { ideaId: null, title: '', idea: typedWords, beats: shownBeats });
   let request;
   try {
-    request = recordingRequest(view, pressedCues(), { sample });
     // The person's own wording goes through the engine onto the cues they edited. The sample take has its own cues and reads no draft.
-    if (!sample) {
-      wording = readWording(cueStorage(), cueScope());
-      request = { ...request, deliveryCues: cuesWithWording(request, wording) };
-    }
+    if (!sample) wording = readWording(cueStorage(), cueScope());
+    request = recordingRequest(view, pressedCues(), { sample, wording: sample ? null : wording });
   } catch (err) {
     // The engine's own refusal of a choice of cues, in its own words.
     sayQuietly(document, err instanceof Error ? err.message : NOT_STARTED_LINE);
     return;
   }
-  // A reminder from Review goes only with a take of the creator's own: never the sample take, never a refused one.
   starting = true;
-  let focus = { ok: true, carry: null };
-  if (!sample && reviewCard) {
-    await reviewCard.ready;
-    focus = reviewCard.forStart();
-    if (!focus.ok) { starting = false; sayQuietly(document, focus.message); return; }
-  }
   const scope = cueScope();
   try {
-    const { id } = madeRecordingId && focus.carry ? { id: madeRecordingId } : await createRecordingFor(request);
-    if (focus.carry) {
-      madeRecordingId = id;
-      const kept = saveTakeFocus(storageOrNull('localStorage'), id, focus.carry);
-      if (!kept.ok) { starting = false; sayQuietly(document, `${kept.message} Your recording is ready: press Start recording to try again, or Remove the reminder first.`); return; }
-      reviewCard.consumed();
-    }
-    // The rehearsal's own camera is let go before the record page opens; that page asks for its own.
-    if (!shellMode) { releaseCamera(); if (rehearsal) rehearsal.abortAll(); }
+    const { id } = await createRecordingFor(request);
     go(`${routeFor('record', { id })}${sample ? SAMPLE_QUERY : presentationMode ? '?presentation=1' : ''}`);
     // The chosen cues were used by this take: the draft goes only now, never on a failed save. A sample take uses none.
-    if (!sample) { clearCues(scope); clearWording(cueStorage(), scope); if (rehearsal) rehearsal.clearSaved(); }
+    if (!sample) { clearCues(scope); clearWording(cueStorage(), scope); }
     // Outside shell mode the page is leaving: a press on the way out makes nothing more.
     if (shellMode) starting = false;
   } catch (err) {
@@ -430,42 +499,92 @@ async function startTake(sample) {
   }
 }
 
-/** The camera stream held for the preview, so it can be let go (pagehide, Start) and asked for again (Retry camera). */
-let cameraStream = null;
-let cameraAsk = 0;
-/** Let the preview's tracks go. Nothing else is held: no recorder and no microphone are ever opened on this page. */
-function releaseCamera() {
-  cameraAsk += 1;
-  if (cameraStream) { for (const track of cameraStream.getTracks()) track.stop(); cameraStream = null; }
-  const video = $('camera');
-  video.srcObject = null;
-  video.classList.remove('is-ready');
+/** The default microphone's name, read from the device list once the camera is allowed. Live opens the microphone itself. */
+async function nameMic() {
+  try {
+    const mics = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
+    const first = mics.find((d) => d.deviceId === 'default') || mics[0];
+    $('mic-name').textContent = (first && first.label) || 'Default microphone';
+  } catch {
+    $('mic-name').textContent = 'Default microphone';
+  }
 }
-/** Ask for the camera (video only, never audio) and say plainly how it went, on every view. Retry camera calls this again. */
+
+/**
+ * Light the level bars from the microphone for as long as this page is open. Nothing is recorded or sent: the sound
+ * is only measured. False when this browser cannot measure it or the stream has no microphone.
+ */
+function showLevel(stream) {
+  const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!Context || stream.getAudioTracks().length === 0) return false;
+  const bars = [...$('meter').children];
+  const audio = new Context();
+  const analyser = audio.createAnalyser();
+  analyser.fftSize = 512;
+  audio.createMediaStreamSource(stream).connect(analyser);
+  const samples = new Float32Array(analyser.fftSize);
+  // A browser may hold sound back until the first press or key.
+  const wake = () => { if (audio.state === 'suspended') audio.resume().catch(() => {}); };
+  for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, wake);
+  wake();
+  const draw = () => {
+    analyser.getFloatTimeDomainData(samples);
+    let sum = 0;
+    for (const sample of samples) sum += sample * sample;
+    const lit = levelBars(Math.sqrt(sum / samples.length), bars.length);
+    bars.forEach((bar, i) => bar.classList.toggle('is-on', i < lit));
+    requestAnimationFrame(draw);
+  };
+  draw();
+  return true;
+}
+
+/**
+ * True when the address opens straight on the prepare view, where the level meter is: the microphone is then asked
+ * for together with the camera, in one prompt. The three starts ask for the picture only.
+ */
+const opensOnPrepare = !shellMode && !presentationMode && (Boolean(ideaId) || new URLSearchParams(location.search).get('start') === 'talk');
+/** True once the camera was allowed or refused: the meter waits for that answer before asking for anything itself. */
+let cameraSettled = false;
+let levelStarted = false;
+
+/** Start the level meter the first time the prepare view shows: from the microphone already open, or by asking for it then. */
+async function startLevel() {
+  if (levelStarted || shellMode || presentationMode) return;
+  levelStarted = true;
+  let stream = $('camera').srcObject;
+  if (!stream || stream.getAudioTracks().length === 0) {
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true }); } catch { stream = null; }
+  }
+  $('level').hidden = !(stream && showLevel(stream));
+  if (stream && stream.getAudioTracks().length > 0) micStream = stream;
+  watchVoice();
+}
+
 async function startCamera() {
   const video = $('camera');
-  const ask = cameraAsk + 1;
-  releaseCamera();
-  cameraAsk = ask;
-  sayCamera('Checking your camera…');
-  if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
-    sayCamera(cameraFailureLine({ name: 'unsupported' }), true);
-    return;
-  }
-  let stream;
+  let stream = null;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-  } catch (err) {
-    // The warm gradient behind stays visible.
-    if (ask === cameraAsk) sayCamera(cameraFailureLine(err), true);
-    return;
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: opensOnPrepare });
+  } catch {
+    // The microphone may be what was refused: the camera alone still shows the framing.
+    if (opensOnPrepare) { try { stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); } catch { stream = null; } }
   }
-  // A newer ask, or the page leaving, means this stream is not wanted: it is let go at once.
-  if (ask !== cameraAsk) { for (const track of stream.getTracks()) track.stop(); return; }
-  cameraStream = stream;
-  video.srcObject = stream;
-  video.classList.add('is-ready');
-  sayCamera('Camera on. Check your framing and light. Nothing is recording yet.');
+  if (stream) {
+    video.srcObject = stream;
+    video.classList.add('is-ready');
+    $('cam-name').textContent = (stream.getVideoTracks()[0] && stream.getVideoTracks()[0].label) || 'Default camera';
+    nameMic();
+    sayCamera('Camera on. Check your framing and light. Nothing is recording yet.');
+  } else {
+    // warm gradient behind stays visible
+    $('cam-name').textContent = 'No camera yet';
+    $('mic-name').textContent = 'Default microphone';
+    sayCamera('YAP cannot see a camera yet. Allow camera access for this page, then reload. You can still start; the recording page asks again.');
+  }
+  cameraSettled = true;
+  if (shellEl.dataset.view === 'prepare') startLevel();
+  watchFace();
 }
 
 /** Ask this app's model route (the tester's own Claude Code, then their own key, D-125). writeBeats falls back to the default beats. */
@@ -522,6 +641,9 @@ async function showIdea(id) {
     sayQuietly(document, line);
     return;
   }
+  // The experiments are read with the idea; with none, or no answer, the card shows the beats as they were kept.
+  trials = await getTrials().then((answer) => answer.trials || answer || [], () => []);
+  if (!Array.isArray(trials)) trials = [];
   openIdea = prepareView(idea);
   openIdea.idea=ideaWords(idea).join('\n');
   if(idea.keptBeats?.length||idea.ticks?.['outline-edited'])openIdea.beats=(idea.keptBeats||[]).map(b=>({label:b.title,points:b.line?[b.line]:[],...preparedAngleFields(b.preparedAngles)}));
@@ -556,13 +678,27 @@ $('back-home').addEventListener('click', () => {
 $('start-recording').addEventListener('click', () => {
   document.dispatchEvent(new CustomEvent('yap:start-recording'));
 });
+// Set up opens the overlay, and its own close button or Escape closes it.
+$('setup-open').addEventListener('click', () => setSetup(true));
+$('setup-close').addEventListener('click', () => setSetup(false));
+$('beat-prev').addEventListener('click', () => showBeat(currentBeat - 1));
+$('beat-next').addEventListener('click', () => showBeat(currentBeat + 1));
+// The arrow keys step through the beats, as the two buttons do, unless the person is typing.
+document.addEventListener('keydown', (event) => {
+  if (shellEl.dataset.view !== 'prepare' || event.metaKey || event.ctrlKey || event.altKey) return;
+  if (event.key === 'Escape' && shellEl.dataset.setup === 'open') { setSetup(false); return; }
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName) || event.target.isContentEditable) return;
+  if (event.key === 'ArrowRight') showBeat(currentBeat + 1);
+  else if (event.key === 'ArrowLeft') showBeat(currentBeat - 1);
+});
 document.addEventListener('yap:start-recording', () => { startTake(false); });
 
 // The Recent list: the shell's two drawn rows in shell mode; outside it, the saved recordings once the three starts are shown.
 renderRecent(shellMode ? DRAWN_RECENT : []);
-/** One line about the camera, on every view outside shell mode (and Retry camera when it failed). */
-function sayCamera(line, failed = false) {
-  if (cameraNote) cameraNote.say(line, { failed });
+/** One line about the camera, shown only on the presentation path. */
+function sayCamera(line) {
+  const note = document.querySelector('[data-testid="camera-status"]');
+  if (note) note.textContent = line;
 }
 
 /**
@@ -572,6 +708,11 @@ function sayCamera(line, failed = false) {
  */
 function openPresentation() {
   shellEl.dataset.presentation = 'true';
+  const status = el('p', 'camera-status', 'Checking your camera…');
+  status.setAttribute('data-testid', 'camera-status');
+  status.setAttribute('role', 'status');
+  const first = document.querySelector('#prepare .panel-title');
+  first.before(status);
   $('back-home').textContent = 'Back to presentation editing';
   $('back-home').setAttribute('data-testid', 'back-to-presentation');
   // Only a presentation the person actually kept is read here: with none kept, the suggestions are not theirs to record.
@@ -592,8 +733,15 @@ function openPresentation() {
   display.target = '_blank';
   display.rel = 'noopener';
   display.dataset.testid = 'open-presentation-display';
-  const shareHint = el('p', 'camera-status-hint', 'Open this tab first, then choose it in the screen picker.');
-  rehearsal.extras.append(display, shareHint);
+  const shareHint = el('p', 'camera-status', 'Open this tab first, then choose it in the screen picker.');
+  status.after(display, shareHint);
+  // Keep actions entirely visible; only the beats/cues area scrolls in the dock.
+  const dock = $('prepare');
+  Object.assign(dock.style, { display: 'flex', flexDirection: 'column' });
+  Object.assign(dock.querySelector('.prepare-grid').style, { minHeight: '0', overflowY: 'auto', flex: '1 1 auto', gridAutoRows: 'max-content' });
+  Object.assign(dock.querySelector('.actions').style, { flexShrink: '0' });
+  Object.assign(display.style, { padding: '0', marginBottom: '6px', fontSize: '15px', flexShrink: '0' });
+  Object.assign(shareHint.style, { flexShrink: '0', fontSize: '13px' });
   // Cues chosen on the map open already pressed here; a choice already made on this page stands.
   const scope = cueScope();
   if (read.cues.length && !(scope in readCueStore().entries)) writeCues(scope, read.cues);
@@ -604,9 +752,9 @@ if (presentationMode) openPresentation();
 else if (ideaId) showIdea(ideaId);
 else if(!shellMode&&new URLSearchParams(location.search).get('start')==='talk')openPrepare(defaultBeats());
 else openHome();
-if (!shellMode) {
+if (shellMode) {
+  $('cam-name').textContent = 'Built-in camera';
+  $('mic-name').textContent = 'Built-in microphone';
+} else {
   startCamera();
-  // The camera is let go when the page goes away, and asked for again if the browser brings the page back from its cache.
-  globalThis.addEventListener('pagehide', () => { releaseCamera(); rehearsal.dispose(); });
-  globalThis.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
 }

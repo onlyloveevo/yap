@@ -14,7 +14,7 @@ export function assertDeviceStream(stream) {
 export async function startCameraRecorder(options={}) {
  if('stream' in options) throw new Error('The recorder must request the camera and microphone itself.');
  const scope=options.scope || globalThis, devices=scope.navigator?.mediaDevices, Recorder=scope.MediaRecorder;
- if(!devices?.getUserMedia || !Recorder) throw new Error('Camera recording needs Chrome on localhost or HTTPS.');
+ if(!devices?.getUserMedia || !Recorder) throw new Error('Recording needs Chrome. Open YAP there.');
  let stream;
  try {
   stream=await devices.getUserMedia({video:true,audio:true}); deviceStreams.add(stream); assertDeviceStream(stream);
@@ -42,8 +42,8 @@ export async function startCameraRecorder(options={}) {
   };
  } catch(error) {
   stream?.getTracks().forEach(t=>t.stop());
-  if(error.name==='NotAllowedError')throw new Error('Camera or microphone permission was denied. Allow both in your browser, then reload this page.');
-  if(error.name==='NotFoundError')throw new Error('No camera or microphone was found. Connect both, then reload this page.');
+  if(error.name==='NotAllowedError')throw new Error('Allow the camera and microphone for this page in your browser.');
+  if(error.name==='NotFoundError')throw new Error('Plug in a camera and a microphone.');
   throw error;
  }
 }

@@ -65,7 +65,7 @@ export function createReturnPreview(document, { record }) {
   const recordLabel = record.querySelector('.record-label') || (() => {
     const span = document.createElement('b');
     span.className = 'record-label';
-    span.textContent = 'Record next take';
+    span.textContent = 'Record the next take';
     record.append(span);
     return span;
   })();

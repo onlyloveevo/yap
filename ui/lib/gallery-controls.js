@@ -67,14 +67,17 @@ export function searchTextOf(card) {
 /**
  * Show the cards that match the pressed format and the search words; hide the rest.
  * @param {Iterable<any>} cards
- * @param {{ format: string | null, query: string }} state
+ * @param {{ format?: string | null, platform?: string | null, saved?: boolean, query: string }} state `platform` is a chip of the
+ *   chips row ("YouTube"), `saved` keeps only the person's own ideas
  * @returns {number} how many cards are showing
  */
 export function applyFilters(cards, state) {
   let shown = 0;
   for (const card of cards) {
     const formatOk = !state.format || card.dataset.format === state.format;
-    const visible = formatOk && matchesQuery(searchTextOf(card), state.query);
+    const placeOk = !state.platform || card.dataset.platform === state.platform;
+    const savedOk = !state.saved || card.dataset.custom === '1';
+    const visible = formatOk && placeOk && savedOk && matchesQuery(searchTextOf(card), state.query);
     card.hidden = !visible;
     if (visible) shown += 1;
   }
@@ -265,14 +268,15 @@ export function openRenameDialog(document, { title, onSave, returnFocus }) {
 export const GALLERY_CSS = `
 .card-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; }
 .card-desc { overflow-wrap: anywhere; }
-.searchbox[hidden], .search-clear[hidden], .empty[hidden], .empty-clear[hidden] { display: none; }
-.square { cursor: pointer; }
-.square[aria-expanded="true"] { color: var(--amber); border-color: var(--amber); background: var(--amber-tint); }
-.searchbox { position: relative; margin-left: auto; flex: 0 1 300px; min-width: 0; }
-.searchbox + .square { margin-left: 0; }
-.search-input { width: 100%; height: 52px; padding: 0 44px 0 var(--space-4); border: 1px solid var(--field-border); border-radius: var(--radius-nav); background: var(--field); color: var(--white); font: inherit; font-size: 16px; }
+.search-clear[hidden], .search-key[hidden], .empty[hidden], .empty-clear[hidden], .square[hidden] { display: none; }
+.head-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-3); flex: 0 1 400px; min-width: 0; }
+.searchbox { position: relative; width: 100%; min-width: 0; }
+.searchbox > svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--white-soft); pointer-events: none; }
+.search-input { width: 100%; height: 48px; padding: 0 52px 0 46px; border: 1px solid var(--field-border); border-radius: var(--radius-nav); background: var(--field); color: var(--white); font: inherit; font-size: 15.5px; }
 .search-input::placeholder { color: var(--white-dim); }
 .search-input::-webkit-search-cancel-button { display: none; }
+.search-input:focus-visible { outline: 0; border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-tint); }
+.search-key { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); padding: 2px 7px; border: 1px solid var(--rule); border-radius: 6px; font: inherit; font-size: 12px; color: var(--white-dim); pointer-events: none; }
 .search-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: var(--radius-round); background: transparent; color: var(--white-soft); }
 .search-clear svg { width: 18px; height: 18px; }
 .search-status { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -311,8 +315,8 @@ export const GALLERY_CSS = `
   .filters { flex-wrap: wrap; margin-top: var(--space-4); }
   .pill { height: 40px; padding: 0 var(--space-4); font-size: 15px; }
   .square { width: 44px; height: 44px; }
-  .searchbox { flex: 1 1 100%; order: 10; margin-left: 0; }
-  .searchbox + .square { margin-left: auto; }
+  .head-side { flex: none; align-items: stretch; }
+  .search-key { display: none; }
   .search-input { height: 46px; }
   .grid { grid-template-columns: minmax(0, 1fr); }
   .card-title { font-size: 18px; }
@@ -331,7 +335,12 @@ export function injectStyles(document, id, css) {
 
 const hook = (node, name) => { node.setAttribute('data-testid', name); return node; };
 
-/** The search field, its clear button, the sr-only count and the no-match message, put where the shell leaves room. */
+/**
+ * The search field of the Loom's idea inbox: always there, top right, above the
+ * button that starts a blank idea. With it come its clear button, the sr-only
+ * count and the no-match message. The shell's drawn search button has nothing
+ * left to open, so it leaves the screen.
+ */
 function mountSearch(document) {
   const filters = document.querySelector('.filters');
   const toggle = document.querySelector('[data-testid="search"]');
@@ -339,10 +348,10 @@ function mountSearch(document) {
   const box = hook(el(document, 'div', 'searchbox'), 'search-box');
   box.id = 'search-box';
   box.setAttribute('role', 'search');
-  box.hidden = true;
+  box.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>';
   const input = /** @type {HTMLInputElement} */ (hook(el(document, 'input', 'search-input'), 'search-input'));
   input.type = 'search';
-  input.placeholder = 'Search ideas';
+  input.placeholder = 'Search your ideas, topics or formats';
   input.maxLength = QUERY_MAX;
   input.autocomplete = 'off';
   input.spellcheck = false;
@@ -352,10 +361,15 @@ function mountSearch(document) {
   clear.hidden = true;
   clear.setAttribute('aria-label', 'Clear search');
   clear.innerHTML = '<svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>';
-  box.append(input, clear);
-  toggle.before(box);
-  toggle.setAttribute('aria-controls', 'search-box');
-  toggle.setAttribute('aria-expanded', 'false');
+  // The key that jumps here, said in the field while it is empty.
+  const key = hook(el(document, 'kbd', 'search-key', /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'), 'search-key');
+  key.setAttribute('aria-hidden', 'true');
+  box.append(input, key, clear);
+  const side = el(document, 'div', 'head-side');
+  const start = document.querySelector('[data-testid="new-idea"]');
+  start.before(side);
+  side.append(box, start);
+  toggle.hidden = true;
   const status = hook(el(document, 'p', 'search-status'), 'search-status');
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
@@ -366,7 +380,7 @@ function mountSearch(document) {
   emptyClear.type = 'button';
   empty.append(emptyLine, emptyClear);
   grid.after(status, empty);
-  return { filters, toggle, box, input, clear, status, empty, emptyLine, emptyClear };
+  return { filters, box, input, key, clear, status, empty, emptyLine, emptyClear };
 }
 
 const FORMAT_OF = { 'filter-talking-head': 'Talking head', 'filter-vlog': 'Vlog', 'filter-walkthrough': 'Walkthrough', 'filter-interview': 'Interview' };
@@ -383,55 +397,51 @@ const FORMAT_OF = { 'filter-talking-head': 'Talking head', 'filter-vlog': 'Vlog'
 export function wireFilters(document) {
   injectStyles(document, 'gallery-controls', GALLERY_CSS);
   const ui = mountSearch(document);
-  const state = { format: null, query: '' };
+  const state = { format: null, platform: null, saved: false, query: '' };
   const allCards = () => [...document.querySelectorAll('.grid > .card')];
 
   function refresh() {
     const shown = applyFilters(allCards(), state);
-    const filtered = Boolean(state.format) || state.query.trim() !== '';
+    const filtered = Boolean(state.format || state.platform || state.saved) || state.query.trim() !== '';
     ui.status.textContent = filtered ? `${shown} ${shown === 1 ? 'idea' : 'ideas'} shown` : '';
     ui.empty.hidden = shown !== 0;
-    if (shown === 0) ui.emptyLine.textContent = state.query.trim() !== '' ? `No ideas match “${state.query.trim()}”.` : 'No ideas in this format yet.';
+    if (shown === 0) ui.emptyLine.textContent = state.query.trim() !== '' ? `No ideas match “${state.query.trim()}”.` : (state.saved ? 'Nothing saved yet. Develop a new idea to start.' : state.platform ? `No ideas for ${state.platform} yet.` : 'No ideas in this format yet.');
     ui.emptyClear.hidden = state.query.trim() === '';
   }
   const setQuery = (value) => {
     state.query = value.slice(0, QUERY_MAX);
     ui.clear.hidden = state.query === '';
+    ui.key.hidden = state.query !== '';
     refresh();
-  };
-  const open = () => {
-    ui.box.hidden = false;
-    ui.toggle.setAttribute('aria-expanded', 'true');
-    ui.input.focus();
-  };
-  const close = (refocus) => {
-    ui.input.value = '';
-    setQuery('');
-    ui.box.hidden = true;
-    ui.toggle.setAttribute('aria-expanded', 'false');
-    if (refocus) ui.toggle.focus();
   };
 
   document.addEventListener('click', (event) => {
     const pill = event.target instanceof Element ? event.target.closest('.pill') : null;
     if (!pill) return;
     state.format = FORMAT_OF[pill.getAttribute('data-testid') || ''] || null;
+    // A chip of the chips row names a platform, or the person's own saved ideas. It lights itself: the shell's script only knows its drawn pills.
+    if (pill.dataset.chip) for (const each of document.querySelectorAll('.pill[data-chip]')) each.setAttribute('aria-pressed', String(each === pill));
+    state.platform = pill.dataset.platform || null;
+    state.saved = pill.dataset.chip === 'saved';
     refresh();
   });
-  ui.toggle.addEventListener('click', () => { if (ui.box.hidden) open(); else close(true); });
   ui.input.addEventListener('input', () => setQuery(ui.input.value));
+  // Escape clears the typed words first; on an empty field it lets go of the field.
   ui.input.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     event.preventDefault();
-    if (ui.input.value) { ui.input.value = ''; setQuery(''); } else close(true);
+    if (ui.input.value) { ui.input.value = ''; setQuery(''); } else ui.input.blur();
   });
   ui.clear.addEventListener('click', () => { ui.input.value = ''; setQuery(''); ui.input.focus(); });
-  ui.emptyClear.addEventListener('click', () => { ui.input.value = ''; setQuery(''); if (!ui.box.hidden) ui.input.focus(); });
-  // "/" jumps to the search field, as long as the person is not typing somewhere.
+  ui.emptyClear.addEventListener('click', () => { ui.input.value = ''; setQuery(''); ui.input.focus(); });
+  // Command K (Control K off a Mac) jumps to the search field, as the field says. So does "/", as long as the person is not typing somewhere.
   document.addEventListener('keydown', (event) => {
+    if (document.querySelector('dialog[open]')) return;
     const target = /** @type {any} */ (event.target);
     const typing = target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
-    if (event.key === '/' && !typing && !event.metaKey && !event.ctrlKey && !event.altKey && !document.querySelector('dialog[open]')) { event.preventDefault(); open(); }
+    const chord = (event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'k';
+    const slash = event.key === '/' && !typing && !event.metaKey && !event.ctrlKey && !event.altKey;
+    if (chord || slash) { event.preventDefault(); ui.input.focus(); ui.input.select(); }
   });
   return { refresh };
 }

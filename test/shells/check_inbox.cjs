@@ -5,6 +5,8 @@
 // 1. the guard below: with no folder it prints its usage line and stops (exit 0 under the test runner, 2 from a shell).
 // 2. the url, origin and shotDir lines, the request line and the goto lines: an optional served address after the folder, same-origin requests allowed, screenshots in SHOT_DIR.
 // 3. SUPERSEDED ON PURPOSE (PRD-review-own-video.md, SCREEN-06): in the shell, "Open review" answered with a toast; in the wired screen it opens /review/:id. That one assertion is replaced (the line marked SUPERSEDED). The shell's "Add video" toast was never asserted here; in the wired screen it opens the file picker.
+// 4. SUPERSEDED ON PURPOSE (BUILD_YapSubmitDemo, 4 Oct 2026): Home and Grow opened nothing and left the top bar; the badge reads "Sample videos" and no longer says "Not connected".
+// 5. SUPERSEDED ON PURPOSE (BUILD_YapSubmitDemo round 4, 4 Oct 2026, release judges' fault 8): the inbox has the left sidebar every other screen has, in place of the top bar; the profile picture opened nothing and left with the bar.
 // Every other assertion is byte for byte the original.
 if (!process.argv[2]) { console.log('Usage: node test/shells/check_inbox.cjs <folder> [http://127.0.0.1:PORT/review]'); process.exit(process.env.NODE_TEST_CONTEXT ? 0 : 2); }
 const { chromium } = require('playwright'); const path = require('path'), fs = require('fs');
@@ -21,10 +23,11 @@ const dir = path.resolve(process.argv[2] || '.'); const target = process.argv[3]
     const click = async id => { const e = await p.$(T(id)); if (!e) { need(false, `${w}: [data-testid=${id}] missing`); return; } await e.click().catch(() => need(false, `${w}: cannot click ${id}`)); await p.waitForTimeout(220); };
     const cards = async () => p.$$eval(T('card'), es => es.filter(e => e.offsetParent !== null).map(e => ({ status: e.dataset.status, sel: e.dataset.selected === 'true', title: (e.querySelector('[data-testid="card-title"]') || {}).innerText || '', open: !!e.querySelector('[data-testid="open-review"]') && e.querySelector('[data-testid="open-review"]').offsetParent !== null })));
     await p.goto(isUrl ? target : 'file://' + f); await p.waitForTimeout(300);
-    for (const id of ['brand', 'nav-home', 'nav-ideas', 'nav-create', 'nav-review', 'nav-grow', 'avatar', 'inbox-title', 'sample-badge', 'search', 'filter-needs', 'filter-waiting', 'filter-reviewed', 'filter-all', 'add-video']) need(await vis(id), `${w}: ${id} missing or not visible`);
+    for (const id of ['brand', 'nav-ideas', 'nav-create', 'nav', 'nav-review', 'inbox-title', 'sample-badge', 'search', 'filter-needs', 'filter-waiting', 'filter-reviewed', 'filter-all', 'add-video']) need(await vis(id), `${w}: ${id} missing or not visible`);
     need((await p.$eval(T('nav-review'), e => e.getAttribute('aria-current')).catch(() => null)) === 'page', `${w}: Review should be the current nav item (aria-current="page")`);
+    need(await p.$eval(T('nav'), e => { const b = e.getBoundingClientRect(); return b.left === 0 && b.height > b.width * 2; }).catch(() => false) && (await p.$$('.top-bar')).length === 0, `${w}: the menu is the left sidebar every screen shares, not a top bar`);
     need(/review inbox/i.test(await txt('inbox-title')), `${w}: title should read "Review inbox"`);
-    need(/sample/i.test(await txt('sample-badge')) && /not connected/i.test(await txt('sample-badge')), `${w}: the badge must say "Sample videos · Not connected"`);
+    need(/sample/i.test(await txt('sample-badge')) && !/not connected/i.test(await p.evaluate(() => document.body.innerText)), `${w}: one quiet "Sample videos" badge, and nothing says "Not connected"`); need((await p.$$(T('nav-home'))).length + (await p.$$(T('nav-grow'))).length === 0, `${w}: Home and Grow open nothing, so they are not in the top bar`);
     let cs = await cards();
     need(cs.length >= 4 && cs.every(c => c.status === 'needs'), `${w}: the inbox opens on Needs review with at least 4 cards, all needs (got ${cs.length}: ${cs.map(c => c.status).join(',')})`);
     need(cs.filter(c => c.sel).length === 1 && cs.filter(c => c.open).length === 1 && cs.find(c => c.sel)?.open, `${w}: exactly one selected card, and the only visible Open review button sits on it`);
@@ -47,5 +50,5 @@ const dir = path.resolve(process.argv[2] || '.'); const target = process.argv[3]
   }
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS review inbox: nav, honest sample badge, filters, search, selection with one Open review, coffee trial waiting, 2 sizes, no errors, no network');
+  console.log('PASS review inbox: nav, one quiet sample badge, filters, search, selection with one Open review, coffee trial waiting, 2 sizes, no errors, no network');
 })().catch(e => { console.log('FAIL check crashed: ' + e); process.exit(1); });

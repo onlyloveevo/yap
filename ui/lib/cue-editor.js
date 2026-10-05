@@ -148,7 +148,7 @@ export function clearWording(storage, scope) {
 export function cuesWithWording(request, wording) {
   const cues = Array.isArray(request.deliveryCues) ? request.deliveryCues : [];
   if (cues.length === 0 || !isObject(wording) || cues.every((cue) => !Object.hasOwn(wording, cue.kind))) return cues;
-  const picks = cues.map((cue) => ({ kind: cue.kind, beatId: cue.beatId, text: Object.hasOwn(wording, cue.kind) ? wording[cue.kind] : cue.text }));
+  const picks = cues.map((cue) => ({ kind: cue.kind, beatId: cue.beatId, ...(cue.beatId === null ? { placed: false } : {}), text: Object.hasOwn(wording, cue.kind) ? wording[cue.kind] : cue.text }));
   return chooseDeliveryCues(/** @type {any} */ (picks), request.beats).cues;
 }
 

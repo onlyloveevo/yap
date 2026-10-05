@@ -136,8 +136,11 @@ export function undoLast(recording) {
  * @param {'apply' | 'restore' | 'apply-sure' | 'restore-all'} op
  * @param {string[]} [ids]
  */
+/** The cuts YAP makes by itself: the kinds the transcript knows, and filler words. */
+const YAP_KINDS = Object.freeze([...AUTO_KINDS, 'filler']);
+
 export function changeAutocuts(recording, op, ids = []) {
-  const auto = recording.cuts.cuts.filter((c) => AUTO_KINDS.includes(c.kind));
+  const auto = recording.cuts.cuts.filter((c) => YAP_KINDS.includes(c.kind));
   let targets;
   if (op === 'apply-sure') targets = auto.filter((c) => c.certainty === 'sure' && !c.applied).map((c) => c.id);
   else if (op === 'restore-all') targets = auto.filter((c) => c.applied).map((c) => c.id);
@@ -146,7 +149,7 @@ export function changeAutocuts(recording, op, ids = []) {
     for (const id of ids) {
       const cut = recording.cuts.cuts.find((c) => c.id === id);
       if (!cut) throw new EditorOpError(404, 'No cut has that id. Reload to see the current cut.');
-      if (!AUTO_KINDS.includes(cut.kind)) throw new EditorOpError(422, 'Only automatic cuts are changed here. Trims and removed words keep their own controls.');
+      if (!YAP_KINDS.includes(cut.kind)) throw new EditorOpError(422, 'Only automatic cuts are changed here. Trims and removed words keep their own controls.');
     }
     targets = [...new Set(ids)];
   } else throw new EditorOpError(400, 'Unknown autocut change.');

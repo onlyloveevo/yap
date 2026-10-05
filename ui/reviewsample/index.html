@@ -6,42 +6,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YAP · Review</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../lib/nav.css">
 <script type="module" src="wire.js"></script>
+<link rel="stylesheet" href="../lib/theme.css">
 </head>
 <body>
 <div class="app">
-  <aside class="side">
+  <nav class="nav" data-testid="nav" aria-label="Main">
     <div class="brand" data-testid="brand">YAP</div>
-    <nav class="nav" id="nav"></nav>
-  </aside>
+    <a class="nav-item" href="#" data-testid="nav-ideas">
+      <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>Ideas</a>
+    <a class="nav-item" href="#" data-testid="nav-create">
+      <svg viewBox="0 0 24 24"><path d="M11 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V13"/><path d="m18.5 3.5 2 2L12 14l-3 1 1-3z"/></svg>Create</a>
+    <a class="nav-item" href="#" data-testid="nav-review" aria-current="page">
+      <svg viewBox="0 0 24 24"><path d="M4 21h16M5 14l3 3 5-6 3 3M7 4v2M3.5 5h7M17 3v3M15.5 4.5h3"/></svg>Review</a>
+  </nav>
   <main class="main">
     <header class="head">
       <div class="head-text">
         <div class="title-row">
           <h1 data-testid="title">Review</h1>
-          <span class="badge" data-testid="sample-badge">Sample data · Not connected</span>
+          <span class="badge" data-testid="sample-badge">Sample</span>
         </div>
         <p class="sub">Understand what's working, and make your next video even better.</p>
       </div>
-      <button class="range" data-testid="range" type="button" aria-label="Date range: Last 28 days"></button>
+      <p class="range" data-testid="range" id="range"></p>
     </header>
     <section class="kpis" id="kpis"></section>
     <div class="cols">
       <div class="left">
         <section class="player" data-testid="player">
-          <div class="screen"><img src="assets/video.jpg" alt=""></div>
+          <div class="screen" data-still="frame"><img class="still" src="assets/video.jpg" alt=""></div>
           <div class="controls">
             <button class="icon-btn" data-testid="play" type="button" aria-label="Play" id="play"></button>
-            <span class="time" data-testid="time" id="time">0:14 / 8:27</span>
-            <div class="progress"><div class="progress-fill" id="progress"></div></div>
-            <span class="ctl" id="ctl"></span>
+            <span class="time" data-testid="time" id="time">0:00 / 8:27</span>
+            <div class="progress" data-testid="seek"><div class="progress-fill" id="progress"></div></div>
+            <span class="ctl"><button class="icon-btn" data-testid="mute" type="button" aria-label="Mute" aria-pressed="false" id="mute"></button><button class="icon-btn" data-testid="fullscreen" type="button" aria-label="Full screen" id="full"></button></span>
           </div>
         </section>
-        <div class="vtitle"><h2 data-testid="video-title">Why this matters</h2><p>Published Jan 12, 2025</p></div>
+        <div class="vtitle"><h2 data-testid="video-title">Why this matters</h2><p data-testid="published">Published Jan 12, 2025</p></div>
         <section class="card retention" data-testid="retention">
-          <div class="card-head">
-            <h3>Audience retention <span class="info" id="info"></span></h3>
-            <div class="legend"><span><i class="dot purple"></i>This video</span><span><i class="dot grey"></i>Your channel average</span></div>
+          <div class="card-head" data-testid="chart-head">
+            <h3><span data-testid="chart-heading">Audience retention</span> <span class="info" id="info"></span></h3>
+            <div class="legend" data-testid="legend"><span><i class="dot purple"></i>This video</span><span><i class="dot grey"></i>Your channel average</span></div>
           </div>
           <div class="chart" id="chart"></div>
           <h3 class="kmh">Key moments</h3>
@@ -50,13 +57,13 @@
       </div>
       <aside class="assistant" data-testid="assistant">
         <div class="a-head">
-          <span class="spark-ic" id="spark-ic"></span><b>YAP assistant</b><span class="beta">BETA</span>
-          <button class="icon-btn small" type="button" aria-label="Assistant options" id="a-opt"></button>
+          <span class="spark-ic" id="spark-ic"></span><b>YAP assistant</b><span class="beta">BETA</span><button class="hear" data-testid="hear" id="hear" type="button" aria-pressed="false" aria-label="Hear YAP's reading" hidden></button>
         </div>
         <div class="scroller" id="scroller">
           <div class="bubble you" data-testid="question">What happened here?</div>
           <div class="bubble yap" data-testid="answer" id="answer"></div>
           <section class="experiment" data-testid="experiment" id="experiment"></section>
+          <div class="trying-slot" id="trying"></div>
           <div class="thread" id="thread"></div>
         </div>
         <div class="ask">
@@ -70,6 +77,5 @@
     </div>
   </main>
 </div>
-<div class="toast" data-testid="toast" id="toast" role="status" hidden></div>
 </body>
 </html>

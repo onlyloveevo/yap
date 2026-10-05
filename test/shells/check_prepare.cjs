@@ -7,6 +7,8 @@
 // 2. the url, origin and shotDir line: an optional served address after the folder, and screenshots in SHOT_DIR, or .tmp/shells/ in the app folder. Never beside a page.
 // 3. the request line lets through requests to the served address's own origin, and the goto line opens that address when one is given.
 // 4. the screenshot line near the end writes prepare-<width>.png into the screenshot folder.
+// Round 2 (4 Oct 2026) added three assertions of its own, marked Rehearsal: his Loom shows preparation as a rehearsal, which the shell of 3 Oct did not have.
+// Round 4 (4 Oct 2026) added one press and no assertion: Set up is opened before the cue switches are pressed, because the rehearsal is now the Live screen and the switches are in its one overlay.
 if (!process.argv[2]) { console.log('Usage: node test/shells/check_prepare.cjs <folder> [http://127.0.0.1:PORT/path]   (playwright on NODE_PATH; screenshots go to SHOT_DIR or .tmp/shells/)'); process.exit(process.env.NODE_TEST_CONTEXT ? 0 : 2); }
 const { chromium } = require('playwright'); const path = require('path'), fs = require('fs');
 const dir = path.resolve(process.argv[2] || '.'); const fails = []; const need = (ok, m) => { if (!ok) fails.push(m); };
@@ -31,6 +33,11 @@ const words = s => s.trim().split(/\s+/).filter(Boolean).length;
     // Just talk -> default beats, no model
     await click('choice-just-talk');
     let bs = await beats(); need(bs.map(x => x.label.toLowerCase()).join(',') === 'hook,story,point,takeaway', `${w}: Just talk should give the default beats Hook, Story, Point, Takeaway (got ${bs.map(x => x.label).join(', ')})`);
+    // Rehearsal (his Loom at 07:42): the beat card steps forward and back through the beats, and the timeline shows them all.
+    const cur = async () => p.$eval('[data-testid="beat"].is-current [data-testid="beat-label"]', e => e.innerText).catch(() => '');
+    need((await p.$$(T('rail-beat'))).length === 4, `${w}: the timeline should show the 4 default beats`);
+    await click('beat-next'); need((await cur()).toLowerCase() === 'story', `${w}: Next should show the second beat, Story (got ${await cur()})`);
+    await click('beat-prev'); need((await cur()).toLowerCase() === 'hook', `${w}: Back should return to the first beat, Hook (got ${await cur()})`);
     await click('back-home');
     // Idea -> 3-6 beats, labels <= 3 words, points <= 6 words, at most 3 per beat
     await click('choice-idea'); need(await vis('idea-input'), `${w}: idea input missing after Start from an idea`);
@@ -38,7 +45,8 @@ const words = s => s.trim().split(/\s+/).filter(Boolean).length;
     await click('make-beats'); bs = await beats();
     need(bs.length >= 3 && bs.length <= 6, `${w}: idea should give 3-6 beats (got ${bs.length})`);
     for (const x of bs) { need(words(x.label) >= 1 && words(x.label) <= 3, `${w}: beat label "${x.label}" should be 1-3 words`); need(x.points.length <= 3, `${w}: beat "${x.label}" has ${x.points.length} points (max 3)`); for (const pt of x.points) need(words(pt) <= 6, `${w}: point "${pt}" is over 6 words`); }
-    // delivery cues: 6 chips, at most 3 chosen
+    // delivery cues: 6 chips, at most 3 chosen. Round 4 (4 Oct 2026): the switches are in the Set up overlay, as his Loom's preparation is the Live screen, so it is opened first.
+    await click('setup-open');
     const chips = await p.$$(T('cue-chip')); need(chips.length === 6, `${w}: ${chips.length} delivery cue chips (want 6)`);
     const want = ['slow down', 'smile', 'more energy', 'pause', 'look at lens', 'land the point']; const ct = (await p.$$eval(T('cue-chip'), es => es.map(e => e.innerText.toLowerCase()))).join('|');
     for (const c of want) need(ct.includes(c), `${w}: no "${c}" chip`);
@@ -55,5 +63,5 @@ const words = s => s.trim().split(/\s+/).filter(Boolean).length;
   }
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS Home + Prepare shell: three starts, default beats, idea beats within limits, 6 cues with a 3-cue limit, 2 sizes, no errors, no network');
+  console.log('PASS Home + Prepare shell: three starts, default beats, a rehearsal that steps through them, idea beats within limits, 6 cues with a 3-cue limit, 2 sizes, no errors, no network');
 })().catch(e => { console.log('FAIL check crashed: ' + e); process.exit(1); });

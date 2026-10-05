@@ -9,7 +9,6 @@
   },
   "scripts": {
     "test": "node scripts/test.js",
-    "test:review": "node --test --test-concurrency=4 test/*.test.js",
     "replay": "node scripts/replay.js",
     "setup": "node scripts/setup.js",
     "start": "node server/serve.js",
@@ -18,7 +17,8 @@
     "walk:review": "node scripts/walk.js review",
     "walk:own-take": "node scripts/walk.js own-take",
     "walk": "node scripts/walk.js full",
-    "check:shells": "node scripts/walk.js checks"
+    "check:shells": "node scripts/walk.js checks",
+    "test:review": "node --test --test-concurrency=4 test/*.test.js"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.0",

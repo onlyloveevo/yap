@@ -47,11 +47,6 @@ for (const row of rows()) {
   $(`beat-${id}-edit`).addEventListener('click', () => fire('yap:beat-edit', { id }));
 }
 
-const extras = $('extras');
-extras.addEventListener('click', () => {
-  extras.setAttribute('aria-expanded', String(extras.getAttribute('aria-expanded') !== 'true'));
-});
-
 const input = $('refine-input');
 input.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' || e.shiftKey) return;

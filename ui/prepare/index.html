@@ -15,8 +15,8 @@
   <div class="camera-shade"></div>
 
   <header class="top-bar">
-    <div class="brand-line" data-testid="brand"><strong>YAP</strong></div>
-    <p class="tagline">Show up. Yap. Be you.</p>
+    <div class="brand-line" data-testid="brand"><strong>YAP</strong><span class="brand-dot pnew" aria-hidden="true">&bull;</span><span class="pnew" data-testid="preview-chip">Rehearsal &middot; not recording</span></div>
+    <p class="tagline"><span>Show up.</span> <span>Yap.</span> <span>Be you.</span></p>
   </header>
 
   <section class="panel glass" id="home" aria-labelledby="home-title">
@@ -42,20 +42,45 @@
   </section>
 
   <section class="panel panel-wide glass" id="prepare" hidden aria-labelledby="prepare-title">
-    <h1 class="panel-title" id="prepare-title">Your beats</h1>
+    <header class="phead">
+      <h1 class="panel-title" id="prepare-title">Your beats</h1>
+    </header>
+    <div class="header-actions pnew">
+      <button class="help glass" type="button" id="setup-open" data-testid="setup-open" aria-expanded="false" aria-controls="setup"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9m4 0h3M4 17h3m4 0h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Set up</span></button>
+    </div>
+    <div class="delivery-cue glass pnew" id="live-cue" data-testid="live-cue" role="status" hidden><span class="live-cue-mark" id="live-cue-mark" aria-hidden="true"></span><span id="live-cue-text"></span></div>
+    <div class="carried pnew" id="carried"></div>
     <div class="prepare-grid">
-      <ol class="beat-list" id="beat-list"></ol>
-      <div class="cues">
-        <h2 class="cue-title">How do you want to come across?</h2>
-        <div class="chips" id="chips" role="group" aria-label="Delivery cues"></div>
-        <p class="cue-limit" data-testid="cue-limit" id="cue-limit" role="status" hidden>Pick up to 3. They show one at a time while you record.</p>
-        <p class="hint">A cue shows briefly, then fades.</p>
+      <div class="stage">
+        <button class="step pnew" type="button" id="beat-prev" data-testid="beat-prev" aria-label="Previous beat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="pill" id="pill">
+          <span class="story-rule pnew" aria-hidden="true"></span>
+          <ol class="beat-list" id="beat-list"></ol>
+        </div>
+        <button class="step pnew" type="button" id="beat-next" data-testid="beat-next" aria-label="Next beat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
+      <aside class="side" id="setup" data-testid="setup" aria-label="Cues, camera and microphone">
+        <div class="panel-heading pnew"><strong>Set up</strong><button class="panel-icon" type="button" id="setup-close" data-testid="setup-close" aria-label="Close set up">&times;</button></div>
+        <div class="cues">
+          <h2 class="cue-title">What would help today?</h2>
+          <div class="chips" id="chips" role="group" aria-label="Delivery cues"></div>
+          <p class="hint">Only the cues you leave on show while you record.</p>
+          <p class="cue-limit" data-testid="cue-limit" id="cue-limit" role="status" hidden>Pick up to 3. They show one at a time while you record.</p>
+        </div>
+        <div class="pbar pnew">
+          <div class="dev"><span class="dev-k">Camera</span><span class="dev-v" id="cam-name" data-testid="camera-name">Looking for your camera</span></div>
+          <div class="dev"><span class="dev-k">Microphone</span><span class="dev-v" id="mic-name" data-testid="mic-name">Looking for your microphone</span></div>
+          <div class="dev level" id="level"><span class="dev-k">Audio level</span><div class="meter" id="meter" data-testid="audio-level" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="dev-s" id="level-note">Speak to test</span></div>
+        </div>
+      </aside>
     </div>
     <div class="actions">
       <button class="text-button" type="button" data-testid="back-home" id="back-home">Back</button>
       <button class="primary" type="button" data-testid="start-recording" id="start-recording">Start recording</button>
     </div>
+    <footer class="bottom-bar pnew">
+      <nav class="rail" id="rail" data-testid="rail" aria-label="Your beats"></nav>
+    </footer>
   </section>
 </main>
 </body>

@@ -9,14 +9,14 @@ export function ideaWords(idea = {}) {
  return [first, ...rest]
   .filter(word => typeof word === 'string' && word.trim()).map(word => word.trim());
 }
-/** An editable outline made only by splitting the person's words. No AI claim. */
+/** An editable outline made only by splitting the person's words: what an idea with no accepted outline shows as its beats. */
 export function outlineFromWords(idea = {}) {
  const parts=ideaWords(idea).flatMap(text=>text.split(/\n+|(?<=[.!?])\s+|;\s*|,\s+(?=and\b|then\b|but\b)/i))
   .map(text=>text.trim()).filter(Boolean).slice(0,12);
  return parts.map((line,i)=>({id:`own-${i+1}`,title:line.split(/\s+/).slice(0,7).join(' '),line,source:'idea',state:'yours'}));
 }
-export function ideaView(idea = {}, {conversation = false} = {}) {
+export function ideaView(idea = {}) {
  const messages=ideaWords(idea), rows=idea.keptBeats?.length||idea.ticks?.['outline-edited']?idea.keptBeats:outlineFromWords(idea);
  return {messages,rows,title:idea.title || messages[0] || 'Your idea',format:idea.format || 'Talking head',
-  summary:messages.join('\n'),notice:conversation?'Your words stay yours. YAP replies below, and nothing changes your outline until you use a suggestion.':'Your words, saved as an editable outline. No AI reply has been generated.'};
+  summary:messages.join('\n')};
 }

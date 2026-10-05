@@ -77,9 +77,12 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
     apply: hooks.apply,
     invalidateExport: hooks.invalidateExport,
     preview: hooks.previewBroll,
+    seek: hooks.seek,
   } });
 
-  const defs = [['transcript', 'Transcript', transcript.element], ['autocut', 'Autocut', autocut.element], ['captions', 'Captions', captionsPanel], ['broll', 'B-roll', broll.element]];
+  const defs = [['transcript', 'Transcript', transcript.element], ['autocut', 'Autocut', autocut.element], ['captions', 'Captions', captionsPanel], ['broll', 'Add B-roll', broll.element]];
+  // Two panels share this rail: the words (Transcript, Autocut, Captions) and B-roll, which stands alone under its own title.
+  const groupOf = (key) => (key === 'broll' ? ['broll'] : ['transcript', 'autocut', 'captions']);
   let active = 'transcript';
   for (const [key, label, panel] of defs) {
     const b = el(doc, 'button', 'rail-tab');
@@ -91,11 +94,12 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
     b.append(el(doc, 'span', 'rail-tab-name', label), el(doc, 'span', 'rail-badge'));
     b.addEventListener('click', () => select(key));
     b.addEventListener('keydown', (event) => {
-      const at = defs.findIndex(([k]) => k === key);
+      const group = groupOf(key);
+      const at = group.indexOf(key);
       const move = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-      if (!move) return;
+      if (!move || group.length < 2) return;
       event.preventDefault();
-      const next = defs[(at + move + defs.length) % defs.length][0];
+      const next = group[(at + move + group.length) % group.length];
       select(next);
       tabButtons[next].focus();
     });
@@ -114,7 +118,9 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
   closeButton.textContent = '×';
   head.append(tabs, closeButton);
   rail.append(head, ...defs.map(([, , p]) => p));
-  stage.append(rail);
+  // The panel stands beside the whole editor, as tall as the window, so the picture and the timeline stay together.
+  const shell = stage.closest('.edit-shell') || stage;
+  shell.append(rail);
 
   // The panel is closed until asked for; the choice is kept for this browser tab so a reload does not shut it.
   const KEY = 'yap-edit-panel';
@@ -124,6 +130,7 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
   function setOpen(on) {
     rail.hidden = !on;
     stage.dataset.rail = on ? 'open' : 'closed';
+    shell.dataset.rail = stage.dataset.rail;
     for (const button of doc.querySelectorAll('[data-rail-entry]')) button.setAttribute('aria-expanded', String(on && button.dataset.railEntry === active));
   }
   /** Open the panel on a tab. Focus moves to that tab, so the keyboard lands where the action was asked for. */
@@ -149,6 +156,7 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
 
   function select(key) {
     active = key;
+    rail.dataset.mode = key === 'broll' ? 'broll' : 'words';
     for (const [k] of defs) {
       tabButtons[k].setAttribute('aria-selected', String(k === key));
       tabButtons[k].tabIndex = k === key ? 0 : -1;
@@ -211,8 +219,8 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
     (saved, rec) => {
       if (!saved.changed) return saved.note || 'Nothing changed.';
       const n = saved.count;
-      const what = change.op === 'restore' || change.op === 'restore-all' ? 'Restored' : 'Applied';
-      return `${what} ${n} automatic ${n === 1 ? 'cut' : 'cuts'}. ${cutLine(rec)} Export again to download this edit.`;
+      const back = change.op === 'restore' || change.op === 'restore-all';
+      return `${back ? `Put ${n} ${n === 1 ? 'cut' : 'cuts'} back` : `Made ${n} ${n === 1 ? 'cut' : 'cuts'}`}. ${cutLine(rec)} Export again to download this edit.`;
     },
   );
   const setCaptions = (patch, say) => run(
@@ -226,6 +234,14 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
     return setCaptions({ op: 'enable', enabled: on }, () => (on ? 'Captions on. They show in the preview and are burned into the next export.' : 'Captions off. The next export has none.'));
   };
   toggle.addEventListener('click', () => { if (!toggle.disabled) toggleCaptions(); });
+
+  /** Every automatic cut for the Autocut list, filler words named as what they are. */
+  function reviewOf(rec) {
+    const fillers = new Set(rec.cuts.cuts.filter((c) => c.kind === 'filler').map((c) => c.id));
+    const review = autocutReview({ ...rec.cuts, cuts: rec.cuts.cuts.map((c) => (c.kind === 'filler' ? { ...c, kind: 'dead-air' } : c)) }, rec.transcript, rec.duration);
+    for (const item of review.items) if (fillers.has(item.id)) { item.kind = 'filler'; item.label = 'Filler'; }
+    return review;
+  }
 
   // ---- drawing ----
   function renderCaptionsPanel(rec, status) {
@@ -276,7 +292,7 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
       status, all: Array.isArray(rec.transcript) ? rec.transcript : [], states, runs: removedRuns(states), corrections,
       undoLabel: describeUndo(rec.cuts), busy, removedCount: states.filter((w) => w.removed).length,
     });
-    const review = autocutReview(rec.cuts, rec.transcript, rec.duration);
+    const review = reviewOf(rec);
     autocut.render(review, busy);
     tabButtons.autocut.querySelector('.rail-badge').textContent = review.counts.pending ? String(review.counts.pending) : '';
     tabButtons.autocut.querySelector('.rail-badge').hidden = !review.counts.pending;
@@ -320,7 +336,10 @@ export function createEditorRail({ document: doc, stage, id, hooks }) {
     isOpen: () => !rail.hidden,
     /** The tab the panel was left on in this browser tab, or null when it was closed. */
     remembered,
-    pendingAutocut: () => { const rec = hooks.getRecording(); return rec ? autocutReview(rec.cuts, rec.transcript, rec.duration).counts.pending : 0; },
+    pendingAutocut: () => { const rec = hooks.getRecording(); return rec ? reviewOf(rec).counts.pending : 0; },
+    brollMoments: () => broll.moments(),
+    brollMomentIndex: () => broll.momentIndex(),
+    chooseBrollMoment: (index) => broll.chooseMoment(index),
     element: rail,
     /** What Export sends besides the cut: the caption and B-roll state shown and, when captions are on, one drawing per cue. */
     async exportExtras() {

@@ -80,16 +80,37 @@ export function beatRows(idea, storyBeats) {
 }
 
 import { outlineFromWords } from './idea-model.js';
-/** Runtime only: saved edits win; otherwise use exact source words, not empty defaults. */
+import { isSuggestionId } from '../../src/engine/formats.js';
+/**
+ * Runtime only: the rows of a person's beat list. Their own beats come first:
+ * the saved ones when the list was ever edited, else the idea's bundled ones,
+ * else their words split into beats. YAP's suggestions follow: the idea's
+ * bundled ones, or the ones YAP wrote for this idea and the idea still carries
+ * (offeredBeats, src/engine/beat-list.js). A suggestion the person accepted is
+ * among the saved beats and shows as accepted. A bundled one they removed (a
+ * tick named skip-<id>) is not offered again.
+ */
 export function editableRows(idea = {}) {
- if(idea.keptBeats?.length||idea.ticks?.['outline-edited'])return (idea.keptBeats||[]).map(beat=>({...beat,source:'idea',state:'yours'}));
- if(idea.beats?.length)return beatRows(idea);
- return outlineFromWords(idea);
+ const edited=Boolean(idea.keptBeats?.length||idea.ticks?.['outline-edited']);
+ const bundled=idea.beats?.length?beatRows(idea):[];
+ const base=edited?(idea.keptBeats||[]):bundled.length?bundled.filter(row=>row.source==='idea'):outlineFromWords(idea);
+ const written=(Array.isArray(idea.offeredBeats)?idea.offeredBeats:[]).map(beat=>({id:beat.id,title:text(beat.title),line:text(beat.line),source:'suggestion',state:'suggested'}));
+ const offered=bundled.length?bundled.filter(row=>row.source==='suggestion'):written;
+ const offeredIds=new Set(offered.map(row=>row.id));
+ const own=base.map(beat=>offeredIds.has(beat.id)||isSuggestionId(beat.id)||/^suggestion-\d+$/.test(beat.id)?{...beat,source:'suggestion',state:'accepted'}:{...beat,source:'idea',state:'yours'});
+ const keptIds=new Set(own.map(row=>row.id));
+ return [...own,...offered.filter(row=>!keptIds.has(row.id)&&idea.ticks?.[`skip-${row.id}`]!==true)].slice(0,12);
+}
+/** The suggestions still waiting on a list, as the idea keeps them. */
+export function offeredBeats(rows) {
+ return (Array.isArray(rows)?rows:[]).filter(row=>row&&row.state==='suggested'&&typeof row.id==='string').map(row=>({id:row.id,title:text(row.title),line:text(row.line)}));
 }
 export function refinedRows(rows,id,text) {
  const line=String(text || '').trim();if(!line)return rows;
  if(id && rows.some(row=>row.id===id))return rows.map(row=>row.id===id?{...row,line,source:'idea',state:'yours'}:row);
  if(rows.length>=12)return rows;
  const used=new Set(rows.map(row=>row.id));let n=1;while(used.has(`own-${n}`))n++;
- return [...rows,{id:`own-${n}`,title:line.split(/\s+/).slice(0,7).join(' '),line,source:'idea',state:'yours'}];
+ // A new beat is the person's: it goes after their last kept beat, ahead of the suggestions still waiting at the end.
+ let at=rows.length;while(at>0&&rows[at-1].state==='suggested')at--;
+ return [...rows.slice(0,at),{id:`own-${n}`,title:line.split(/\s+/).slice(0,7).join(' '),line,source:'idea',state:'yours'},...rows.slice(at)];
 }

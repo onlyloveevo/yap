@@ -9,6 +9,13 @@
 // changed (409). A caption change names the caption revision it was made on.
 // The saved words and the original media are never written.
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { resolveFfmpeg } from '../src/node/export-file.js';
+import { resolveDataDir } from '../src/node/store.js';
+import { TIMELINE_FPS } from '../src/engine/export.js';
+import { handleMediaLibraryApi, sendFile } from './broll-api.js';
 import { timedWords } from '../src/engine/editor-words.js';
 import { removeWordRange, restoreRun, removeRunAgain, undoLast, changeAutocuts, EditorOpError } from '../src/engine/editor-ops.js';
 import { captionState, sanitizeCaptionText, CAPTION_LIMITS, CAPTION_COPY } from '../src/engine/caption-model.js';
@@ -92,4 +99,59 @@ function captionsAction(current, body, store, info, answer, refuse) {
   const next = same ? current : { ...current, captions: { enabled, corrections, revision: state.revision + 1 } };
   if (!same) store.save(next);
   answer(200, { recording: next, meta: info, changed: !same, captions: captionState(next) });
+}
+
+// ---- Routes of the editor that are not under one recording's cut: the media library and the original as an MP4 ----
+
+const RECORDING_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
+/** One conversion per recording at a time; a second request waits for the first. */
+const converting = new Map();
+
+/** The original recording as a constant-frame-rate MP4, the file the exported EDL and XML timelines point at. Made once, then kept. */
+function originalAsMp4(ffmpeg, source, target) {
+  if (converting.has(target)) return converting.get(target);
+  const job = new Promise((resolve) => {
+    const tmp = `${target}.tmp-${process.pid}`;
+    let child;
+    try {
+      child = spawn(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-nostdin', '-i', source, '-vf', `fps=${TIMELINE_FPS}`, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-f', 'mp4', '-y', tmp], { stdio: 'ignore' });
+    } catch { resolve(false); return; }
+    child.once('error', () => { fs.rmSync(tmp, { force: true }); resolve(false); });
+    child.once('close', (code) => {
+      if (code === 0 && fs.existsSync(tmp)) { fs.renameSync(tmp, target); resolve(true); } else { fs.rmSync(tmp, { force: true }); resolve(false); }
+    });
+  }).finally(() => converting.delete(target));
+  converting.set(target, job);
+  return job;
+}
+
+/**
+ * GET originals/:id and the media library (server/broll-api.js).
+ * @returns {Promise<boolean>} true when the request was one of these routes and has been answered
+ */
+export async function handleEditorExtras({ req, res, rest, method, answer, refuse, readJsonBody, recordings, root, dataDir }) {
+  if (await handleMediaLibraryApi({ req, res, rest, method, answer, refuse, readJsonBody, root, dataDir })) return true;
+  const m = /^originals\/([^/]+)$/.exec(rest || '');
+  if (!m) return false;
+  const id = m[1];
+  if (!['GET', 'HEAD'].includes(method)) { req.resume(); refuse(405, 'Method not allowed.'); return true; }
+  if (!RECORDING_ID.test(id)) { refuse(400, 'Invalid recording id.'); return true; }
+  const { store, meta } = recordings();
+  const recording = store.load(id);
+  if (!recording || recording.status !== 'ready' || !recording.video) { refuse(404, 'No finished recording has that id.'); return true; }
+  const info = meta.load(id);
+  const name = `YAP-${id}-original.mp4`;
+  if (info.sample) { sendFile(req, res, path.join(root, 'sample', `${info.sampleTake === 2 ? 'take2' : 'take1'}.mp4`), 'video/mp4', name); return true; }
+  const source = path.join(resolveDataDir(root, path.join(dataDir, 'media')), `${id}.webm`);
+  const exportsDir = resolveDataDir(root, path.join(dataDir, 'exports'));
+  const target = path.join(exportsDir, `${id}.original.mp4`);
+  if (!fs.existsSync(source)) { refuse(404, 'The original recording is not on this computer.'); return true; }
+  if (!fs.existsSync(target) || fs.statSync(target).mtimeMs < fs.statSync(source).mtimeMs) {
+    const ffmpeg = resolveFfmpeg({ appRoot: root });
+    if (!ffmpeg) { refuse(503, 'Run npm run setup from this app folder to restore video export. The original take is safe.'); return true; }
+    fs.mkdirSync(exportsDir, { recursive: true });
+    if (!await originalAsMp4(ffmpeg, source, target)) { refuse(422, 'The original could not be prepared as an MP4. The recording itself is safe.'); return true; }
+  }
+  sendFile(req, res, target, 'video/mp4', name);
+  return true;
 }
