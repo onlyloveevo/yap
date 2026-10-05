@@ -1,0 +1,6 @@
+{
+  "deliveryCues": [
+    { "kind": "slow-down", "beat": 1 },
+    { "kind": "land-the-point", "beat": 3 }
+  ]
+}

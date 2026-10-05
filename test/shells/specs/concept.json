@@ -1,0 +1,189 @@
+{
+ "name": "Ideas developing concept (frame accepted 3 Oct 05:09: 'lets go wtih thsi one next set of generatiosn')",
+ "fit": true,
+ "words": {
+  "brand": "YAP",
+  "nav-home": "Home",
+  "nav-ideas": "Ideas",
+  "nav-create": "Create",
+  "nav-review": "Review",
+  "nav-grow": "Grow",
+  "eyebrow": "OPEN IDEAS",
+  "title": "Let's shape your idea.",
+  "idea-heading": "YOUR IDEA",
+  "idea-status": "Working draft",
+  "idea-kind": "YouTube video · Talking head",
+  "change": "Change",
+  "story-label": "STORY SO FAR",
+  "edit-story": "Edit story",
+  "beat-opening-label": "Opening",
+  "beat-opening": "I planned for hours and never pressed record.",
+  "beat-story-label": "Story",
+  "beat-story": "What happened when I tried.",
+  "beat-closing-label": "Closing",
+  "beat-closing": "What do I want to leave the viewer with?",
+  "thumbs-label": "THUMBNAIL IDEAS",
+  "thumb-a-label": "Direction A",
+  "thumb-a-caption": "Why I keep putting off filming",
+  "thumb-b-label": "Direction B",
+  "thumb-b-caption": "I planned for hours. I never hit record.",
+  "experiment-label": "OPTIONAL EXPERIMENT",
+  "experiment-chip": "Proposed",
+  "experiment-title": "Try a clearer thumbnail promise",
+  "bring-experiment": "Bring in an experiment from Review",
+  "keep-exploring": "Keep exploring",
+  "save-idea": "Save idea",
+  "talk-to-yap": "Talk to YAP"
+ },
+ "contains": {
+  "talk-panel": [
+   "YouTube, talking head. Make it personal.",
+   "What happened when you tried to film?",
+   "I planned for hours and never pressed record.",
+   "Let's build around that moment."
+  ]
+ },
+ "placeholders": {
+  "idea-input": "Add a thought or ask YAP..."
+ },
+ "attrs": [
+  [
+   "nav-ideas",
+   "aria-current",
+   "page"
+  ],
+  [
+   "thumb-a",
+   "aria-pressed",
+   "false"
+  ],
+  [
+   "thumb-b",
+   "aria-pressed",
+   "false"
+  ],
+  [
+   "experiment",
+   "aria-expanded",
+   "false"
+  ]
+ ],
+ "leftOf": [
+  [
+   "nav",
+   "talk-panel"
+  ],
+  [
+   "talk-panel",
+   "idea-panel"
+  ],
+  [
+   "beat-opening",
+   "thumb-a"
+  ],
+  [
+   "keep-exploring",
+   "save-idea"
+  ]
+ ],
+ "wider": [
+  [
+   "idea-panel",
+   "talk-panel"
+  ]
+ ],
+ "above": [
+  [
+   "beat-opening",
+   "beat-story"
+  ],
+  [
+   "beat-story",
+   "beat-closing"
+  ],
+  [
+   "thumb-a",
+   "thumb-b"
+  ],
+  [
+   "thumb-b",
+   "experiment"
+  ],
+  [
+   "experiment",
+   "save-idea"
+  ]
+ ],
+ "gold": [
+  "save-idea"
+ ],
+ "goldOutline": [
+  "talk-to-yap"
+ ],
+ "images": [
+  "thumb-a",
+  "thumb-b"
+ ],
+ "type": {
+  "input": "idea-input",
+  "send": "send",
+  "event": "yap:idea-message"
+ },
+ "toggles": [
+  {
+   "click": "thumb-a",
+   "attr": "aria-pressed",
+   "after": "true",
+   "then": [
+    [
+     "thumb-b",
+     "aria-pressed",
+     "false"
+    ]
+   ]
+  },
+  {
+   "click": "thumb-b",
+   "attr": "aria-pressed",
+   "after": "true",
+   "then": [
+    [
+     "thumb-a",
+     "aria-pressed",
+     "false"
+    ]
+   ]
+  },
+  {
+   "click": "experiment",
+   "attr": "aria-expanded",
+   "after": "true"
+  }
+ ],
+ "events": [
+  {
+   "click": "talk-to-yap",
+   "event": "yap:talk"
+  },
+  {
+   "click": "change",
+   "event": "yap:idea-change-format"
+  },
+  {
+   "click": "edit-story",
+   "event": "yap:idea-edit-story"
+  },
+  {
+   "click": "bring-experiment",
+   "event": "yap:experiment-bring"
+  },
+  {
+   "click": "keep-exploring",
+   "event": "yap:idea-keep-exploring"
+  },
+  {
+   "click": "save-idea",
+   "event": "yap:idea-save"
+  }
+ ]
+}

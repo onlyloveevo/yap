@@ -1,0 +1,558 @@
+:root {
+ color-scheme:dark;
+
+ --white:#fff;
+  --white-soft:rgba(255,255,255,.78);
+  --white-dim:rgba(255,255,255,.58);
+  --glass:rgba(255,255,255,.055);
+  --glass-border:rgba(255,255,255,.14);
+  --amber:#f4c66b;
+  --green:#66ba82;
+  --backdrop:#17120f;
+  --camera-glow:#3a2f27;
+  --camera-mid:#231b16;
+  --camera-edge:#1c1611;
+  --camera-dark:#0d0a09;
+  --amber-glow:rgba(244,198,107,.28);
+
+ --shell-top:rgba(30,26,23,.9);
+  --shell-bottom:rgba(14,12,12,.97);
+  --label-bg:rgba(22,19,17,.82);
+  --purple:#7a63c4;
+  --wave:#8f7fb8;
+  --wave-bright:#bba3ed;
+  --wave-fill:rgba(143,127,184,.16);
+  --wave-bg:rgba(255,255,255,.04);
+  --cut-fill:#e4d5c9;
+  --cut-text:#171414;
+  --transparent:transparent;
+  --black-shade:rgba(0,0,0,.28);
+
+ --shadow:0 10px 30px var(--black-shade);
+  --blur:20px;
+
+ --radius-card:20px;
+  --radius-pill:999px;
+  --radius-round:50%;
+  --radius-small:10px;
+  --radius-shell:24px;
+  --radius-tile:8px;
+  --radius-label:10px;
+  --radius-wave:10px;
+
+ --space-0:0px;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-7:28px;
+  --space-8:32px;
+  --space-9:40px;
+  --page-pad:20px;
+
+ --outer-x:5.2vw;
+  --outer-y:2.1vh;
+  --shell-height:95.8vh;
+  --top-height:60px;
+  --view-height:72px;
+  --clip-top:40px;
+  --tile-height:84px;
+  --wave-height:52px;
+  --footer-height:84px;
+  --line:1px;
+  --selected-border:2px;
+  --icon:22px;
+  --avatar:40px;
+  --story-width:310px;
+  --story-bottom:24px;
+  --player-pad:20px;
+  --handle-width:5px;
+  --handle-height:22px;
+  --note-rule:40px;
+  --playhead-overhang:14px;
+  --tap:44px;
+
+ --size-2:2px;
+  --size-10:10px;
+  --size-11:11px;
+  --size-12:12px;
+  --size-13:13px;
+  --size-14:14px;
+  --size-15:15px;
+  --size-20:20px;
+  --size-22:22px;
+  --size-30:30px;
+  --size-480:480px;
+  --toggle-width:480px;
+  --tracking-brand:-.045em;
+  --tracking-note:.025em;
+  --tracking-label:.14em;
+}
+
+*{box-sizing:border-box}
+html,body{margin:var(--space-0);
+ min-height:100%;
+ width:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+ color:var(--white);
+ -webkit-font-smoothing:antialiased;
+ background:radial-gradient(ellipse at 50% 30%,var(--camera-glow),var(--backdrop) 55%,var(--camera-dark));
+ padding:var(--outer-y) var(--outer-x)}
+button{font:inherit;
+ color:inherit;
+ cursor:pointer}
+button:focus-visible{outline:var(--size-2) solid var(--amber);
+ outline-offset:var(--space-1)}
+button, h1,p{margin:var(--space-0)}
+button{border:var(--line) solid var(--glass-border)}
+button:disabled{cursor:default}
+.glass{background:var(--glass);
+ border:var(--line) solid var(--glass-border);
+ backdrop-filter:blur(var(--blur)) saturate(1.2);
+ -webkit-backdrop-filter:blur(var(--blur)) saturate(1.2)}
+/* The shell is a column: the player takes whatever height the controls leave, so 900px tall pages never scroll. */
+.edit-shell{height:var(--shell-height);
+ min-height:640px;
+ display:flex;
+ flex-direction:column;
+ border:var(--line) solid var(--glass-border);
+ border-radius:var(--radius-shell);
+ background:linear-gradient(var(--shell-top),var(--shell-bottom));
+ box-shadow:0 30px 80px rgba(0,0,0,.4);
+ padding:var(--space-2) var(--page-pad) var(--space-0)}
+.edit-shell{position:relative;isolation:isolate;overflow:hidden}
+/* Ambient fill: the same frame, heavily blurred and very dim, fading out below the player. The real frame stays whole and uncropped in the player. */
+.ambient{position:absolute;left:-6%;top:-6%;width:112%;height:62%;z-index:-1;pointer-events:none;object-fit:cover;filter:blur(36px) saturate(1.1) brightness(.45);opacity:0;transition:opacity .6s;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent);mask-image:linear-gradient(to bottom,#000 55%,transparent)}
+.ambient[data-ready="true"]{opacity:1}
+.edit-shell>.top-bar,.edit-shell>.view-row,.edit-shell>.timeline,.edit-shell>.bottom-row{flex-shrink:0}
+
+.top-bar{min-height:var(--top-height);
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ padding:var(--space-0) var(--space-6);
+ gap:var(--space-4)}
+.brand-line,.header-actions{display:flex;
+ align-items:center;
+ gap:var(--space-4)}
+.brand-line strong{font-size:var(--size-30);
+ font-weight:700;
+ letter-spacing:var(--tracking-brand)}
+.divider{height:var(--size-22);
+ width:var(--line);
+ background:var(--glass-border)}
+.mode-tab{font-size:var(--size-14);
+ font-weight:500;
+ padding:var(--space-2) var(--space-0);
+ border-bottom:var(--size-2) solid var(--amber)}
+.status{display:flex;
+ align-items:center;
+ gap:var(--space-3);
+ font-size:var(--size-13);
+ color:var(--white-dim);
+ margin-left:var(--space-2)}
+.status i{width:var(--space-2);
+ height:var(--space-2);
+ border-radius:var(--radius-round);
+ background:var(--green)}
+.header-actions{gap:var(--space-3)}
+.menu{background:var(--transparent);
+ border:0;
+ font-size:var(--size-22);
+ color:var(--white-dim);
+ min-width:var(--tap);
+ min-height:var(--tap);
+ padding:var(--space-2)}
+.help{border-radius:var(--radius-pill);
+ min-height:var(--tap);
+ padding:var(--space-2) var(--space-6);
+ font-size:var(--size-14)}
+/* A control that is not available yet recedes; it never competes with an action. */
+.help:disabled{background:var(--transparent);
+ border-color:var(--transparent);
+ backdrop-filter:none;
+ -webkit-backdrop-filter:none;
+ color:var(--white-dim)}
+.avatar{display:grid;
+ place-items:center;
+ width:var(--avatar);
+ height:var(--avatar);
+ border-radius:var(--radius-round);
+ background:var(--label-bg);
+ border:var(--line) solid var(--glass-border);
+ font-size:var(--size-15);
+ font-weight:500}
+
+/* 16:9 box centred in the free height. The video inside is object-fit:contain, so no recorded pixel is cropped; other aspect ratios sit on the matte. */
+.player{position:relative;
+ flex:1 1 0;
+ min-height:0;
+ align-self:center;
+ aspect-ratio:16/9;
+ max-width:100%;
+ border:var(--line) solid var(--glass-border);
+ border-radius:var(--radius-card);
+ overflow:hidden;
+ background:var(--camera-dark);
+ box-shadow:var(--shadow)}
+.player:before{content:"";
+ position:absolute;
+ inset:0;
+ z-index:1;
+ pointer-events:none;
+ background:linear-gradient(to top,rgba(0,0,0,.55),transparent 28%)}
+.player>video{z-index:0}
+.handwritten{font-family:"Bradley Hand","Segoe Print","Chalkboard SE",cursive;
+ font-size:var(--size-20);
+ line-height:1.3;
+ font-style:italic;
+ letter-spacing:var(--tracking-note);
+ color:var(--white-dim);
+ transform:rotate(-7deg)}
+.player-note{position:absolute;
+ z-index:2;
+ top:var(--space-9);
+ right:var(--space-5)}
+.handwritten span{display:block;
+ width:var(--note-rule);
+ height:var(--line);
+ background:var(--white-dim);
+ margin:var(--space-2) auto}
+.story-card{position:absolute;
+ z-index:2;
+ bottom:var(--story-bottom);
+ left:50%;
+ transform:translateX(-50%);
+ display:flex;
+ align-items:center;
+ gap:var(--space-4);
+ width:var(--story-width);
+ padding:var(--space-3) var(--space-4);
+ border-radius:var(--radius-card)}
+.story-rule{align-self:stretch;
+ width:3px;
+ border-radius:var(--radius-pill);
+ background:var(--amber)}
+.story-label{font-size:var(--size-10);
+ letter-spacing:var(--tracking-label);
+ font-weight:600;
+ color:var(--white-dim);
+ margin-bottom:var(--space-1)}
+h1{font-size:var(--size-20);
+ font-weight:600;
+ line-height:1.25}
+.player-controls{position:absolute;
+ z-index:3;
+ bottom:var(--space-3);
+ left:var(--player-pad);
+ right:var(--player-pad);
+ display:flex;
+ justify-content:space-between;
+ align-items:center}
+.play-time,.player-tools{display:flex;
+ align-items:center;
+ gap:var(--space-2)}
+.play-time{font-size:var(--size-14);
+ font-weight:500;
+ font-variant-numeric:tabular-nums;
+ text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.icon-button{display:grid;
+ place-items:center;
+ width:var(--tap);
+ height:var(--tap);
+ border:0;
+ background:var(--transparent);
+ padding:var(--space-2)}
+.icon-button:disabled{opacity:.4}
+svg{width:var(--icon);
+ height:var(--icon);
+ fill:none;
+ stroke:currentColor;
+ stroke-width:1.8;
+ stroke-linecap:round;
+ stroke-linejoin:round}
+
+.view-row{min-height:var(--view-height);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ position:relative}
+.view-toggle{display:flex;
+ width:var(--toggle-width);
+ border-radius:var(--radius-pill);
+ overflow:hidden;
+ padding:var(--space-1);
+ gap:var(--space-1)}
+.view-toggle button{flex:1;
+ min-height:var(--tap);
+ background:var(--transparent);
+ border:0;
+ border-radius:var(--radius-pill);
+ padding:var(--space-2) var(--space-4);
+ display:grid;
+ gap:2px;
+ color:var(--white-soft)}
+.view-toggle strong{font-size:var(--size-14);
+ font-weight:500}
+.view-toggle small{font-size:var(--size-11);
+ color:var(--white-dim)}
+.view-toggle button[aria-pressed="true"]{background:var(--cut-fill);
+ color:var(--cut-text)}
+.view-toggle button[aria-pressed="true"] strong{font-weight:600}
+.view-toggle button[aria-pressed="true"] small{color:var(--cut-text)}
+.export{position:absolute;
+ right:var(--space-0);
+ min-height:var(--tap);
+ border-radius:var(--radius-pill);
+ padding:var(--space-2) var(--space-5);
+ display:flex;
+ align-items:center;
+ gap:var(--space-2);
+ font-size:var(--size-14);
+ font-weight:600;
+ /* Export is the one primary action on this screen. */
+ background:var(--amber);
+ color:var(--cut-text);
+ border-color:var(--amber);
+ box-shadow:0 6px 22px var(--amber-glow)}
+.export:disabled{opacity:.5;box-shadow:none}
+.export:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+
+.timeline{padding-top:var(--clip-top)}
+.clips{display:flex;
+ gap:var(--space-1);
+ height:var(--tile-height);
+ width:100%}
+.clip{position:relative;
+ min-width:0;
+ flex-basis:0;
+ height:100%;
+ border-radius:var(--radius-tile);
+ border:var(--line) solid var(--glass-border);
+ padding:var(--space-0);
+ background:var(--camera-edge);
+ text-align:left}
+.clip[data-state="removed"]{opacity:.4}
+/* Neighbouring frames sit flush: no gaps, and a hairline so each real frame's own dark edge reads as a cell edge rather than a sliver. */
+.clip [data-testid="clip-previews"]{gap:0;background:#0f0c0b}
+.clip [data-testid="clip-previews"] img+img{box-shadow:inset 1px 0 0 rgba(0,0,0,.35)}
+/* Timeline thumbnails are navigation aids; the player above always shows the whole frame. edit.js sets contain inline, so cover is forced here. */
+.clip [data-testid="clip-previews"] img{object-fit:cover!important;
+ object-position:50% 30%}
+.clip[data-selected="true"]{border:var(--selected-border) solid var(--amber);
+ z-index:2}
+.duration{position:absolute;
+ right:var(--space-1);
+ bottom:var(--space-1);
+ font-size:var(--size-11);
+ font-variant-numeric:tabular-nums;
+ border-radius:var(--radius-small);
+ padding:2px var(--space-2);
+ background:rgba(0,0,0,.55)}
+.clip-label{position:absolute;
+ bottom:calc(100% + var(--space-1));
+ left:50%;
+ transform:translateX(-50%);
+ border-radius:var(--radius-label);
+ background:var(--label-bg);
+ border:var(--line) solid var(--glass-border);
+ padding:var(--space-1) var(--space-3);
+ display:flex;
+ align-items:center;
+ gap:var(--space-2);
+ white-space:nowrap;
+ font-size:var(--size-11);
+ z-index:3}
+.clip-label svg{width:var(--size-12);
+ height:var(--size-12)}
+.clip-label.best{border-color:var(--amber);
+ color:var(--amber)}
+/* The state chip is information, not a sticker: level, quiet, one line. */
+.kept-bubble{position:absolute;
+ bottom:calc(100% + var(--space-2));
+ left:50%;
+ transform:translateX(-50%);
+ white-space:nowrap;
+ border-radius:var(--radius-pill);
+ background:var(--label-bg);
+ border:var(--line) solid var(--glass-border);
+ color:var(--white-soft);
+ font-size:var(--size-12);
+ padding:var(--space-1) var(--space-3);
+ z-index:5}
+.clip-handle{position:absolute;
+ top:50%;
+ transform:translateY(-50%);
+ width:var(--handle-width);
+ height:var(--handle-height);
+ background:var(--white);
+ border:var(--line) solid var(--cut-text);
+ border-radius:var(--radius-pill)}
+.clip-handle.start{left:calc(-1 * var(--space-1))}
+.clip-handle.end{right:calc(-1 * var(--space-1))}
+
+.waveform{height:var(--wave-height);
+ margin-top:var(--space-3);
+ position:relative;
+ border-radius:var(--radius-wave);
+ background:var(--wave-bg);
+ border:var(--line) solid var(--glass-border)}
+.wave-bars{width:100%;
+ height:100%;
+ stroke:var(--wave);
+ stroke-width:1.5}
+.wave-selection{position:absolute;
+ top:var(--space-0);
+ bottom:var(--space-0);
+ border:var(--line) solid var(--wave-bright);
+ border-radius:var(--radius-wave);
+ background:var(--wave-fill);
+ pointer-events:none}
+.wave-selection span{position:absolute;
+ top:var(--space-0);
+ bottom:var(--space-0);
+ width:var(--size-10);
+ background:var(--white);
+ border-radius:var(--radius-pill)}
+.wave-selection span:first-child{left:var(--space-0)}
+.wave-selection span:last-child{right:var(--space-0)}
+.wave-selection span:after{content:"";
+ position:absolute;
+ width:3px;
+ height:var(--handle-height);
+ background:var(--cut-text);
+ opacity:.55;
+ top:50%;
+ left:50%;
+ transform:translate(-50%,-50%);
+ border-radius:var(--radius-pill)}
+.playhead{position:absolute;
+ width:var(--line);
+ background:var(--white);
+ top:calc(-1 * var(--space-3));
+ bottom:calc(-1 * var(--playhead-overhang));
+ pointer-events:none}
+.bottom-row{min-height:var(--footer-height);
+ position:relative;
+ display:flex;
+ justify-content:center;
+ align-items:center}
+.actions{display:flex;
+ gap:var(--space-2)}
+.actions button{display:flex;
+ align-items:center;
+ gap:var(--space-2);
+ min-height:var(--tap);
+ border-radius:var(--radius-pill);
+ padding:var(--space-2) var(--space-5);
+ font-size:var(--size-14);
+ font-weight:500}
+.actions button:disabled:not(.keep){background:var(--transparent);
+ border-color:var(--transparent);
+ box-shadow:none;
+ color:var(--white-dim)}
+.actions .keep{background:var(--transparent);
+ color:var(--amber);
+ border-color:var(--amber);
+ font-weight:600}
+.actions .keep:disabled{border-color:var(--glass-border)}
+/* An already-kept clip is a status, not an action: a quiet chip with no button chrome. Restore (Keep clip) keeps the amber action look. */
+.actions .keep[data-status="kept"]:disabled{background:rgba(255,255,255,.05);border-color:transparent;box-shadow:none;color:var(--white-dim);font-weight:500;opacity:1}
+/* Controls the demo cannot do are removed, not shown as "soon". */
+.help[hidden],.actions [data-testid="broll"][hidden]{display:none!important}
+/* Next take is the one forward action in a real session; edit.js tints it inline, so the shape is set here. */
+.actions [data-testid="retry"]{font-weight:600;color:var(--white);border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.1)}
+.bottom-note{position:absolute;
+ right:var(--space-3);
+ top:var(--space-5);
+ font-size:var(--size-15);
+ color:var(--white-dim);
+ text-align:center}
+.toast{position:fixed;
+ bottom:var(--space-8);
+ left:50%;
+ transform:translateX(-50%);
+ border-radius:var(--radius-pill);
+ background:var(--shell-top);
+ padding:var(--space-4) var(--space-6);
+ z-index:10}
+.toast[hidden]{display:none}
+
+@media(max-height:820px){:root{--tile-height:72px;
+ --wave-height:44px;
+ --footer-height:68px;
+ --clip-top:36px;
+ --view-height:64px;
+ --top-height:52px}
+.edit-shell{min-height:var(--space-0)}
+}
+
+@media(max-width:1000px){:root{--outer-x:2vw;
+ --page-pad:12px;
+ --toggle-width:420px}
+.bottom-note{display:none}
+.clip-label{font-size:var(--size-10);
+ padding:var(--space-1) var(--space-2)}
+}
+
+/* Phone width: one column, the page scrolls, every action stays inside the screen. */
+@media(max-width:700px){:root{--outer-x:var(--space-2);
+ --outer-y:var(--space-2);
+ --toggle-width:100%;
+ --tile-height:60px;
+ --wave-height:44px;
+ --story-width:min(310px,calc(100% - 24px))}
+.edit-shell{height:auto;
+ min-height:calc(100dvh - 2 * var(--outer-y))}
+.top-bar{flex-wrap:wrap;
+ padding:var(--space-0) var(--space-2)}
+.divider,.status{display:none}
+.player{flex:0 0 auto;
+ width:100%}
+.view-row{flex-direction:column;
+ align-items:stretch;
+ gap:var(--space-2);
+ padding:var(--space-3) var(--space-0)}
+.view-toggle{width:100%}
+.export{position:static;
+ justify-content:center}
+.timeline{padding-top:var(--clip-top)}
+.bottom-row{padding:var(--space-4) var(--space-0)}
+.actions{flex-wrap:wrap;
+ justify-content:center;
+ width:100%}
+.actions button{flex:1 1 40%;
+ justify-content:center}
+}
+
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;
+ transition:none!important;
+ scroll-behavior:auto!important}}
+
+/* Final visual review: the film leads; status belongs to its selected clip. */
+.keep[hidden]{display:none}
+@media(min-height:950px) and (min-width:1001px){
+ :root{--top-height:48px;--view-height:60px;--clip-top:34px;--tile-height:60px;--wave-height:40px;--footer-height:56px}
+}
+
+.clip:first-child:not(:last-child) .clip-label{left:0;transform:none}
+.clip:last-child:not(:first-child) .clip-label{left:auto;right:0;transform:none}
+@media(min-height:950px) and (min-width:1001px){.bottom-note{top:4px}}
+
+/* Tiny intervals retain their true width; their button label carries the detail. */
+.clip{container-type:inline-size}
+@container (max-width:48px){
+ .clip-label,.duration,.kept-bubble{display:none}
+ [data-testid="clip-previews"]{font-size:0!important}
+}
+
+/* Editing entry points and the B-roll marks. The panel itself is in ../lib/editor-panel.css and stays closed until asked for. */
+.actions [data-testid="edit-words"][hidden]{display:none!important}
+.entry-badge{min-width:18px;padding:1px 6px;border-radius:var(--radius-pill);background:var(--amber);color:var(--cut-text);font-size:var(--size-11);font-weight:700;line-height:1.4;text-align:center}
+.entry-badge[hidden]{display:none}
+.actions [data-testid="broll"][data-state="on"]{color:var(--amber);border-color:var(--amber)}
+.broll-band{position:absolute;top:0;bottom:0;border-radius:6px;background:rgba(244,198,107,.2);border:1px solid rgba(244,198,107,.65);pointer-events:none}
+.broll-band[hidden]{display:none}
+@media(max-width:1180px){.actions{flex-wrap:wrap;justify-content:center}.actions button{padding:var(--space-2) var(--space-4)}}

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="/ui/reviewdetail/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YAP · Review</title>
+<link rel="stylesheet" href="../review/styles.css">
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="wire.js"></script>
+</head>
+<body>
+<header class="top-bar"><strong data-testid="brand">YAP</strong><nav aria-label="Main navigation"><a data-testid="nav-home" href="#">Home</a><a data-testid="nav-ideas" href="#">Ideas</a><a data-testid="nav-create" href="#">Create</a><a data-testid="nav-review" href="/review" aria-current="page">Review</a><a data-testid="nav-grow" href="#">Grow</a></nav><div class="account"><span class="divider"></span><span class="avatar" data-testid="avatar" aria-label="Sample profile">J</span></div></header>
+<main class="detail" data-testid="detail">
+<p class="back"><a data-testid="back-to-inbox" href="/review">← Review inbox</a></p>
+<header class="detail-head"><h1 data-testid="detail-title">Review</h1><p class="lede" data-testid="detail-lede" hidden></p></header>
+<div data-testid="detail-body"></div>
+<p role="alert" data-testid="detail-error"></p>
+</main>
+<div class="toast" data-testid="toast" role="status" hidden></div>
+</body>
+</html>

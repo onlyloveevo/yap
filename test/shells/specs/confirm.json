@@ -1,0 +1,140 @@
+{
+ "name": "Confirm idea (frame accepted 3 Oct 05:27: 'lets go with this confirming idea just adds it to the idea bank and when you create you can pick an idea')",
+ "fit": true,
+ "words": {
+  "brand": "YAP",
+  "nav-home": "Home",
+  "nav-ideas": "Ideas",
+  "nav-create": "Create",
+  "nav-review": "Review",
+  "nav-grow": "Grow",
+  "eyebrow": "OPEN IDEAS",
+  "title": "Let's shape your idea.",
+  "idea-heading": "YOUR IDEA",
+  "edit": "Edit",
+  "idea-summary": "A personal look at perfectionism, overthinking and how I'm changing that.",
+  "point-opening-title": "Opening",
+  "point-opening-text": "The moment I realised I was avoiding it.",
+  "point-story-title": "Story",
+  "point-story-text": "What was going on and how it felt.",
+  "point-closing-title": "Closing",
+  "point-closing-text": "What I'm doing differently now.",
+  "keep-exploring": "Keep exploring",
+  "confirm-idea": "Confirm idea",
+  "talk-to-yap": "Talk to YAP"
+ },
+ "contains": {
+  "talk-panel": [
+   "YouTube, talking head. Make it personal.",
+   "What happened when you tried to film?",
+   "I planned for hours and never pressed record.",
+   "Great. Here's a draft.",
+   "Does this feel right?"
+  ]
+ },
+ "placeholders": {
+  "idea-input": "Add a thought or ask YAP..."
+ },
+ "attrs": [
+  [
+   "nav-ideas",
+   "aria-current",
+   "page"
+  ],
+  [
+   "point-opening",
+   "aria-checked",
+   "true"
+  ],
+  [
+   "point-story",
+   "aria-checked",
+   "true"
+  ],
+  [
+   "point-closing",
+   "aria-checked",
+   "false"
+  ]
+ ],
+ "leftOf": [
+  [
+   "nav",
+   "talk-panel"
+  ],
+  [
+   "talk-panel",
+   "idea-panel"
+  ],
+  [
+   "keep-exploring",
+   "confirm-idea"
+  ]
+ ],
+ "above": [
+  [
+   "idea-thumb",
+   "idea-summary"
+  ],
+  [
+   "idea-summary",
+   "point-opening"
+  ],
+  [
+   "point-opening",
+   "point-story"
+  ],
+  [
+   "point-story",
+   "point-closing"
+  ],
+  [
+   "point-closing",
+   "confirm-idea"
+  ]
+ ],
+ "gold": [
+  "confirm-idea"
+ ],
+ "goldOutline": [
+  "talk-to-yap"
+ ],
+ "images": [
+  "idea-thumb"
+ ],
+ "type": {
+  "input": "idea-input",
+  "send": "send",
+  "event": "yap:idea-message"
+ },
+ "toggles": [
+  {
+   "click": "point-closing",
+   "attr": "aria-checked",
+   "after": "true"
+  },
+  {
+   "click": "point-opening",
+   "attr": "aria-checked",
+   "after": "false"
+  }
+ ],
+ "events": [
+  {
+   "click": "talk-to-yap",
+   "event": "yap:talk"
+  },
+  {
+   "click": "edit",
+   "event": "yap:idea-edit"
+  },
+  {
+   "click": "keep-exploring",
+   "event": "yap:idea-keep-exploring"
+  },
+  {
+   "click": "confirm-idea",
+   "event": "yap:idea-confirm"
+  }
+ ]
+}

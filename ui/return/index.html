@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <base href="/ui/return/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>YAP · Return</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="wire.js"></script>
+</head>
+<body>
+  <main class="live-shell" data-phase="ready" aria-label="YAP return">
+    <div class="camera-fallback" aria-hidden="true"></div>
+    <video class="camera" data-testid="camera" autoplay muted playsinline aria-label="Camera preview"></video>
+    <div class="camera-shade" aria-hidden="true"></div>
+
+    <header class="top-bar">
+      <div class="identity">
+        <div class="brand-line" data-testid="brand"><strong>YAP</strong><span class="brand-dot">•</span><span>Take 2</span></div>
+        <p class="tagline" data-testid="tagline"><span>Show up.</span><span>Yap.</span><span>Be you.</span></p>
+      </div>
+      <div class="header-actions">
+        <button class="help glass" type="button" data-testid="help" aria-label="Help">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h2m2-5v10m4-14v18m4-14v10m4-8v6m4-3h-2"/></svg>
+          <span>Help</span>
+        </button>
+        <button class="menu glass" type="button" aria-label="More options">···</button>
+      </div>
+    </header>
+
+    <section class="memory-card glass" data-testid="memory-card" aria-label="From last time">
+      <h2 class="memory-title">From last time</h2>
+      <p class="memory-line">Last time you wanted to slow down during the opening. Keep that cue?</p>
+      <div class="memory-actions">
+        <button class="pill pill-amber" type="button" data-testid="memory-keep">Keep</button>
+        <button class="pill pill-glass" type="button" data-testid="memory-drop">Drop</button>
+      </div>
+      <p class="trial" data-testid="trial-status"><span class="trial-dot" aria-hidden="true"></span><span>Trial running: 'Grab a coffee' · video 1 of 3</span></p>
+      <p class="bet" data-testid="bet">My bet: at most 2 restarts this take</p>
+    </section>
+
+    <section class="cue-area" aria-label="Live cues and controls">
+      <div class="delivery-cue glass" data-testid="delivery-cue" hidden><span aria-hidden="true">🙂</span><span data-role="cue-text">Smile</span></div>
+      <div class="story-card glass" data-testid="story-card" hidden>
+        <div class="story-rule" aria-hidden="true"></div>
+        <div class="story-content">
+          <div class="story-label" data-testid="story-label">Story</div>
+          <h1 data-testid="beat-title">Intro</h1>
+          <ul class="talking-points" aria-label="Talking points">
+            <li class="point is-active" data-testid="point"><span class="point-dot" aria-hidden="true"></span><span>Grab a coffee. Let's get into it.</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="bet-result glass" data-testid="bet-result" hidden>
+        <p class="result-line">Bet held: 1 restart (I said at most 2)</p>
+        <p class="result-next">Next bet: at most 1 restart</p>
+      </div>
+      <div class="controls" aria-label="Recording controls">
+        <button class="control record" type="button" data-testid="record" aria-label="Record"><span aria-hidden="true"></span></button>
+        <button class="control glass" type="button" data-testid="pause" aria-label="Pause recording" aria-pressed="false" hidden>
+          <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M17 5v14"/></svg>
+          <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
+        </button>
+        <button class="control stop" type="button" data-testid="stop" aria-label="Stop recording" hidden><span aria-hidden="true"></span></button>
+        <output class="timer glass" data-testid="timer" aria-label="Recording time" hidden>00:00</output>
+        <button class="control glass tick" type="button" data-testid="tick" aria-label="Mark beat done and continue" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>
+        </button>
+        <button class="end-take" type="button" data-testid="end-take" hidden>End take</button>
+      </div>
+    </section>
+
+    <footer class="bottom-bar">
+      <button class="edit" type="button" data-testid="edit">Edit</button>
+      <nav class="beats" data-testid="beats" aria-label="Story beats">
+        <div class="beat-track" aria-hidden="true"><span class="track-done"></span><span class="track-current"></span></div>
+        <button class="beat" type="button" data-testid="beat-node" data-state="current" aria-label="Intro, current" aria-current="step"><span class="node"></span><span class="beat-name">Intro</span></button>
+        <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Problem, ahead"><span class="node"></span><span class="beat-name">Problem</span></button>
+        <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Solution, ahead"><span class="node"></span><span class="beat-name">Solution</span></button>
+        <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Example, ahead"><span class="node"></span><span class="beat-name">Example</span></button>
+        <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Close, ahead"><span class="node"></span><span class="beat-name">Close</span></button>
+      </nav>
+      <button class="export glass" type="button" data-testid="export" aria-label="Export recording">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M4 14v6h16v-6"/></svg>
+      </button>
+    </footer>
+  </main>
+</body>
+</html>

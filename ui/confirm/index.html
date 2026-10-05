@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <base href="/ui/confirm/">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YAP · Confirm idea</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <nav class="nav" data-testid="nav" aria-label="Main">
+    <div class="brand" data-testid="brand">YAP</div>
+    <a class="nav-item" href="#" data-testid="nav-home">
+      <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/></svg>Home</a>
+    <a class="nav-item" href="#" data-testid="nav-ideas" aria-current="page">
+      <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>Ideas</a>
+    <a class="nav-item" href="#" data-testid="nav-create">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg>Create</a>
+    <a class="nav-item" href="#" data-testid="nav-review">
+      <svg viewBox="0 0 24 24"><path d="M6 20V10M12 20V4M18 20v-7"/></svg>Review</a>
+    <a class="nav-item" href="#" data-testid="nav-grow">
+      <svg viewBox="0 0 24 24"><path d="M14 4c3.5 0 6 .5 6 .5s.5 2.5.5 6c0 4-3.5 7-7 8l-3.5-3.5c1-3.5 4-7 8-7"/><path d="M10 14.5 5.5 19M9.5 8.5 5 9.5l-1.5 3.5 4 .5M15.5 14.5 14.5 19 11 20.5l-.5-4"/></svg>Grow</a>
+  </nav>
+
+  <main class="stage">
+    <section class="panel talk" data-testid="talk-panel">
+      <p class="eyebrow" data-testid="eyebrow">OPEN IDEAS</p>
+      <h1 class="title" data-testid="title">Let's shape your idea.</h1>
+      <div class="thread">
+        <div class="msg you"><span class="who">YOU</span><p>YouTube, talking head. Make it personal.</p></div>
+        <div class="msg yap">
+          <svg viewBox="0 0 24 24" class="fill gold spark"><path d="M10 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7zM18.5 14c.3 2.4 1.1 3.2 3.5 3.5-2.4.3-3.2 1.1-3.5 3.5-.3-2.4-1.1-3.2-3.5-3.5 2.4-.3 3.2-1.1 3.5-3.5z"/></svg>
+          <div><span class="who">YAP</span><p>What happened when you tried to film?</p></div>
+        </div>
+        <div class="msg you"><span class="who">YOU</span><p>I planned for hours and never pressed record.</p></div>
+        <div class="msg yap">
+          <svg viewBox="0 0 24 24" class="fill gold spark"><path d="M10 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7zM18.5 14c.3 2.4 1.1 3.2 3.5 3.5-2.4.3-3.2 1.1-3.5 3.5-.3-2.4-1.1-3.2-3.5-3.5 2.4-.3 3.2-1.1 3.5-3.5z"/></svg>
+          <div><span class="who">YAP</span><p>Great. Here's a draft.<br>Does this feel right?</p></div>
+        </div>
+      </div>
+      <div class="box">
+        <input type="text" data-testid="idea-input" placeholder="Add a thought or ask YAP..." aria-label="Add a thought or ask YAP">
+        <button class="send" type="button" data-testid="send" aria-label="Send" disabled>
+          <svg viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></svg></button>
+      </div>
+      <button class="gold outline" type="button" data-testid="talk-to-yap">
+        <svg viewBox="0 0 24 24"><path d="M3.5 10.5v3M8 8v8M12.5 4.5v15M17 7.5v9M21 10.5v3"/></svg>Talk to YAP</button>
+    </section>
+
+    <section class="panel idea" data-testid="idea-panel">
+      <div class="head">
+        <p class="eyebrow" data-testid="idea-heading">YOUR IDEA</p>
+        <button class="quiet" type="button" data-testid="edit">
+          <svg viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4v3.5H16"/><path d="m9.5 14.5.5-2.5 5-5 2 2-5 5z" stroke-width="1.3"/></svg>Edit</button>
+      </div>
+      <img class="thumb" data-testid="idea-thumb" src="assets/idea-thumb.png" alt="Why I keep putting off filming">
+      <p class="summary" data-testid="idea-summary">A personal look at perfectionism, overthinking and how I'm changing that.</p>
+      <div class="points" role="group" aria-label="Idea points">
+        <button class="point" type="button" role="checkbox" aria-checked="true" data-testid="point-opening">
+          <span class="ptxt"><span class="ptitle" data-testid="point-opening-title">Opening</span><span class="ptext" data-testid="point-opening-text">The moment I realised I was avoiding it.</span></span>
+          <svg class="mark" viewBox="0 0 28 28" aria-hidden="true"><circle class="disc" cx="14" cy="14" r="13"/><path class="tick" d="m8.5 14.4 3.9 3.9 7.2-7.6"/></svg>
+        </button>
+        <button class="point" type="button" role="checkbox" aria-checked="true" data-testid="point-story">
+          <span class="ptxt"><span class="ptitle" data-testid="point-story-title">Story</span><span class="ptext" data-testid="point-story-text">What was going on and how it felt.</span></span>
+          <svg class="mark" viewBox="0 0 28 28" aria-hidden="true"><circle class="disc" cx="14" cy="14" r="13"/><path class="tick" d="m8.5 14.4 3.9 3.9 7.2-7.6"/></svg>
+        </button>
+        <button class="point" type="button" role="checkbox" aria-checked="false" data-testid="point-closing">
+          <span class="ptxt"><span class="ptitle" data-testid="point-closing-title">Closing</span><span class="ptext" data-testid="point-closing-text">What I'm doing differently now.</span></span>
+          <svg class="mark" viewBox="0 0 28 28" aria-hidden="true"><circle class="disc" cx="14" cy="14" r="13"/><path class="tick" d="m8.5 14.4 3.9 3.9 7.2-7.6"/></svg>
+        </button>
+      </div>
+      <div class="foot">
+        <button class="text-btn" type="button" data-testid="keep-exploring">Keep exploring</button>
+        <button class="gold confirm" type="button" data-testid="confirm-idea">Confirm idea<svg viewBox="0 0 24 24"><path d="M4.5 12h15M13.5 6l6 6-6 6"/></svg></button>
+      </div>
+    </section>
+  </main>
+</div>
+<script defer src="confirm.js"></script>
+  <script type="module" src="wire.js"></script>
+</body>
+</html>

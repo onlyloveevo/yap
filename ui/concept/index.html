@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <base href="/ui/concept/">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YAP · Ideas</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <nav class="nav" data-testid="nav" aria-label="Main">
+    <div class="brand" data-testid="brand">YAP</div>
+    <a class="nav-item" href="#" data-testid="nav-home">
+      <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/></svg>Home</a>
+    <a class="nav-item" href="#" data-testid="nav-ideas" aria-current="page">
+      <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>Ideas</a>
+    <a class="nav-item" href="#" data-testid="nav-create">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg>Create</a>
+    <a class="nav-item" href="#" data-testid="nav-review">
+      <svg viewBox="0 0 24 24"><path d="M6 20V10M12 20V4M18 20v-7"/></svg>Review</a>
+    <a class="nav-item" href="#" data-testid="nav-grow">
+      <svg viewBox="0 0 24 24"><path d="M14 4c3.5 0 6 .5 6 .5s.5 2.5.5 6c0 4-3.5 7-7 8l-3.5-3.5c1-3.5 4-7 8-7"/><path d="M10 14.5 5.5 19M9.5 8.5 5 9.5l-1.5 3.5 4 .5M15.5 14.5 14.5 19 11 20.5l-.5-4"/></svg>Grow</a>
+  </nav>
+
+  <main class="stage">
+    <section class="panel talk" data-testid="talk-panel">
+      <p class="eyebrow" data-testid="eyebrow">Open ideas</p>
+      <h1 class="title" data-testid="title">Let’s shape your idea.</h1>
+      <div class="thread">
+        <div class="msg you"><p class="who">You</p><p>YouTube, talking head. Make it personal.</p></div>
+        <div class="msg yap"><svg viewBox="0 0 24 24" class="fill gold spark"><path d="M10 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7zM18.5 14c.3 2.4 1.1 3.2 3.5 3.5-2.4.3-3.2 1.1-3.5 3.5-.3-2.4-1.1-3.2-3.5-3.5 2.4-.3 3.2-1.1 3.5-3.5z"/></svg><p class="who">YAP</p><p>What happened when you tried to film?</p></div>
+        <div class="msg you"><p class="who">You</p><p>I planned for hours and never pressed record.</p></div>
+        <div class="msg yap"><svg viewBox="0 0 24 24" class="fill gold spark"><path d="M10 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7zM18.5 14c.3 2.4 1.1 3.2 3.5 3.5-2.4.3-3.2 1.1-3.5 3.5-.3-2.4-1.1-3.2-3.5-3.5 2.4-.3 3.2-1.1 3.5-3.5z"/></svg><p class="who">YAP</p><p>Let’s build around that moment.</p></div>
+      </div>
+      <div class="box">
+        <input type="text" data-testid="idea-input" placeholder="Add a thought or ask YAP..." aria-label="Add a thought">
+        <button class="send" type="button" data-testid="send" aria-label="Send" disabled>
+          <svg viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></svg></button>
+      </div>
+      <button class="outline" type="button" data-testid="talk-to-yap">
+        <svg viewBox="0 0 24 24"><path d="M3.5 10.5v3M8 8v8M12.5 4.5v15M17 7.5v9M21 10.5v3"/></svg>Talk to YAP</button>
+    </section>
+
+    <section class="panel idea" data-testid="idea-panel">
+      <header class="head">
+        <p class="eyebrow" data-testid="idea-heading">Your idea</p>
+        <p class="status"><span class="ring"></span><span data-testid="idea-status">Working draft</span></p>
+        <p class="kind" data-testid="idea-kind">YouTube video · Talking head</p>
+        <button class="small" type="button" data-testid="change">Change</button>
+      </header>
+      <div class="cols">
+        <div class="story">
+          <div class="story-head">
+            <p class="eyebrow" data-testid="story-label">Story so far</p>
+            <a class="ulink" href="#" data-testid="edit-story">Edit story</a>
+            <svg viewBox="0 0 24 24" class="pencil"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="M14.5 6.5l3 3"/></svg>
+          </div>
+          <p class="lbl" data-testid="beat-opening-label">Opening</p>
+          <div class="beat" data-testid="beat-opening">I planned for hours and never pressed record.</div>
+          <p class="lbl" data-testid="beat-story-label">Story</p>
+          <div class="beat" data-testid="beat-story">What happened when I tried.</div>
+          <p class="lbl" data-testid="beat-closing-label">Closing</p>
+          <div class="beat dim" data-testid="beat-closing">What do I want to leave the viewer with?</div>
+        </div>
+        <div class="thumbs">
+          <p class="eyebrow tiny" data-testid="thumbs-label">Thumbnail ideas</p>
+          <p class="dir" data-testid="thumb-a-label">Direction A</p>
+          <button class="thumb" type="button" aria-pressed="false" data-testid="thumb-a" aria-label="Direction A thumbnail"><img src="assets/thumb-a.png" alt="Why I waited thumbnail"></button>
+          <p class="cap" data-testid="thumb-a-caption">Why I keep putting off filming</p>
+          <p class="dir" data-testid="thumb-b-label">Direction B</p>
+          <button class="thumb" type="button" aria-pressed="false" data-testid="thumb-b" aria-label="Direction B thumbnail"><img src="assets/thumb-b.png" alt="Never hit record thumbnail"></button>
+          <p class="cap" data-testid="thumb-b-caption">I planned for hours. I never hit record.</p>
+        </div>
+      </div>
+      <div class="foot">
+        <button class="exp" type="button" aria-expanded="false" data-testid="experiment">
+          <svg viewBox="0 0 24 24" class="gold flask"><path d="M9.5 3.5h5M10.5 3.5v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4a1.5 1.5 0 0 0 1.3-2l-5.5-9.5v-6M7.5 15h9"/></svg>
+          <span class="exp-text">
+            <span class="exp-top"><span class="eyebrow tiny" data-testid="experiment-label">Optional experiment</span><span class="pill" data-testid="experiment-chip">Proposed</span></span>
+            <span class="exp-title" data-testid="experiment-title">Try a clearer thumbnail promise</span>
+          </span>
+          <svg viewBox="0 0 24 24" class="chev"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="actions">
+          <a class="ulink" href="#" data-testid="bring-experiment">Bring in an experiment from Review</a>
+          <a class="ulink keep" href="#" data-testid="keep-exploring">Keep exploring</a>
+          <button class="gold" type="button" data-testid="save-idea">Save idea</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script defer src="concept.js"></script>
+  <script type="module" src="wire.js"></script>
+</body>
+</html>

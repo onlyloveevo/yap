@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8">
+<base href="/ui/review/"><meta name="viewport" content="width=device-width, initial-scale=1"><title>YAP · Review inbox</title><link rel="stylesheet" href="styles.css"><script type="module" src="wire.js"></script></head>
+<body>
+<header class="top-bar"><strong data-testid="brand">YAP</strong><nav aria-label="Main navigation"><a data-testid="nav-home" href="#">Home</a><a data-testid="nav-ideas" href="#">Ideas</a><a data-testid="nav-create" href="#">Create</a><a data-testid="nav-review" href="/review" aria-current="page">Review</a><a data-testid="nav-grow" href="#">Grow</a></nav><div class="account"><span class="divider"></span><span class="avatar" data-testid="avatar" aria-label="Sample profile">J</span></div></header>
+<main class="workspace"><aside class="sidebar"><h1 data-testid="inbox-title">Review inbox</h1><p class="subtitle">Pick a video to review with YAP.</p><p class="sample" data-testid="sample-badge"><span aria-hidden="true">ⓘ</span> Sample videos · Not connected</p><label class="search-box"><span aria-hidden="true">⌕</span><input data-testid="search" type="search" placeholder="Search videos" aria-label="Search videos"></label><div class="filters" aria-label="Video status"><button data-testid="filter-needs" data-filter="needs"><i></i>Needs review</button><button data-testid="filter-waiting" data-filter="waiting"><i></i>Waiting for results</button><button data-testid="filter-reviewed" data-filter="reviewed"><i></i>Reviewed</button><button data-testid="filter-all" data-filter="all"><i></i>All videos</button></div><button class="add-video" data-testid="add-video"><span aria-hidden="true">⊕</span>Add video</button></aside><section class="cards" aria-label="Sample videos"></section></main>
+<div class="toast" data-testid="toast" role="status" hidden></div>
+</body></html>

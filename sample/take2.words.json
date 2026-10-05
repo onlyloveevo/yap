@@ -1,0 +1,222 @@
+{
+  "version": 1,
+  "label": "sample",
+  "source": "tools/make-sample.js, synthetic voice Kokoro-82M v1.0 / af_heart (Apache-2.0 model)",
+  "words": [
+    {
+      "text": "Grab",
+      "start": 0,
+      "end": 0.476
+    },
+    {
+      "text": "a",
+      "start": 0.476,
+      "end": 0.595
+    },
+    {
+      "text": "coffee.",
+      "start": 0.595,
+      "end": 1.309
+    },
+    {
+      "text": "Let's",
+      "start": 1.409,
+      "end": 1.937
+    },
+    {
+      "text": "get",
+      "start": 1.937,
+      "end": 2.254
+    },
+    {
+      "text": "into",
+      "start": 2.254,
+      "end": 2.676
+    },
+    {
+      "text": "it.",
+      "start": 2.676,
+      "end": 2.888
+    },
+    {
+      "text": "Three",
+      "start": 3.341,
+      "end": 3.814
+    },
+    {
+      "text": "planning",
+      "start": 3.814,
+      "end": 4.571
+    },
+    {
+      "text": "habits",
+      "start": 4.571,
+      "end": 5.139
+    },
+    {
+      "text": "save",
+      "start": 5.139,
+      "end": 5.517
+    },
+    {
+      "text": "me",
+      "start": 5.517,
+      "end": 5.706
+    },
+    {
+      "text": "hours",
+      "start": 5.706,
+      "end": 6.179
+    },
+    {
+      "text": "every",
+      "start": 6.179,
+      "end": 6.653
+    },
+    {
+      "text": "week.",
+      "start": 6.653,
+      "end": 7.031
+    },
+    {
+      "text": "Write",
+      "start": 7.636,
+      "end": 8.082
+    },
+    {
+      "text": "the",
+      "start": 8.082,
+      "end": 8.349
+    },
+    {
+      "text": "hook",
+      "start": 8.349,
+      "end": 8.706
+    },
+    {
+      "text": "before",
+      "start": 8.706,
+      "end": 9.241
+    },
+    {
+      "text": "Write",
+      "start": 9.947,
+      "end": 10.369
+    },
+    {
+      "text": "the",
+      "start": 10.369,
+      "end": 10.622
+    },
+    {
+      "text": "hook",
+      "start": 10.622,
+      "end": 10.959
+    },
+    {
+      "text": "before",
+      "start": 10.959,
+      "end": 11.465
+    },
+    {
+      "text": "anything",
+      "start": 11.465,
+      "end": 12.139
+    },
+    {
+      "text": "else",
+      "start": 12.139,
+      "end": 12.476
+    },
+    {
+      "text": "and",
+      "start": 12.476,
+      "end": 12.729
+    },
+    {
+      "text": "plan",
+      "start": 12.729,
+      "end": 13.066
+    },
+    {
+      "text": "the",
+      "start": 13.066,
+      "end": 13.319
+    },
+    {
+      "text": "rest.",
+      "start": 13.319,
+      "end": 13.657
+    },
+    {
+      "text": "Keep",
+      "start": 14.458,
+      "end": 14.881
+    },
+    {
+      "text": "one",
+      "start": 14.881,
+      "end": 15.197
+    },
+    {
+      "text": "take",
+      "start": 15.197,
+      "end": 15.62
+    },
+    {
+      "text": "and",
+      "start": 15.62,
+      "end": 15.937
+    },
+    {
+      "text": "fix",
+      "start": 15.937,
+      "end": 16.254
+    },
+    {
+      "text": "it",
+      "start": 16.254,
+      "end": 16.465
+    },
+    {
+      "text": "later.",
+      "start": 16.465,
+      "end": 16.993
+    },
+    {
+      "text": "Everything",
+      "start": 17.997,
+      "end": 18.879
+    },
+    {
+      "text": "else",
+      "start": 18.879,
+      "end": 19.232
+    },
+    {
+      "text": "can",
+      "start": 19.232,
+      "end": 19.496
+    },
+    {
+      "text": "wait",
+      "start": 19.496,
+      "end": 19.849
+    },
+    {
+      "text": "for",
+      "start": 19.849,
+      "end": 20.114
+    },
+    {
+      "text": "the",
+      "start": 20.114,
+      "end": 20.379
+    },
+    {
+      "text": "edit.",
+      "start": 20.379,
+      "end": 20.731
+    }
+  ]
+}

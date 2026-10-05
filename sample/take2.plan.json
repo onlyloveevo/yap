@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "label": "sample",
+  "take": "take2",
+  "duration": 20.731,
+  "exchange": null,
+  "answer": null,
+  "restarts": [
+    [
+      7.636,
+      9.947
+    ]
+  ],
+  "fastPassage": null,
+  "gaps": [
+    [
+      2.891,
+      3.341
+    ],
+    [
+      7.035,
+      7.635
+    ],
+    [
+      9.247,
+      9.947
+    ],
+    [
+      13.658,
+      14.458
+    ],
+    [
+      16.996,
+      17.996
+    ]
+  ],
+  "pauses": [],
+  "neverSpoken": []
+}

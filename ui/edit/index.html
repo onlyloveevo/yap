@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head><base href="/ui/edit/"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>YAP · Edit Mode</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="../lib/trim-editor.css"></head>
+<body>
+<main class="edit-shell">
+  <header class="top-bar">
+    <div class="brand-line"><strong data-testid="brand">YAP</strong><span class="divider"></span><span class="mode-tab" data-testid="mode-tab">Edit Mode</span><span class="status" data-testid="status"><i></i>Record. Be you.</span></div>
+    <div class="header-actions"><button class="menu" aria-label="More options">···</button><button class="help glass" data-testid="help">Need help?</button><span class="avatar" aria-label="Profile J">J</span></div>
+  </header>
+  <section class="player" data-testid="player" aria-label="Recording preview">
+    <p class="handwritten player-note">Turn your<br>thoughts into<br>brighter videos.<span></span></p>
+    <div class="story-card glass" data-testid="story-overlay"><span class="story-rule"></span><div><div class="story-label">STORY</div><h1>Why this matters</h1></div></div>
+    <div class="player-controls"><div class="play-time"><button data-testid="play" aria-label="Play preview" class="icon-button" data-icon="play"></button><span data-testid="time">00:14 / 08:27</span></div><div class="player-tools"><button data-testid="cc" aria-label="Closed captions" class="icon-button" data-icon="cc"></button><button data-testid="volume" aria-label="Volume" class="icon-button" data-icon="volume"></button><button data-testid="fullscreen" aria-label="Fullscreen" class="icon-button" data-icon="fullscreen"></button></div></div>
+  </section>
+  <section class="view-row" aria-label="Recording version"><div class="view-toggle glass"><button data-testid="view-original" aria-pressed="false"><strong>Original</strong><small></small></button><button data-testid="view-yapcut" aria-pressed="true"><strong>YAP cut</strong><small></small></button></div><button class="export" data-testid="export"><span data-icon="export"></span>Export</button></section>
+  <section class="timeline" aria-label="Clip editor"><div class="clips" data-testid="clips"></div><div class="waveform" data-testid="waveform"><svg class="wave-bars" viewBox="0 0 1400 56" preserveAspectRatio="none" aria-hidden="true"></svg><div class="wave-selection" data-testid="wave-selection"><span></span><span></span></div><div class="playhead" data-testid="playhead"></div></div></section>
+  <footer class="bottom-row"><div class="actions"><button class="glass" data-testid="edit-words" data-rail-entry="transcript" aria-expanded="false" hidden><span data-icon="words"></span>Edit words<span class="entry-badge" data-testid="edit-words-badge" hidden></span></button><button class="keep" data-testid="keep"><span data-icon="scissors"></span>Keep</button><button class="glass" data-testid="shorten"><span data-icon="crop"></span>Shorten</button><button class="glass" data-testid="retry"><span data-icon="retry"></span>Retry</button><button class="glass" data-testid="broll" data-rail-entry="broll" aria-expanded="false"><span data-icon="image"></span>Add B-roll</button></div><p class="handwritten bottom-note">Less fluff.<br>More you.<span></span></p></footer>
+</main>
+<div class="toast glass" data-testid="toast" role="status" hidden></div>
+<script type="module" src="wire.js"></script>
+</body></html>

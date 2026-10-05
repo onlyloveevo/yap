@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <base href="/ui/record/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>YAP · Live mode</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../lib/live-refine.css">
+  <script type="module" src="wire.js"></script>
+</head>
+<body>
+  <main class="live-shell" aria-label="YAP live mode">
+    <div class="camera-fallback" aria-hidden="true"></div>
+    <video class="camera" data-testid="camera" autoplay muted playsinline aria-label="Camera preview"></video>
+    <div class="camera-shade" aria-hidden="true"></div>
+    <div class="conversation-dim" data-testid="dim" hidden aria-hidden="true"></div>
+
+    <header class="top-bar">
+      <div class="identity">
+        <div class="brand-line" data-testid="brand"><strong>YAP</strong><span class="brand-dot">•</span><span>Live mode</span></div>
+        <p class="tagline" data-testid="tagline"><span>Show up.</span><span>Yap.</span><span>Be you.</span></p>
+      </div>
+      <div class="header-actions">
+        <button class="help glass" type="button" data-testid="help" aria-label="Help" aria-expanded="false" aria-controls="help-panel">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h2m2-5v10m4-14v18m4-14v10m4-8v6m4-3h-2"/></svg>
+          <span>Help</span>
+        </button>
+        <button class="menu glass" type="button" aria-label="More options">···</button>
+      </div>
+    </header>
+
+    <section class="cue-area" aria-label="Live cues and controls">
+      <div class="delivery-cue glass" data-testid="delivery-cue"><span aria-hidden="true">🙂</span><span>Smile</span></div>
+      <div class="story-card glass" data-testid="story-card">
+        <div class="story-rule" aria-hidden="true"></div>
+        <div class="story-content">
+          <div class="story-label" data-testid="story-label">Story</div>
+          <h1 data-testid="beat-title">Intro</h1>
+          <ul class="talking-points" aria-label="Talking points">
+            <li class="point is-active" data-testid="point"><span class="point-dot" aria-hidden="true"></span><span data-testid="greeting">Grab a tea. Let's get into it.</span></li>
+            <li class="point" data-testid="point"><span class="point-dot" aria-hidden="true"></span><span>Who this is for</span></li>
+            <li class="point" data-testid="point"><span class="point-dot" aria-hidden="true"></span><span>What you will get</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="controls" aria-label="Recording controls">
+        <button class="control glass" type="button" data-testid="pause" aria-label="Pause recording" aria-pressed="false">
+          <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M17 5v14"/></svg>
+          <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
+        </button>
+        <button class="control stop" type="button" data-testid="stop" aria-label="Stop recording"><span aria-hidden="true"></span></button>
+        <output class="timer glass" data-testid="timer" aria-label="Recording time">00:24</output>
+        <button class="control glass tick" type="button" data-testid="tick" aria-label="Mark beat done and continue">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <footer class="bottom-bar">
+      <button class="edit" type="button" data-testid="edit">Edit</button>
+      <nav class="beats" data-testid="beats" aria-label="Story beats">
+        <div class="beat-track" aria-hidden="true"><span class="track-done"></span><span class="track-current"></span></div>
+        <button class="beat" type="button" data-testid="beat-node" data-state="current" aria-label="Intro, current" aria-current="step"><span class="node"></span><span class="beat-name">Intro</span></button>
+        <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Problem, ahead"><span class="node"></span><span class="beat-name">Problem</span></button>
+        <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Solution, ahead"><span class="node"></span><span class="beat-name">Solution</span></button>
+        <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Example, ahead"><span class="node"></span><span class="beat-name">Example</span></button>
+        <button class="beat" type="button" data-testid="beat-node" data-state="ahead" aria-label="Close, ahead"><span class="node"></span><span class="beat-name">Close</span></button>
+      </nav>
+      <button class="export glass" type="button" data-testid="export" aria-label="Export recording">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M4 14v6h16v-6"/></svg>
+      </button>
+    </footer>
+
+    <aside class="help-panel" id="help-panel" data-testid="help-panel" aria-label="YAP conversation" hidden>
+      <div class="panel-heading">
+        <div class="panel-brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M2 16h2m4-6v12m4-18v24m4-14v4m4-11v18m4-13v8m4-5h2"/></svg><strong>YAP</strong></div>
+        <div class="panel-window-actions"><button class="panel-icon" type="button" data-action="close" aria-label="Minimise YAP">−</button><button class="panel-icon" type="button" data-action="close" aria-label="Close YAP">×</button></div>
+      </div>
+      <div class="panel-conversation">
+        <p class="conversation-caption">This conversation</p>
+        <div class="message-you" data-testid="msg-you">Let's try 'Grab a coffee' instead of 'Grab a tea.'</div>
+        <div class="message-yap-wrap"><span class="message-label">YAP</span><div class="message-yap" data-testid="msg-yap">Try it for three videos, then check in?</div></div>
+        <section class="experiment-card" data-testid="experiment-card" aria-label="Greeting experiment">
+          <div class="experiment-heading"><span class="experiment-kicker">NEW EXPERIMENT</span><span class="experiment-tag" data-testid="experiment-tag">Greeting</span></div>
+          <p class="experiment-line" data-testid="experiment-line">Grab a coffee. Let's get into it.</p>
+          <div class="trial-row"><span>Trial length</span><div class="trial-stepper"><button type="button" data-testid="trial-minus" aria-label="One fewer video">−</button><output data-testid="trial-value">3 videos</output><button type="button" data-testid="trial-plus" aria-label="One more video">+</button></div></div>
+          <button class="try-button" type="button" data-testid="try">Try for 3 videos</button>
+          <button class="keep-button" type="button" data-testid="keep">Keep tea</button>
+        </section>
+        <div class="trial-result" data-testid="trial-saved" role="status" hidden></div>
+        <form class="say-row" autocomplete="off"><textarea rows="2" data-testid="say-input" aria-label="Say it or type it" placeholder="Say it or type it…"></textarea><button class="mic-button" type="button" data-testid="mic" aria-label="Microphone preview; type your message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3Zm-6-4v1a6 6 0 0 0 12 0v-1M12 18v4m-4 0h8"/></svg></button><button class="send-button" type="submit" data-testid="send" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 9L3 21l3-8 9-1-9-1z"/></svg></button></form>
+        <button class="back-button" type="button" data-testid="back">Back to recording</button>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

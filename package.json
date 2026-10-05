@@ -1,0 +1,27 @@
+{
+  "name": "yap",
+  "version": "0.1.0",
+  "private": true,
+  "description": "YAP: talk through an idea, record with a teleprompter you can argue with mid-take, get a rough cut back.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node scripts/test.js",
+    "test:review": "node --test --test-concurrency=4 test/*.test.js",
+    "replay": "node scripts/replay.js",
+    "setup": "node scripts/setup.js",
+    "start": "node server/serve.js",
+    "pack": "node scripts/pack.js",
+    "walk:loop": "node scripts/walk.js loop",
+    "walk:review": "node scripts/walk.js review",
+    "walk:own-take": "node scripts/walk.js own-take",
+    "walk": "node scripts/walk.js full",
+    "check:shells": "node scripts/walk.js checks"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.3.0",
+    "ffmpeg-static": "5.3.0"
+  }
+}

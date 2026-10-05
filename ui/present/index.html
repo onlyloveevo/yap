@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="/ui/present/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YAP · Presentation</title>
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="wire.js"></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" data-testid="brand"><strong>YAP</strong></a>
+  <span class="crumb">Presentation</span>
+  <a class="top-link" href="/" data-testid="back-to-ideas">Back to Ideas</a>
+</header>
+
+<main class="page">
+  <section class="intro" aria-labelledby="page-title">
+    
+    <h1 id="page-title">Show YAP, in your own words</h1>
+    <p class="lede">Add your beats, choose what to show, then record your screen and camera. Switch between Full camera and Screen + bubble while recording.</p>
+    <div class="title-row">
+      <label class="field-label" for="title-input">Presentation title</label>
+      <input id="title-input" class="title-input" data-testid="title-input" type="text" autocomplete="off" placeholder="What is this talk called?" aria-describedby="save-status">
+      <p class="save-status" id="save-status" data-testid="save-status" role="status" aria-live="polite">Loading…</p>
+    </div>
+    <p class="legend">Pictures are labelled design references or build screenshots; they are not interactive app screens.</p>
+  </section>
+
+  <div id="lanes" class="lanes" data-testid="lanes"></div>
+
+  <details class="order" id="order" data-testid="order">
+    <summary>Running order and delivery cues</summary>
+    <div class="order-body">
+      <h2 class="order-title">Running order</h2>
+      <p class="order-note">The beats you switched on, in the order you will say them. Move one earlier or later; the map above does not change.</p>
+      <ol class="order-list" id="order-list" data-testid="order-list"></ol>
+      <h2 class="order-title">How do you want to come across?</h2>
+      <p class="order-note">Up to 3. They show one at a time while you record, and you can change them again at the camera check.</p>
+      <div class="chips" id="cue-chips" role="group" aria-label="Delivery cues"></div>
+      <p class="order-note" id="cue-limit" data-testid="cue-limit" role="status" hidden>Pick up to 3.</p>
+      <h2 class="order-title">Keep a copy</h2>
+      <p class="order-note">Your words are kept in this browser as you type. A copy as plain text is always yours to keep.</p>
+      <a class="text-link" id="copy-download" data-testid="copy-download" download="yap-presentation.txt" href="#">Download a copy as text</a>
+    </div>
+  </details>
+
+  <section class="fallback" id="fallback" data-testid="fallback" hidden aria-labelledby="fallback-title">
+    <h2 id="fallback-title">Your words, safe on this page</h2>
+    <p>This browser would not keep them, so copy them somewhere before you leave.</p>
+    <textarea id="fallback-text" data-testid="fallback-text" readonly rows="8" aria-label="Your presentation as text"></textarea>
+    <a class="text-link" id="fallback-download" data-testid="fallback-download" download="yap-presentation.txt" href="#">Download as text</a>
+  </section>
+</main>
+
+<footer class="bar" data-testid="bar">
+  <div class="bar-inner">
+    <p class="bar-count" id="bar-count" data-testid="bar-count"></p>
+    <button class="ghost" type="button" id="open-order" data-testid="open-order">Running order</button>
+    <button class="ghost" type="button" id="preview-btn" data-testid="preview">Preview</button>
+    <div class="live-wrap">
+      <button class="primary" type="button" id="go-live" data-testid="go-live">Go Live</button>
+      <p class="live-note" id="live-note">Opens setup first. Recording starts after you choose a screen to share.</p>
+    </div>
+  </div>
+  <p class="live-error" id="live-error" data-testid="live-error" role="alert" hidden></p>
+</footer>
+
+<section class="preview" id="preview" data-testid="preview-panel" role="dialog" aria-modal="true" aria-labelledby="preview-title" hidden>
+  <div class="preview-card">
+    <p class="eyebrow">Read-through</p>
+    <h2 id="preview-title" data-testid="preview-title"></h2>
+    <ol class="preview-list" id="preview-list" data-testid="preview-list"></ol>
+    <p class="order-note">Nothing is recorded here and nothing in YAP runs. This is only your words, in order.</p>
+    <div class="preview-actions">
+      <button class="ghost" type="button" id="preview-close" data-testid="preview-close">Close</button>
+      <button class="primary" type="button" id="preview-live" data-testid="preview-go-live">Go Live</button>
+    </div>
+  </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,18 @@
+/* Trim recording dialog: the same warm glass as the editor, compact, and never taller than a 720px screen. */
+.trim-dialog{width:min(440px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;margin:auto;padding:22px 24px 20px;color:#fff;border-radius:20px;background:rgba(30,26,23,.94);border:1px solid rgba(255,255,255,.18);box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.trim-dialog::backdrop{background:rgba(10,8,7,.55);backdrop-filter:blur(3px)}
+.trim-dialog h2{margin:0 0 6px;font-size:20px;font-weight:600}
+.trim-help{font-size:13px;line-height:1.4;color:rgba(255,255,255,.7);margin:0 0 14px}
+.trim-row{display:grid;grid-template-columns:1fr 92px auto;align-items:center;gap:10px;margin-bottom:10px}
+.trim-row label{font-size:14px;color:rgba(255,255,255,.85)}
+.trim-row input{width:100%;box-sizing:border-box;min-height:40px;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#fff;font:inherit;font-size:15px;font-variant-numeric:tabular-nums;text-align:right}
+.trim-row input:focus-visible,.trim-dialog button:focus-visible{outline:2px solid #f4c66b;outline-offset:2px}
+.trim-use,.trim-cancel,.trim-reset,.trim-reload{min-height:40px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:#fff;font:inherit;font-size:13px;cursor:pointer}
+.trim-use:disabled,.trim-cancel:disabled,.trim-reset:disabled{opacity:.45;cursor:default}
+.trim-kept{margin:4px 0 0;font-size:14px;font-variant-numeric:tabular-nums;color:#f4c66b}
+.trim-error{margin:10px 0 0;padding:9px 12px;border-radius:10px;font-size:13px;line-height:1.4;background:rgba(255,120,90,.12);border:1px solid rgba(255,150,120,.4);color:#ffd9cc}
+.trim-reload{margin-top:8px;border-color:#f4c66b;color:#f4c66b}
+.trim-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:16px}
+.trim-reset{margin-right:auto}
+.trim-apply{min-height:40px;padding:6px 20px;border-radius:999px;background:#f4c66b;border:1px solid #f4c66b;color:#17130d;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.trim-apply:disabled{opacity:.5;cursor:default}

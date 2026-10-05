@@ -1,0 +1,52 @@
+// One check for the Ideas-to-Create frames Deth locked in his demo chat on 3 Oct 2026 (CHOICES.json in his visual-story-lock folder). A spec file names the frame's exact words, layout and behaviour.
+// Usage: node test/shells/check_frame.cjs <spec.json> <http://127.0.0.1:PORT/path | task dir>   (a URL checks the wired screen; requests to that same origin are allowed; screenshots go to SHOT_DIR or .tmp/shells/)
+//
+// This is the copy inside the app folder (Plan 02-02; D-102, D-142), made with cp from the shell folder's check_frame.js. It needs playwright on NODE_PATH (tools/browser.js finds it).
+// It differs from the original in three places, and no assertion is touched (every line that asserts is byte for byte; test/shell-checks.test.js holds those lines to a sha256):
+// 1. the guard just below: with no spec or no target it prints its usage line and stops. `node --test` runs every file under test/, this one included, so under the test runner that is exit 0; from a shell it is exit 2.
+// 2. the shotDir line: screenshots go to SHOT_DIR, or to .tmp/shells/ in the app folder, named after the spec. Never beside a page.
+// 3. the screenshot line near the end writes there, for a task folder as well as for a URL.
+if (!process.argv[2] || !process.argv[3]) { console.log('Usage: node test/shells/check_frame.cjs <spec.json> <http://127.0.0.1:PORT/path>   (playwright on NODE_PATH; screenshots go to SHOT_DIR or .tmp/shells/)'); process.exit(process.env.NODE_TEST_CONTEXT ? 0 : 2); }
+const { chromium } = require('playwright'); const path = require('path'), fs = require('fs');
+const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); const target = process.argv[3] || '.'; const isUrl = /^https?:\/\//.test(target); const dir = isUrl ? (process.env.SHOT_DIR || null) : path.resolve(target); const origin = isUrl ? new URL(target).origin : null; const fails = []; const need = (ok, m) => { if (!ok) fails.push(m); };
+const shotDir = path.resolve(process.env.SHOT_DIR || path.join(__dirname, '..', '..', '.tmp', 'shells')); const shotName = path.basename(process.argv[2]).replace(/\.json$/i, '').replace(/[^A-Za-z0-9-]/g, '-');
+const norm = s => String(s).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...').replace(/—/g, '-').replace(/\s+/g, ' ').trim().toLowerCase();
+(async () => {
+  const f = isUrl ? null : path.join(dir, 'index.html'); if (!isUrl && !fs.existsSync(f)) { console.log('FAIL index.html missing in ' + dir); process.exit(1); }
+  const b = await chromium.launch();
+  for (const [w, h] of [[1440, 900], [1280, 800]]) {
+    const p = await b.newPage({ viewport: { width: w, height: h } }); p.setDefaultTimeout(1500); const errs = [], ext = [];
+    p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); }); p.on('pageerror', e => errs.push(String(e)));
+    p.on('request', r => { const u = r.url(); if (!/^(file|data|blob):/.test(u) && !(origin && u.startsWith(origin))) ext.push(u); });
+    const T = id => `[data-testid="${id}"]`;
+    const vis = async id => { const e = await p.$(T(id)); return !!e && await e.isVisible(); };
+    const txt = async id => norm(await p.$eval(T(id), e => e.innerText).catch(() => ''));
+    const box = async id => { const e = await p.$(T(id)); return e ? await e.boundingBox() : null; };
+    const attr = async (id, a) => p.$eval(T(id), (e, a) => e.getAttribute(a), a).catch(() => null);
+    await p.goto(isUrl ? target : 'file://' + f); await p.waitForTimeout(300);
+    for (const [id, want] of Object.entries(spec.words || {})) { need(await vis(id), `${w}: ${id} missing or hidden`); const got = await txt(id); need(got === norm(want), `${w}: ${id} should read "${want}" (got "${got}")`); }
+    for (const [id, wants] of Object.entries(spec.contains || {})) { const got = await txt(id); for (const want of wants) need(got.includes(norm(want)), `${w}: ${id} should contain "${want}"`); }
+    for (const [id, want] of Object.entries(spec.placeholders || {})) need(norm(await attr(id, 'placeholder') || '') === norm(want), `${w}: ${id} placeholder should be "${want}"`);
+    for (const [id, a, want] of spec.attrs || []) need((await attr(id, a)) === want, `${w}: ${id} should have ${a}="${want}" (got ${await attr(id, a)})`);
+    for (const [l, r] of spec.leftOf || []) { const a = await box(l), c = await box(r); need(a && c && a.x + a.width <= c.x + 2, `${w}: ${l} should sit left of ${r}`); }
+    for (const [big, small] of spec.wider || []) { const a = await box(big), c = await box(small); need(a && c && a.width > c.width, `${w}: ${big} should be wider than ${small}`); }
+    for (const ids of spec.sameRow || []) { const bs = await Promise.all(ids.map(box)); need(bs.every(Boolean) && bs.every(x => Math.abs(x.y - bs[0].y) < 8), `${w}: ${ids.join(', ')} should sit on one row`); }
+    for (const [top, under] of spec.above || []) { const a = await box(top), c = await box(under); need(a && c && a.y + a.height <= c.y + 2, `${w}: ${top} should sit above ${under}`); }
+    for (const id of spec.gold || []) { const s = await p.$eval(T(id), e => getComputedStyle(e).backgroundColor + ' ' + getComputedStyle(e).backgroundImage).catch(() => ''); const m = s.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); need(m && +m[1] > 200 && +m[2] > 140 && +m[3] < 130, `${w}: ${id} should be a filled gold button (got ${s.slice(0, 60)})`); }
+    for (const id of spec.goldOutline || []) { const s = await p.$eval(T(id), e => { const c = getComputedStyle(e); return [c.borderTopColor, c.backgroundColor, c.backgroundImage]; }).catch(() => ['', '', '']); const m = s[0].match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/), g = s[1].match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/); need(m && +m[1] > 190 && +m[2] > 130 && +m[3] < 140, `${w}: ${id} should have a gold outline (got ${s[0]})`); need(s[2] === 'none' && (!g || !(+g[1] > 200 && +g[2] > 140 && +g[3] < 130 && (g[4] === undefined || +g[4] > 0.5))), `${w}: ${id} should be outlined, not filled gold`); }
+    for (const id of spec.images || []) { const ok = await p.$eval(T(id), e => { const r = e.getBoundingClientRect(); const img = e.tagName === 'IMG' ? e : e.querySelector('img'); const bg = getComputedStyle(e).backgroundImage; return r.width >= 120 && r.height >= 60 && ((img && img.complete && img.naturalWidth > 0) || /url\(/.test(bg)); }).catch(() => false); need(ok, `${w}: ${id} should show a picture at least 120 px wide (an <img> that loaded, or a background image)`); }
+    await p.evaluate(names => { window.__ev = []; for (const n of names) document.addEventListener(n, e => window.__ev.push([n, e.detail || null])); }, [...new Set([...(spec.events || []).map(e => e.event), ...(spec.keys || []).filter(k => k.event).map(k => k.event), ...(spec.type ? [spec.type.event] : [])])]);
+    if (spec.type) { need(await p.$eval(T(spec.type.send), e => e.disabled === true).catch(() => false), `${w}: ${spec.type.send} should be disabled while the box is empty`); await p.fill(T(spec.type.input), 'It felt safer to plan').catch(() => need(false, `${w}: cannot type in ${spec.type.input}`)); need(await p.$eval(T(spec.type.send), e => e.disabled === false).catch(() => false), `${w}: ${spec.type.send} should enable once there is text`); await p.click(T(spec.type.send)).catch(() => need(false, `${w}: cannot click ${spec.type.send}`)); await p.waitForTimeout(100); const ev = await p.evaluate(() => window.__ev); need(ev.some(e => e[0] === spec.type.event && e[1] && e[1].text === 'It felt safer to plan'), `${w}: ${spec.type.send} should dispatch ${spec.type.event} on document with detail.text`); }
+    for (const t of spec.toggles || []) { await p.click(T(t.click)).catch(() => need(false, `${w}: cannot click ${t.click}`)); await p.waitForTimeout(80); need((await attr(t.click, t.attr)) === t.after, `${w}: after a click ${t.click} should have ${t.attr}="${t.after}"`); for (const [id, a, v] of t.then || []) need((await attr(id, a)) === v, `${w}: after clicking ${t.click}, ${id} should have ${a}="${v}"`); for (const id of t.hidden || []) need(!(await vis(id)), `${w}: after clicking ${t.click}, ${id} should be hidden`); for (const id of t.visible || []) need(await vis(id), `${w}: after clicking ${t.click}, ${id} should be visible`); for (const [id, want] of t.text || []) { const got = await txt(id); need(got === norm(want), `${w}: after clicking ${t.click}, ${id} should read "${want}" (got "${got}")`); } }
+    for (const k of spec.keys || []) { await p.focus(T(k.focus)).catch(() => need(false, `${w}: cannot focus ${k.focus}`)); if (k.type) await p.keyboard.type(k.type); await p.keyboard.press(k.press); await p.waitForTimeout(100); for (const [id, want] of k.text || []) { const got = await txt(id); need(got === norm(want), `${w}: after ${k.press} on ${k.focus}, ${id} should read "${want}" (got "${got}")`); } if (k.event) { const ev = await p.evaluate(() => window.__ev); need(ev.some(x => x[0] === k.event && (!k.type || (x[1] && x[1].text === k.type))), `${w}: ${k.press} on ${k.focus} should dispatch ${k.event}${k.type ? ' with detail.text' : ''}`); } }
+    for (const e of spec.events || []) { await p.click(T(e.click)).catch(() => need(false, `${w}: cannot click ${e.click}`)); await p.waitForTimeout(80); const ev = await p.evaluate(() => window.__ev); need(ev.some(x => x[0] === e.event), `${w}: ${e.click} should dispatch ${e.event} on document`); }
+    const body = (await p.evaluate(() => document.body.innerText)).toLowerCase(); need(!/\bscore\b|\bgrade\b/.test(body), `${w}: no score or grade`);
+    const sw = await p.evaluate(() => document.documentElement.scrollWidth); need(sw <= w, `${w}: horizontal scroll (${sw}px)`);
+    if (spec.fit) { const sh = await p.evaluate(() => document.documentElement.scrollHeight); need(sh <= h, `${w}: the screen should fit without vertical scroll (${sh}px)`); }
+    need(errs.length === 0, `${w}: console errors: ${errs.slice(0, 3).join(' | ')}`); need(ext.length === 0, `${w}: network requests: ${ext.slice(0, 3).join(' ')}`);
+    { await p.reload(); await p.waitForTimeout(250); fs.mkdirSync(shotDir, { recursive: true }); await p.screenshot({ path: path.join(shotDir, `${shotName}-${w}.png`) }); } await p.close();
+  }
+  await b.close();
+  if (fails.length) { console.log('FAIL ' + spec.name + '\n- ' + fails.join('\n- ')); process.exit(1); }
+  console.log('PASS ' + spec.name + ': the frame\'s words, layout, pictures and events at 2 sizes, no errors, no network');
+})().catch(e => { console.log('FAIL check crashed: ' + e); process.exit(1); });

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="/ui/ideas/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YAP · Ideas</title>
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="wire.js"></script>
+</head>
+<body>
+<div class="app">
+  <nav class="nav" data-testid="nav" aria-label="Main">
+    <div class="brand" data-testid="brand">YAP</div>
+    <a class="nav-item" href="#" data-testid="nav-home">
+      <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/></svg>Home</a>
+    <a class="nav-item" href="#" data-testid="nav-ideas" aria-current="page">
+      <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>Ideas</a>
+    <a class="nav-item" href="#" data-testid="nav-create">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg>Create</a>
+    <a class="nav-item" href="#" data-testid="nav-review">
+      <svg viewBox="0 0 24 24"><path d="M6 20V10M12 20V4M18 20v-7"/></svg>Review</a>
+    <a class="nav-item" href="#" data-testid="nav-grow">
+      <svg viewBox="0 0 24 24"><path d="M14 4c3.5 0 6 .5 6 .5s.5 2.5.5 6c0 4-3.5 7-7 8l-3.5-3.5c1-3.5 4-7 8-7"/><path d="M10 14.5 5.5 19M9.5 8.5 5 9.5l-1.5 3.5 4 .5M15.5 14.5 14.5 19 11 20.5l-.5-4"/></svg>Grow</a>
+  </nav>
+
+  <main class="stage">
+    <section class="panel talk" data-testid="talk-panel">
+      <p class="eyebrow" data-testid="eyebrow">Open ideas</p>
+      <h1 class="title" data-testid="title">What’s on your mind?</h1>
+      <p class="subtitle" data-testid="subtitle">Talk or type. We’ll work through it together.</p>
+      <div class="chips">
+        <button class="chip" type="button" aria-pressed="false" data-testid="chip-idea">
+          <svg viewBox="0 0 24 24" class="fill gold"><path d="M10 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7zM18.5 14c.3 2.4 1.1 3.2 3.5 3.5-2.4.3-3.2 1.1-3.5 3.5-.3-2.4-1.1-3.2-3.5-3.5 2.4-.3 3.2-1.1 3.5-3.5z"/></svg>An idea for a video</button>
+        <button class="chip" type="button" aria-pressed="false" data-testid="chip-think">
+          <svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.4"/></svg>Help me think it through</button>
+      </div>
+      <div class="box">
+        <textarea data-testid="idea-input" placeholder="Start with a rough thought..." aria-label="Your idea"></textarea>
+        <button class="send" type="button" data-testid="send" aria-label="Send" disabled>
+          <svg viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></svg></button>
+      </div>
+      <button class="gold" type="button" data-testid="talk-to-yap">
+        <svg viewBox="0 0 24 24"><path d="M3.5 10.5v3M8 8v8M12.5 4.5v15M17 7.5v9M21 10.5v3"/></svg>Talk to YAP</button>
+      <hr class="rule">
+      <div class="links">
+        <a class="link" href="#" data-testid="saved-ideas">
+          <svg viewBox="0 0 24 24" class="gold"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/></svg><span>Saved ideas</span>
+          <svg viewBox="0 0 24 24" class="chev"><path d="m9 6 6 6-6 6"/></svg></a>
+        <a class="link" href="#" data-testid="need-spark">
+          <svg viewBox="0 0 24 24" class="gold"><path d="M12 2.5c.7 5.6 3.9 8.8 9.5 9.5-5.6.7-8.8 3.9-9.5 9.5-.7-5.6-3.9-8.8-9.5-9.5 5.6-.7 8.8-3.9 9.5-9.5z"/></svg><span>Need a spark?</span>
+          <svg viewBox="0 0 24 24" class="chev"><path d="m9 6 6 6-6 6"/></svg></a>
+      </div>
+    </section>
+
+    <section class="panel idea" data-testid="idea-panel">
+      <p class="eyebrow" data-testid="idea-heading">Your idea</p>
+      <p class="status"><span class="ring"></span><span data-testid="idea-status">Not started</span></p>
+      <div class="empty">
+        <svg class="art" viewBox="0 0 320 280" aria-hidden="true">
+          <defs>
+            <linearGradient id="gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity=".05"/></linearGradient>
+            <radialGradient id="sh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f4c66b" stop-opacity=".35"/><stop offset="1" stop-color="#f4c66b" stop-opacity="0"/></radialGradient>
+          </defs>
+          <ellipse cx="160" cy="236" rx="100" ry="9" fill="url(#sh)"/>
+          <g transform="rotate(4 160 140)">
+            <rect x="80" y="60" width="146" height="150" rx="10" fill="url(#gl)" stroke="#fff" stroke-opacity=".5"/>
+            <rect x="110" y="86" width="86" height="58" rx="7" fill="#fff" fill-opacity=".1" stroke="#fff" stroke-opacity=".3"/>
+            <path d="m145 102 20 13-20 13z" fill="none" stroke="#f4c66b" stroke-width="2.4" stroke-linejoin="round"/>
+            <path d="M98 166h110M98 178h98M98 190h60" stroke="#fff" stroke-opacity=".3" stroke-width="5" stroke-linecap="round"/>
+          </g>
+          <path d="M52 168c-10 14 6 36 36 40M226 62c32-6 58 8 50 44-6 26-30 46-56 56" fill="none" stroke="#f4c66b" stroke-width="1.6" stroke-linecap="round"/>
+          <g fill="#f4c66b">
+            <path d="M232 22c1.2 8 3.4 10.2 11 11-7.6.8-9.8 3-11 11-1.2-8-3.4-10.2-11-11 7.6-.8 9.8-3 11-11z"/>
+            <path d="M298 150c1.2 8 3.4 10.2 11 11-7.6.8-9.8 3-11 11-1.2-8-3.4-10.2-11-11 7.6-.8 9.8-3 11-11z" transform="translate(-8 -2) scale(.95)"/>
+            <path d="M44 134c.8 5 2 6.2 7 7-5 .8-6.2 2-7 7-.8-5-2-6.2-7-7 5-.8 6.2-2 7-7z"/>
+            <circle cx="268" cy="38" r="1.6"/>
+          </g>
+        </svg>
+        <h2 class="empty-title" data-testid="idea-empty-title">A place for your idea to take shape.</h2>
+        <p class="empty-sub" data-testid="idea-empty-sub">As we talk, we’ll build it here.</p>
+      </div>
+    </section>
+  </main>
+</div>
+<script defer src="ideas.js"></script>
+</body>
+</html>

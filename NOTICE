@@ -1,0 +1,117 @@
+YAP
+Copyright notices for code YAP reuses
+
+The copied application code listed below is under the MIT licence.
+Each copied file keeps its copyright line in its
+own header ("Ported from ..."), and is listed below with the file it came from
+and the full licence text of its source.
+
+The source zip excludes node_modules, model weights and runtime binaries.
+The following pinned dependencies are fetched into the app during setup:
+- ffmpeg-static 5.3.0: GPL-3.0-or-later. Its FFmpeg binary is a separate
+  executable downloaded from eugeneware/ffmpeg-static release b6.1.1.
+  The corresponding README and licence accompany the installed binary.
+  https://github.com/eugeneware/ffmpeg-static
+- @huggingface/transformers 4.3.0: Apache-2.0.
+  https://github.com/huggingface/transformers.js
+Their transitive dependencies retain their original package licence files.
+The bundled sample pictures (sample/take1.mp4 and take2.mp4) are already-generated
+illustrative footage of a fictional presenter, with a "Synthetic demo" label added.
+They are not a recording of a real person. Their generation record (Seedance 2.0,
+fictional presenter from an existing clean reference; source clip sha256
+9522e07bacf659877c71521d975ac0b88eee7c9fb9c318262aa93ea37a2db33f) is
+evidence/aaa-phase/media/SOURCE.json in the development workspace. The sample
+audio is Kokoro-82M (Apache-2.0), described in sample/README.md.
+The browser downloads the Xenova/whisper-tiny.en model on first speech
+alignment. Model card: https://huggingface.co/Xenova/whisper-tiny.en
+No FFmpeg code is copied into the app source. FFmpeg runs as a subprocess.
+
+
+------------------------------------------------------------------------------
+1. jlecomte/voice-activated-teleprompter (commit cd222c8), MIT
+   https://github.com/jlecomte/voice-activated-teleprompter
+------------------------------------------------------------------------------
+
+Files in YAP, and the file each was ported from:
+
+  src/engine/text.js         from src/lib/word-tokenizer.ts
+  src/engine/levenshtein.js  from src/lib/levenshtein.ts
+  src/engine/follow.js       from src/lib/speech-matcher.ts
+  src/engine/webspeech.js    from src/lib/speech-recognizer.ts
+
+src/lib/levenshtein.ts credits its own source as "From
+https://github.com/gustf/js-levenshtein (MIT license)"; src/engine/levenshtein.js
+keeps that line as written.
+
+MIT License
+
+Copyright (c) 2024 - Present, Julien Lecomte - All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+------------------------------------------------------------------------------
+2. vincentventalon/claude-code-video-editing-skill (commit 65b56df), MIT
+   https://github.com/vincentventalon/claude-code-video-editing-skill
+------------------------------------------------------------------------------
+
+Files in YAP, and the file each was ported from:
+
+  src/engine/retake-text.js  from scripts/edit_video.py
+
+MIT License
+
+Copyright (c) 2026 Vincent Ventalon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+------------------------------------------------------------------------------
+3. Informed the design, no code copied
+------------------------------------------------------------------------------
+
+louisedesadeleer/cut-video (commit a5a87a6), MIT, Copyright (c) 2026 Louise
+de Sadeleer: its review page (keep blocks, suggested silences, undo) informed
+YAP's review pattern. No code from it is in YAP.
+
+Sample media: generated locally with Kokoro-82M v1.0, voice af_heart
+(Apache-2.0 model), using kokoro-js 1.2.1. The script is YAP sample material.
+The generated media is prominently labelled synthetic. Model weights and
+generation dependencies are not bundled.
+https://huggingface.co/hexgrad/Kokoro-82M
+https://github.com/hexgrad/kokoro/blob/main/LICENSE
+
+Review sample thumbnails (ui/reviewdetail/thumb-current.jpg and
+thumb-proposed.jpg): illustrative images cut from YAP's own design drawings.

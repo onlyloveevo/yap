@@ -1,0 +1,417 @@
+{
+  "version": 1,
+  "label": "sample",
+  "source": "tools/make-sample.js, synthetic voice Kokoro-82M v1.0 / af_heart (Apache-2.0 model)",
+  "words": [
+    {
+      "text": "Grab",
+      "start": 0,
+      "end": 0.214
+    },
+    {
+      "text": "a",
+      "start": 0.214,
+      "end": 0.267
+    },
+    {
+      "text": "tea.",
+      "start": 0.267,
+      "end": 0.427
+    },
+    {
+      "text": "Let's",
+      "start": 0.527,
+      "end": 0.736
+    },
+    {
+      "text": "get",
+      "start": 0.736,
+      "end": 0.861
+    },
+    {
+      "text": "into",
+      "start": 0.861,
+      "end": 1.028
+    },
+    {
+      "text": "it.",
+      "start": 1.028,
+      "end": 1.112
+    },
+    {
+      "text": "Three",
+      "start": 1.212,
+      "end": 1.415
+    },
+    {
+      "text": "planning",
+      "start": 1.415,
+      "end": 1.74
+    },
+    {
+      "text": "habits",
+      "start": 1.74,
+      "end": 1.983
+    },
+    {
+      "text": "save",
+      "start": 1.983,
+      "end": 2.145
+    },
+    {
+      "text": "me",
+      "start": 2.145,
+      "end": 2.227
+    },
+    {
+      "text": "hours",
+      "start": 2.227,
+      "end": 2.43
+    },
+    {
+      "text": "every",
+      "start": 2.43,
+      "end": 2.633
+    },
+    {
+      "text": "week.",
+      "start": 2.633,
+      "end": 2.795
+    },
+    {
+      "text": "Write",
+      "start": 3.396,
+      "end": 3.842
+    },
+    {
+      "text": "the",
+      "start": 3.842,
+      "end": 4.109
+    },
+    {
+      "text": "hook",
+      "start": 4.109,
+      "end": 4.466
+    },
+    {
+      "text": "before",
+      "start": 4.466,
+      "end": 5.001
+    },
+    {
+      "text": "Write",
+      "start": 5.707,
+      "end": 6.129
+    },
+    {
+      "text": "the",
+      "start": 6.129,
+      "end": 6.382
+    },
+    {
+      "text": "hook",
+      "start": 6.382,
+      "end": 6.719
+    },
+    {
+      "text": "before",
+      "start": 6.719,
+      "end": 7.225
+    },
+    {
+      "text": "anything",
+      "start": 7.225,
+      "end": 7.899
+    },
+    {
+      "text": "else",
+      "start": 7.899,
+      "end": 8.236
+    },
+    {
+      "text": "and",
+      "start": 8.236,
+      "end": 8.489
+    },
+    {
+      "text": "plan",
+      "start": 8.489,
+      "end": 8.826
+    },
+    {
+      "text": "the",
+      "start": 8.826,
+      "end": 9.079
+    },
+    {
+      "text": "rest.",
+      "start": 9.079,
+      "end": 9.416
+    },
+    {
+      "text": "Hey",
+      "start": 10.219,
+      "end": 10.711
+    },
+    {
+      "text": "YAP,",
+      "start": 10.711,
+      "end": 11.204
+    },
+    {
+      "text": "let's",
+      "start": 11.304,
+      "end": 11.756
+    },
+    {
+      "text": "try",
+      "start": 11.756,
+      "end": 12.028
+    },
+    {
+      "text": "'Grab",
+      "start": 12.028,
+      "end": 12.481
+    },
+    {
+      "text": "a",
+      "start": 12.481,
+      "end": 12.572
+    },
+    {
+      "text": "coffee'",
+      "start": 12.572,
+      "end": 13.206
+    },
+    {
+      "text": "instead",
+      "start": 13.206,
+      "end": 13.84
+    },
+    {
+      "text": "of",
+      "start": 13.84,
+      "end": 14.021
+    },
+    {
+      "text": "'Grab",
+      "start": 14.021,
+      "end": 14.474
+    },
+    {
+      "text": "a",
+      "start": 14.474,
+      "end": 14.565
+    },
+    {
+      "text": "tea.'",
+      "start": 14.565,
+      "end": 14.927
+    },
+    {
+      "text": "Yeah,",
+      "start": 16.43,
+      "end": 17.205
+    },
+    {
+      "text": "let's",
+      "start": 17.305,
+      "end": 17.886
+    },
+    {
+      "text": "do",
+      "start": 17.886,
+      "end": 18.118
+    },
+    {
+      "text": "that.",
+      "start": 18.118,
+      "end": 18.583
+    },
+    {
+      "text": "The",
+      "start": 19.587,
+      "end": 19.926
+    },
+    {
+      "text": "first",
+      "start": 19.926,
+      "end": 20.492
+    },
+    {
+      "text": "thing",
+      "start": 20.492,
+      "end": 21.057
+    },
+    {
+      "text": "I",
+      "start": 21.057,
+      "end": 21.17
+    },
+    {
+      "text": "Sorry,",
+      "start": 21.672,
+      "end": 22.475
+    },
+    {
+      "text": "let",
+      "start": 22.575,
+      "end": 22.841
+    },
+    {
+      "text": "me",
+      "start": 22.841,
+      "end": 23.018
+    },
+    {
+      "text": "start",
+      "start": 23.018,
+      "end": 23.461
+    },
+    {
+      "text": "that",
+      "start": 23.461,
+      "end": 23.816
+    },
+    {
+      "text": "again.",
+      "start": 23.816,
+      "end": 24.259
+    },
+    {
+      "text": "The",
+      "start": 24.861,
+      "end": 25.133
+    },
+    {
+      "text": "first",
+      "start": 25.133,
+      "end": 25.587
+    },
+    {
+      "text": "thing",
+      "start": 25.587,
+      "end": 26.041
+    },
+    {
+      "text": "I",
+      "start": 26.041,
+      "end": 26.132
+    },
+    {
+      "text": "write",
+      "start": 26.132,
+      "end": 26.586
+    },
+    {
+      "text": "down",
+      "start": 26.586,
+      "end": 26.949
+    },
+    {
+      "text": "is",
+      "start": 26.949,
+      "end": 27.131
+    },
+    {
+      "text": "the",
+      "start": 27.131,
+      "end": 27.403
+    },
+    {
+      "text": "hook",
+      "start": 27.403,
+      "end": 27.766
+    },
+    {
+      "text": "in",
+      "start": 27.766,
+      "end": 27.948
+    },
+    {
+      "text": "a",
+      "start": 27.948,
+      "end": 28.039
+    },
+    {
+      "text": "single",
+      "start": 28.039,
+      "end": 28.584
+    },
+    {
+      "text": "plain",
+      "start": 28.584,
+      "end": 29.038
+    },
+    {
+      "text": "sentence.",
+      "start": 29.038,
+      "end": 29.764
+    },
+    {
+      "text": "After",
+      "start": 31.966,
+      "end": 32.396
+    },
+    {
+      "text": "that",
+      "start": 32.396,
+      "end": 32.741
+    },
+    {
+      "text": "the",
+      "start": 32.741,
+      "end": 32.999
+    },
+    {
+      "text": "rest",
+      "start": 32.999,
+      "end": 33.343
+    },
+    {
+      "text": "of",
+      "start": 33.343,
+      "end": 33.516
+    },
+    {
+      "text": "the",
+      "start": 33.516,
+      "end": 33.774
+    },
+    {
+      "text": "plan",
+      "start": 33.774,
+      "end": 34.118
+    },
+    {
+      "text": "comes",
+      "start": 34.118,
+      "end": 34.549
+    },
+    {
+      "text": "together",
+      "start": 34.549,
+      "end": 35.238
+    },
+    {
+      "text": "in",
+      "start": 35.238,
+      "end": 35.41
+    },
+    {
+      "text": "about",
+      "start": 35.41,
+      "end": 35.84
+    },
+    {
+      "text": "twenty",
+      "start": 35.84,
+      "end": 36.357
+    },
+    {
+      "text": "minutes.",
+      "start": 36.357,
+      "end": 36.959
+    }
+  ]
+}

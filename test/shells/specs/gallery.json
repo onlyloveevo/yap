@@ -1,0 +1,165 @@
+{
+ "name": "Create gallery picker (frame accepted 3 Oct 05:45: 'ok do that')",
+ "fit": false,
+ "words": {
+  "brand": "YAP",
+  "nav-home": "Home",
+  "nav-ideas": "Ideas",
+  "nav-create": "Create",
+  "nav-review": "Review",
+  "nav-grow": "Grow",
+  "eyebrow": "CREATE",
+  "title": "What are we making today?",
+  "subtitle": "Pick an idea from your idea bank.",
+  "new-idea": "Develop a new idea",
+  "filter-all": "All ideas",
+  "filter-talking-head": "Talking head",
+  "filter-vlog": "Vlog",
+  "filter-walkthrough": "Walkthrough",
+  "filter-interview": "Interview",
+  "card-1-title": "Why I keep putting off filming",
+  "card-1-desc": "A personal look at perfectionism, overthinking and how I'm changing that.",
+  "card-1-updated": "Updated 2 days ago",
+  "card-1-format": "Talking head",
+  "card-2-title": "My creative setup",
+  "card-2-desc": "A look at my current tools, space and workflow.",
+  "card-2-updated": "Updated 5 days ago",
+  "card-2-format": "Vlog",
+  "card-3-title": "What 75 Hard taught me",
+  "card-3-desc": "Key lessons and what I'd do differently next time.",
+  "card-3-updated": "Updated 1 week ago",
+  "card-3-format": "Talking head"
+ },
+ "contains": {
+  "card-4": [
+   "From ideas to action",
+   "How I actually follow through.",
+   "Talking head"
+  ],
+  "card-5": [
+   "My AI workflow",
+   "The tools and processes I use daily.",
+   "Walkthrough"
+  ],
+  "card-6": [
+   "A day in the life",
+   "A realistic look at a typical day.",
+   "Vlog"
+  ]
+ },
+ "attrs": [
+  [
+   "nav-create",
+   "aria-current",
+   "page"
+  ],
+  [
+   "filter-all",
+   "aria-pressed",
+   "true"
+  ],
+  [
+   "filter-vlog",
+   "aria-pressed",
+   "false"
+  ]
+ ],
+ "leftOf": [
+  [
+   "nav",
+   "gallery"
+  ],
+  [
+   "title",
+   "new-idea"
+  ],
+  [
+   "filter-all",
+   "filter-talking-head"
+  ],
+  [
+   "filter-interview",
+   "search"
+  ],
+  [
+   "card-1",
+   "card-2"
+  ],
+  [
+   "card-2",
+   "card-3"
+  ]
+ ],
+ "sameRow": [
+  [
+   "card-1",
+   "card-2",
+   "card-3"
+  ],
+  [
+   "card-4",
+   "card-5",
+   "card-6"
+  ]
+ ],
+ "above": [
+  [
+   "title",
+   "filter-all"
+  ],
+  [
+   "filter-all",
+   "card-1"
+  ],
+  [
+   "card-1",
+   "card-4"
+  ]
+ ],
+ "images": [
+  "card-1-thumb",
+  "card-2-thumb",
+  "card-3-thumb"
+ ],
+ "toggles": [
+  {
+   "click": "filter-vlog",
+   "attr": "aria-pressed",
+   "after": "true",
+   "then": [
+    [
+     "filter-all",
+     "aria-pressed",
+     "false"
+    ]
+   ],
+   "hidden": [
+    "card-1",
+    "card-3"
+   ],
+   "visible": [
+    "card-2"
+   ]
+  },
+  {
+   "click": "filter-all",
+   "attr": "aria-pressed",
+   "after": "true",
+   "visible": [
+    "card-1",
+    "card-2",
+    "card-3"
+   ]
+  }
+ ],
+ "events": [
+  {
+   "click": "new-idea",
+   "event": "yap:idea-new"
+  },
+  {
+   "click": "card-1",
+   "event": "yap:idea-pick"
+  }
+ ]
+}

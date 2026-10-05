@@ -1,0 +1,238 @@
+{
+ "name": "Beat list (frame accepted 3 Oct 06:13: 'Ok beatlet sgo with this')",
+ "fit": true,
+ "words": {
+  "brand": "YAP",
+  "nav-home": "Home",
+  "nav-ideas": "Ideas",
+  "nav-create": "Create",
+  "nav-review": "Review",
+  "nav-grow": "Grow",
+  "back-top": "Back to idea",
+  "eyebrow": "CREATE",
+  "title": "Your idea, broken into beats",
+  "subtitle": "One moment per beat. Edit, remove or drag to reorder.",
+  "idea-thumb-chip": "Proposed thumbnail",
+  "idea-title": "Why I keep putting off filming",
+  "idea-kind": "YouTube · Talking head",
+  "edit-idea": "Edit idea",
+  "add-beat": "Add beat",
+  "extras-title": "Thumbnail & experiment",
+  "extras-chip": "Proposed",
+  "prepare-recording": "Prepare recording",
+  "back-bottom": "Back to idea",
+  "refine-title": "Refine with YAP",
+  "refine-note": "Suggestions are yours to change or skip.",
+  "talk-to-yap": "Talk to YAP",
+  "beat-hours-num": "01",
+  "beat-hours-title": "Hours of planning",
+  "beat-hours-line": "I planned for hours.",
+  "beat-hours-source": "From your idea",
+  "beat-never-num": "02",
+  "beat-never-title": "Never pressed record",
+  "beat-never-line": "I never pressed record.",
+  "beat-never-source": "From your idea",
+  "beat-delay-num": "03",
+  "beat-delay-title": "Planning becomes the delay",
+  "beat-delay-line": "Planning can become a way to avoid filming.",
+  "beat-delay-source": "YAP suggestion",
+  "beat-imperfect-num": "04",
+  "beat-imperfect-title": "Try one imperfect take",
+  "beat-imperfect-line": "Try filming one take before planning any more.",
+  "beat-imperfect-source": "YAP suggestion",
+  "beat-first-step-num": "05",
+  "beat-first-step-title": "Leave them with a first step",
+  "beat-first-step-line": "Start before you feel ready.",
+  "beat-first-step-source": "YAP suggestion",
+  "beat-delay-accept": "Accept",
+  "beat-imperfect-accept": "Accept",
+  "beat-first-step-accept": "Accept"
+ },
+ "contains": {
+  "refine-message": [
+   "I split your idea into moments.",
+   "Keep what fits; change the rest."
+  ]
+ },
+ "placeholders": {
+  "refine-input": "Ask YAP or add a thought..."
+ },
+ "attrs": [
+  [
+   "nav-create",
+   "aria-current",
+   "page"
+  ],
+  [
+   "beat-hours",
+   "data-state",
+   "yours"
+  ],
+  [
+   "beat-delay",
+   "data-state",
+   "suggested"
+  ],
+  [
+   "extras",
+   "aria-expanded",
+   "false"
+  ]
+ ],
+ "leftOf": [
+  [
+   "nav",
+   "beats-panel"
+  ],
+  [
+   "beats-panel",
+   "refine-panel"
+  ],
+  [
+   "prepare-recording",
+   "back-bottom"
+  ],
+  [
+   "beat-delay-source",
+   "beat-delay-accept"
+  ]
+ ],
+ "wider": [
+  [
+   "beats-panel",
+   "refine-panel"
+  ]
+ ],
+ "above": [
+  [
+   "title",
+   "idea-card"
+  ],
+  [
+   "idea-card",
+   "beat-hours"
+  ],
+  [
+   "beat-hours",
+   "beat-never"
+  ],
+  [
+   "beat-never",
+   "beat-delay"
+  ],
+  [
+   "beat-delay",
+   "beat-imperfect"
+  ],
+  [
+   "beat-imperfect",
+   "beat-first-step"
+  ],
+  [
+   "beat-first-step",
+   "add-beat"
+  ],
+  [
+   "add-beat",
+   "extras"
+  ],
+  [
+   "extras",
+   "prepare-recording"
+  ],
+  [
+   "refine-input",
+   "talk-to-yap"
+  ]
+ ],
+ "gold": [
+  "prepare-recording"
+ ],
+ "goldOutline": [
+  "talk-to-yap"
+ ],
+ "images": [
+  "idea-thumb"
+ ],
+ "toggles": [
+  {
+   "click": "beat-delay-accept",
+   "attr": "aria-pressed",
+   "after": "true",
+   "then": [
+    [
+     "beat-delay",
+     "data-state",
+     "accepted"
+    ]
+   ]
+  },
+  {
+   "click": "extras",
+   "attr": "aria-expanded",
+   "after": "true"
+  }
+ ],
+ "keys": [
+  {
+   "focus": "beat-never-handle",
+   "press": "Alt+ArrowUp",
+   "text": [
+    [
+     "beat-never-num",
+     "01"
+    ],
+    [
+     "beat-hours-num",
+     "02"
+    ]
+   ]
+  },
+  {
+   "focus": "beat-never-handle",
+   "press": "Alt+ArrowDown",
+   "text": [
+    [
+     "beat-never-num",
+     "02"
+    ],
+    [
+     "beat-hours-num",
+     "01"
+    ]
+   ]
+  },
+  {
+   "focus": "refine-input",
+   "type": "Make the ending shorter",
+   "press": "Enter",
+   "event": "yap:idea-message"
+  }
+ ],
+ "events": [
+  {
+   "click": "talk-to-yap",
+   "event": "yap:talk"
+  },
+  {
+   "click": "edit-idea",
+   "event": "yap:idea-edit"
+  },
+  {
+   "click": "beat-hours-edit",
+   "event": "yap:beat-edit"
+  },
+  {
+   "click": "add-beat",
+   "event": "yap:beat-add"
+  },
+  {
+   "click": "back-bottom",
+   "event": "yap:idea-back"
+  },
+  {
+   "click": "prepare-recording",
+   "event": "yap:beats-ready"
+  }
+ ]
+}

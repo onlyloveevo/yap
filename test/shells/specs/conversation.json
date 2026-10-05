@@ -1,0 +1,148 @@
+{
+ "name": "Ideas first conversation (frame accepted 3 Oct 04:53: 'this is good format should also be suggested')",
+ "fit": true,
+ "words": {
+  "brand": "YAP",
+  "nav-home": "Home",
+  "nav-ideas": "Ideas",
+  "nav-create": "Create",
+  "nav-review": "Review",
+  "nav-grow": "Grow",
+  "eyebrow": "OPEN IDEAS",
+  "title": "Let's explore it.",
+  "idea-heading": "YOUR IDEA",
+  "idea-status": "Exploring",
+  "starting-label": "STARTING THOUGHT",
+  "starting-thought": "\"Why I keep putting off filming\"",
+  "template-label": "TEMPLATE",
+  "template-name": "YouTube video",
+  "template-suggested": "Suggested",
+  "format-label": "FORMAT",
+  "format-hint": "A starting point - you can change it.",
+  "format-vlog-title": "Vlog",
+  "format-vlog-sub": "Show the moments as they happen.",
+  "format-talking-head-title": "Talking head",
+  "format-talking-head-sub": "Tell the story to camera.",
+  "format-suggested": "Suggested",
+  "more-formats": "More formats",
+  "save-thought": "Save thought",
+  "keep-exploring": "Keep exploring",
+  "talk-to-yap": "Talk to YAP"
+ },
+ "contains": {
+  "talk-panel": [
+   "I want to make a video about why I keep putting off filming.",
+   "Would you rather tell the story to camera, or show what happens as you try?",
+   "We can work that out together."
+  ]
+ },
+ "placeholders": {
+  "idea-input": "Add a thought or ask YAP..."
+ },
+ "attrs": [
+  [
+   "nav-ideas",
+   "aria-current",
+   "page"
+  ],
+  [
+   "format-talking-head",
+   "aria-pressed",
+   "true"
+  ],
+  [
+   "format-vlog",
+   "aria-pressed",
+   "false"
+  ]
+ ],
+ "leftOf": [
+  [
+   "nav",
+   "talk-panel"
+  ],
+  [
+   "talk-panel",
+   "idea-panel"
+  ],
+  [
+   "format-vlog",
+   "format-talking-head"
+  ],
+  [
+   "save-thought",
+   "keep-exploring"
+  ]
+ ],
+ "wider": [
+  [
+   "idea-panel",
+   "talk-panel"
+  ]
+ ],
+ "above": [
+  [
+   "template-select",
+   "format-vlog"
+  ],
+  [
+   "idea-input",
+   "talk-to-yap"
+  ]
+ ],
+ "gold": [
+  "keep-exploring"
+ ],
+ "goldOutline": [
+  "talk-to-yap"
+ ],
+ "type": {
+  "input": "idea-input",
+  "send": "send",
+  "event": "yap:idea-message"
+ },
+ "toggles": [
+  {
+   "click": "format-vlog",
+   "attr": "aria-pressed",
+   "after": "true",
+   "then": [
+    [
+     "format-talking-head",
+     "aria-pressed",
+     "false"
+    ]
+   ]
+  },
+  {
+   "click": "format-talking-head",
+   "attr": "aria-pressed",
+   "after": "true",
+   "then": [
+    [
+     "format-vlog",
+     "aria-pressed",
+     "false"
+    ]
+   ]
+  }
+ ],
+ "events": [
+  {
+   "click": "talk-to-yap",
+   "event": "yap:talk"
+  },
+  {
+   "click": "save-thought",
+   "event": "yap:idea-save-thought"
+  },
+  {
+   "click": "more-formats",
+   "event": "yap:formats-more"
+  },
+  {
+   "click": "keep-exploring",
+   "event": "yap:idea-keep-exploring"
+  }
+ ]
+}

@@ -1,0 +1,25 @@
+/* Screen presentation chrome. App-only: none of this is drawn into the recording. */
+.present-start-screen { position: absolute; z-index: 6; inset: 0; display: grid; place-items: center; padding: var(--space-6); background: radial-gradient(ellipse at 50% 40%, rgba(58,47,39,.55) 0%, rgba(23,18,15,.9) 70%); }
+.present-card { width: min(520px, 100%); display: grid; gap: var(--space-3); padding: var(--space-8); border-radius: var(--radius-card); background: var(--glass-strong); }
+.present-card h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -.03em; }
+.present-card p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--white-soft); }
+.present-card .present-choose { font-size: 20px; font-weight: 600; color: var(--white); }
+.present-card .present-audio { font-size: 14px; color: var(--white-dim); }
+.present-status { min-height: 1.5em; font-size: 15px; }
+.present-status[data-state="error"] { color: var(--amber); }
+.present-start { min-height: 48px; border: 0; border-radius: var(--radius-pill); padding: var(--space-3) var(--space-6); background: var(--amber); color: #17130d; font-size: 17px; font-weight: 600; }
+.present-start:disabled { opacity: .55; cursor: progress; }
+.present-secondary { min-height: 44px; border: 1px solid var(--glass-border); border-radius: var(--radius-pill); padding: var(--space-2) var(--space-5); background: transparent; font-size: 16px; }
+.present-camera-only { justify-self: center; padding: var(--space-2); color: var(--white-soft); font-size: 15px; }
+.present-camera-only:focus-visible { outline: 2px solid var(--amber); outline-offset: var(--space-1); }
+.present-bar { position: absolute; z-index: 4; top: var(--top-offset); left: 50%; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-3); max-width: calc(100vw - 2 * var(--page-pad) - 280px); }
+.present-sharing { display: flex; align-items: center; gap: var(--space-2); margin: 0; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--radius-pill); font-size: 14px; max-width: 360px; }
+.present-sharing span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.present-dot { width: 9px; height: 9px; flex: 0 0 9px; border-radius: var(--radius-round); background: var(--red); }
+.present-mic { color: var(--white-dim); white-space: nowrap; }
+.present-switch { display: flex; padding: var(--space-1); border-radius: var(--radius-pill); }
+.present-mode { min-height: 40px; border: 0; border-radius: var(--radius-pill); padding: 0 var(--space-4); background: transparent; font-size: 14px; font-weight: 500; color: var(--white-soft); }
+.present-mode[aria-pressed="true"] { background: var(--white); color: #17130d; }
+.live-shell.is-presenting .camera { transform: none; object-fit: contain; background: var(--camera-dark); }
+.live-shell.is-presenting .camera-shade { opacity: .35; }
+@media (max-width: 900px) { .present-bar { top: 96px; max-width: calc(100vw - 2 * var(--page-pad)); } }

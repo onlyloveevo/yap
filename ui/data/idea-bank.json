@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "ideas": [
+    {
+      "id": "sample",
+      "title": "Why I keep putting off filming",
+      "format": "Talking head",
+      "desc": "A personal look at perfectionism, overthinking and how I'm changing that.",
+      "updated": "Updated 2 days ago",
+      "beats": [
+        { "id": "hours", "title": "Hours of planning", "line": "I planned for hours.", "source": "idea" },
+        { "id": "never", "title": "Never pressed record", "line": "I never pressed record.", "source": "idea" },
+        { "id": "delay", "title": "Planning becomes the delay", "line": "Planning can become a way to avoid filming.", "source": "suggestion" },
+        { "id": "imperfect", "title": "Try one imperfect take", "line": "Try filming one take before planning any more.", "source": "suggestion" },
+        { "id": "first-step", "title": "Leave them with a first step", "line": "Start before you feel ready.", "source": "suggestion" }
+      ]
+    },
+    {
+      "id": "idea-2",
+      "title": "My creative setup",
+      "format": "Vlog",
+      "desc": "A look at my current tools, space and workflow.",
+      "updated": "Updated 5 days ago",
+      "beats": []
+    },
+    {
+      "id": "idea-3",
+      "title": "What 75 Hard taught me",
+      "format": "Talking head",
+      "desc": "Key lessons and what I'd do differently next time.",
+      "updated": "Updated 1 week ago",
+      "beats": []
+    },
+    {
+      "id": "idea-4",
+      "title": "From ideas to action",
+      "format": "Talking head",
+      "desc": "How I actually follow through.",
+      "updated": "Updated 1 week ago",
+      "beats": []
+    },
+    {
+      "id": "idea-5",
+      "title": "My AI workflow",
+      "format": "Walkthrough",
+      "desc": "The tools and processes I use daily.",
+      "updated": "Updated 2 weeks ago",
+      "beats": []
+    },
+    {
+      "id": "idea-6",
+      "title": "A day in the life",
+      "format": "Vlog",
+      "desc": "A realistic look at a typical day.",
+      "updated": "Updated 3 weeks ago",
+      "beats": []
+    }
+  ]
+}

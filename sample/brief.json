@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "label": "sample",
+  "idea": "How I plan a video in twenty minutes",
+  "greeting": "Grab a tea. Let's get into it.",
+  "points": [
+    {
+      "id": "p1",
+      "title": "Hook",
+      "active": "p1-tips",
+      "angles": [
+        {
+          "id": "p1-tips",
+          "label": "tips",
+          "text": "Three planning habits that save me hours",
+          "reply": "Which habit do you want to open with?",
+          "keywords": ["habits", "save", "hours", "planning"]
+        },
+        {
+          "id": "p1-story",
+          "label": "story",
+          "text": "The video I planned the night before and lost",
+          "reply": "What was the moment you realised?",
+          "keywords": ["night", "before", "lost", "planned"]
+        }
+      ]
+    },
+    {
+      "id": "p2",
+      "title": "What I do",
+      "active": "p2-tips",
+      "angles": [
+        {
+          "id": "p2-tips",
+          "label": "tips",
+          "text": "Write the hook before anything else",
+          "reply": "Say the hook out loud once.",
+          "keywords": ["hook", "write", "first"]
+        },
+        {
+          "id": "p2-story",
+          "label": "story",
+          "text": "When it went wrong: six hours of editing for nothing",
+          "reply": "What was the moment you realised?",
+          "keywords": ["wrong", "six", "hours", "editing", "nothing"]
+        },
+        {
+          "id": "p2-numbers",
+          "label": "numbers",
+          "text": "Twenty minutes now against six hours then",
+          "reply": "Which number surprised you most?",
+          "keywords": ["twenty", "minutes", "six", "hours"]
+        }
+      ]
+    },
+    {
+      "id": "p3",
+      "title": "Takeaway",
+      "active": "p3-tips",
+      "angles": [
+        {
+          "id": "p3-tips",
+          "label": "tips",
+          "text": "Keep one take and fix it later",
+          "reply": "What would you tell your past self?",
+          "keywords": ["one", "take", "fix", "later"]
+        },
+        {
+          "id": "p3-story",
+          "label": "story",
+          "text": "What I do differently since that day",
+          "reply": "What changed the next morning?",
+          "keywords": ["differently", "since", "day", "changed"]
+        }
+      ]
+    }
+  ]
+}

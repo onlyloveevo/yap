@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="/ui/prepare/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YAP</title>
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="wire.js"></script>
+</head>
+<body>
+<main class="shell" id="shell" data-view="home">
+  <div class="camera-fallback"></div>
+  <video class="camera" data-testid="camera" id="camera" autoplay muted playsinline aria-label="Your camera"></video>
+  <div class="camera-shade"></div>
+
+  <header class="top-bar">
+    <div class="brand-line" data-testid="brand"><strong>YAP</strong></div>
+    <p class="tagline">Show up. Yap. Be you.</p>
+  </header>
+
+  <section class="panel glass" id="home" aria-labelledby="home-title">
+    <h1 class="panel-title" data-testid="title" id="home-title">What are we making?</h1>
+    <div class="choices">
+      <button class="choice" type="button" data-testid="choice-just-talk" data-mode="talk"><span class="choice-name">Just talk</span><span class="choice-note">Four simple beats, nothing to write</span></button>
+      <button class="choice" type="button" data-testid="choice-idea" data-mode="idea"><span class="choice-name">Start from an idea</span><span class="choice-note">A sentence is enough</span></button>
+      <button class="choice" type="button" data-testid="choice-paste" data-mode="paste"><span class="choice-name">Paste something</span><span class="choice-note">Notes, a draft, a post</span></button>
+    </div>
+    <div class="recent" data-testid="recent">
+      <h2 class="eyebrow">Recent</h2>
+      <ul class="recent-list" id="recent-list"></ul>
+    </div>
+  </section>
+
+  <section class="panel glass" id="compose" hidden aria-labelledby="compose-title">
+    <h1 class="panel-title" id="compose-title">What are we making?</h1>
+    <textarea class="idea-input" data-testid="idea-input" id="idea-input" rows="5" placeholder="What do you want to talk about?"></textarea>
+    <div class="actions">
+      <button class="text-button" type="button" id="compose-back">Back</button>
+      <button class="primary" type="button" data-testid="make-beats" id="make-beats">Make my beats</button>
+    </div>
+  </section>
+
+  <section class="panel panel-wide glass" id="prepare" hidden aria-labelledby="prepare-title">
+    <h1 class="panel-title" id="prepare-title">Your beats</h1>
+    <div class="prepare-grid">
+      <ol class="beat-list" id="beat-list"></ol>
+      <div class="cues">
+        <h2 class="cue-title">How do you want to come across?</h2>
+        <div class="chips" id="chips" role="group" aria-label="Delivery cues"></div>
+        <p class="cue-limit" data-testid="cue-limit" id="cue-limit" role="status" hidden>Pick up to 3. They show one at a time while you record.</p>
+        <p class="hint">A cue shows briefly, then fades.</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="text-button" type="button" data-testid="back-home" id="back-home">Back</button>
+      <button class="primary" type="button" data-testid="start-recording" id="start-recording">Start recording</button>
+    </div>
+  </section>
+</main>
+</body>
+</html>

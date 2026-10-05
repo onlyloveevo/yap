@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="/ui/reviewsample/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YAP · Review</title>
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="wire.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand" data-testid="brand">YAP</div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <main class="main">
+    <header class="head">
+      <div class="head-text">
+        <div class="title-row">
+          <h1 data-testid="title">Review</h1>
+          <span class="badge" data-testid="sample-badge">Sample data · Not connected</span>
+        </div>
+        <p class="sub">Understand what's working, and make your next video even better.</p>
+      </div>
+      <button class="range" data-testid="range" type="button" aria-label="Date range: Last 28 days"></button>
+    </header>
+    <section class="kpis" id="kpis"></section>
+    <div class="cols">
+      <div class="left">
+        <section class="player" data-testid="player">
+          <div class="screen"><img src="assets/video.jpg" alt=""></div>
+          <div class="controls">
+            <button class="icon-btn" data-testid="play" type="button" aria-label="Play" id="play"></button>
+            <span class="time" data-testid="time" id="time">0:14 / 8:27</span>
+            <div class="progress"><div class="progress-fill" id="progress"></div></div>
+            <span class="ctl" id="ctl"></span>
+          </div>
+        </section>
+        <div class="vtitle"><h2 data-testid="video-title">Why this matters</h2><p>Published Jan 12, 2025</p></div>
+        <section class="card retention" data-testid="retention">
+          <div class="card-head">
+            <h3>Audience retention <span class="info" id="info"></span></h3>
+            <div class="legend"><span><i class="dot purple"></i>This video</span><span><i class="dot grey"></i>Your channel average</span></div>
+          </div>
+          <div class="chart" id="chart"></div>
+          <h3 class="kmh">Key moments</h3>
+          <div class="moments" data-testid="moments" id="moments"></div>
+        </section>
+      </div>
+      <aside class="assistant" data-testid="assistant">
+        <div class="a-head">
+          <span class="spark-ic" id="spark-ic"></span><b>YAP assistant</b><span class="beta">BETA</span>
+          <button class="icon-btn small" type="button" aria-label="Assistant options" id="a-opt"></button>
+        </div>
+        <div class="scroller" id="scroller">
+          <div class="bubble you" data-testid="question">What happened here?</div>
+          <div class="bubble yap" data-testid="answer" id="answer"></div>
+          <section class="experiment" data-testid="experiment" id="experiment"></section>
+          <div class="thread" id="thread"></div>
+        </div>
+        <div class="ask">
+          <label for="ask-input">Ask anything about this video</label>
+          <div class="ask-box">
+            <input id="ask-input" data-testid="ask-input" type="text" placeholder="Why is CTR lower than my other videos?" autocomplete="off">
+            <button class="send" data-testid="ask-send" type="button" aria-label="Send" id="send"></button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+<div class="toast" data-testid="toast" id="toast" role="status" hidden></div>
+</body>
+</html>

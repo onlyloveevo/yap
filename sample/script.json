@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "label": "sample",
+  "note": "Labelled synthetic sample. Kokoro-82M v1.0 af_heart voice; not a real person recording.",
+  "voices": [
+    "Kokoro af_heart"
+  ],
+  "rates": {
+    "normal": 150,
+    "fast": 260
+  },
+  "commaGap": 0.1,
+  "takes": {
+    "take1": [
+      {
+        "say": "Grab a tea. Let's get into it. Three planning habits save me hours every week.",
+        "rate": "fast",
+        "role": "fast",
+        "point": "p1"
+      },
+      {
+        "gap": 0.6
+      },
+      {
+        "say": "Write the hook before",
+        "rate": "normal",
+        "role": "fragment",
+        "restart": "A",
+        "point": "p2"
+      },
+      {
+        "gap": 0.7
+      },
+      {
+        "say": "Write the hook before anything else and plan the rest.",
+        "rate": "normal",
+        "role": "continuation",
+        "restart": "A",
+        "point": "p2"
+      },
+      {
+        "gap": 0.8
+      },
+      {
+        "say": "Hey YAP, let's try 'Grab a coffee' instead of 'Grab a tea.'",
+        "rate": "normal",
+        "role": "exchange",
+        "point": "p2"
+      },
+      {
+        "gap": 1.5
+      },
+      {
+        "say": "Yeah, let's do that.",
+        "rate": "normal",
+        "role": "answer",
+        "point": "p2"
+      },
+      {
+        "gap": 1.0
+      },
+      {
+        "say": "The first thing I",
+        "rate": "normal",
+        "role": "fragment",
+        "restart": "B",
+        "point": "p2"
+      },
+      {
+        "gap": 0.5
+      },
+      {
+        "say": "Sorry, let me start that again.",
+        "rate": "normal",
+        "role": "restart-phrase",
+        "restart": "B",
+        "point": "p2"
+      },
+      {
+        "gap": 0.6
+      },
+      {
+        "say": "The first thing I write down is the hook in a single plain sentence.",
+        "rate": "normal",
+        "role": "continuation",
+        "restart": "B",
+        "point": "p2"
+      },
+      {
+        "gap": 2.2,
+        "role": "pause"
+      },
+      {
+        "say": "After that the rest of the plan comes together in about twenty minutes.",
+        "rate": "normal",
+        "role": "line",
+        "point": "p2"
+      }
+    ],
+    "take2": [
+      {
+        "say": "Grab a coffee. Let's get into it.",
+        "rate": "normal",
+        "role": "line",
+        "point": "p1"
+      },
+      {
+        "gap": 0.45
+      },
+      {
+        "say": "Three planning habits save me hours every week.",
+        "rate": "normal",
+        "role": "line",
+        "point": "p1"
+      },
+      {
+        "gap": 0.6
+      },
+      {
+        "say": "Write the hook before",
+        "rate": "normal",
+        "role": "fragment",
+        "restart": "A",
+        "point": "p2"
+      },
+      {
+        "gap": 0.7
+      },
+      {
+        "say": "Write the hook before anything else and plan the rest.",
+        "rate": "normal",
+        "role": "continuation",
+        "restart": "A",
+        "point": "p2"
+      },
+      {
+        "gap": 0.8
+      },
+      {
+        "say": "Keep one take and fix it later.",
+        "rate": "normal",
+        "role": "line",
+        "point": "p3"
+      },
+      {
+        "gap": 1.0
+      },
+      {
+        "say": "Everything else can wait for the edit.",
+        "rate": "normal",
+        "role": "line",
+        "point": "p3"
+      }
+    ]
+  }
+}

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="/ui/beats/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YAP · Beats</title>
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="wire.js"></script>
+</head>
+<body>
+<div class="app">
+  <nav class="nav" data-testid="nav" aria-label="Main">
+    <div class="brand" data-testid="brand">YAP</div>
+    <a class="nav-item" href="#" data-testid="nav-home">
+      <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/></svg>Home</a>
+    <a class="nav-item" href="#" data-testid="nav-ideas">
+      <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>Ideas</a>
+    <a class="nav-item" href="#" data-testid="nav-create" aria-current="page">
+      <svg viewBox="0 0 24 24"><path d="M11 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V13"/><path d="m18.5 3.5 2 2L12 14l-3 1 1-3z"/></svg>Create</a>
+    <a class="nav-item" href="#" data-testid="nav-review">
+      <svg viewBox="0 0 24 24"><path d="M4 21h16M5 14l3 3 5-6 3 3M7 4v2M3.5 5h7M17 3v3M15.5 4.5h3"/></svg>Review</a>
+    <a class="nav-item" href="#" data-testid="nav-grow">
+      <svg viewBox="0 0 24 24"><path d="M5 20V12M5 20h-1M12 20V5h-3v15h3zM19 20V10h-3v10h3z"/><path d="M3.5 20h17"/></svg>Grow</a>
+  </nav>
+
+  <main class="stage">
+    <section class="beats" data-testid="beats-panel">
+      <a class="back-top" href="#" data-testid="back-top">
+        <svg viewBox="0 0 24 24"><path d="M20 12H4M10 6l-6 6 6 6"/></svg><span>Back to idea</span></a>
+      <p class="eyebrow" data-testid="eyebrow">CREATE</p>
+      <h1 class="title" data-testid="title">Your idea, broken into beats</h1>
+      <p class="subtitle" data-testid="subtitle">One moment per beat. Edit, remove or drag to reorder.</p>
+
+      <div class="idea-card" data-testid="idea-card">
+        <div class="thumb">
+          <img src="assets/idea-thumb.png" alt="Why I keep putting off filming" data-testid="idea-thumb">
+          <span class="thumb-chip" data-testid="idea-thumb-chip">Proposed thumbnail</span>
+        </div>
+        <div class="idea-text">
+          <div class="idea-title" data-testid="idea-title">Why I keep putting off filming</div>
+          <div class="idea-kind" data-testid="idea-kind">YouTube · Talking head</div>
+        </div>
+        <button class="outline" type="button" data-testid="edit-idea">
+          <svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="m14.5 6.5 3 3"/></svg><span>Edit idea</span></button>
+      </div>
+
+      <div class="beat-list" data-testid="beat-list">
+        <div class="beat" data-testid="beat-hours" data-id="hours" data-state="yours">
+          <button class="handle" type="button" aria-label="Move beat" data-testid="beat-hours-handle"><svg viewBox="0 0 24 24" class="fill"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg></button>
+          <span class="num" data-testid="beat-hours-num">01</span>
+          <div class="beat-text"><div class="beat-title" data-testid="beat-hours-title">Hours of planning</div><div class="beat-line" data-testid="beat-hours-line">I planned for hours.</div></div>
+          <span class="tag" data-testid="beat-hours-source">From your idea</span>
+          <button class="icon-btn" type="button" aria-label="Edit beat" data-testid="beat-hours-edit"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="m14.5 6.5 3 3"/></svg></button>
+          <button class="icon-btn dots" type="button" aria-label="More" data-testid="beat-hours-menu"><svg viewBox="0 0 24 24" class="fill"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+        </div>
+        <div class="beat" data-testid="beat-never" data-id="never" data-state="yours">
+          <button class="handle" type="button" aria-label="Move beat" data-testid="beat-never-handle"><svg viewBox="0 0 24 24" class="fill"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg></button>
+          <span class="num" data-testid="beat-never-num">02</span>
+          <div class="beat-text"><div class="beat-title" data-testid="beat-never-title">Never pressed record</div><div class="beat-line" data-testid="beat-never-line">I never pressed record.</div></div>
+          <span class="tag" data-testid="beat-never-source">From your idea</span>
+          <button class="icon-btn" type="button" aria-label="Edit beat" data-testid="beat-never-edit"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="m14.5 6.5 3 3"/></svg></button>
+          <button class="icon-btn dots" type="button" aria-label="More" data-testid="beat-never-menu"><svg viewBox="0 0 24 24" class="fill"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+        </div>
+        <div class="beat" data-testid="beat-delay" data-id="delay" data-state="suggested">
+          <button class="handle" type="button" aria-label="Move beat" data-testid="beat-delay-handle"><svg viewBox="0 0 24 24" class="fill"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg></button>
+          <span class="num" data-testid="beat-delay-num">03</span>
+          <div class="beat-text"><div class="beat-title" data-testid="beat-delay-title">Planning becomes the delay</div><div class="beat-line" data-testid="beat-delay-line">Planning can become a way to avoid filming.</div></div>
+          <span class="tag" data-testid="beat-delay-source">YAP suggestion</span>
+          <button class="icon-btn" type="button" aria-label="Edit beat" data-testid="beat-delay-edit"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="m14.5 6.5 3 3"/></svg></button>
+          <button class="icon-btn dots" type="button" aria-label="More" data-testid="beat-delay-menu"><svg viewBox="0 0 24 24" class="fill"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+          <button class="outline accept" type="button" aria-pressed="false" data-testid="beat-delay-accept">Accept</button>
+        </div>
+        <div class="beat" data-testid="beat-imperfect" data-id="imperfect" data-state="suggested">
+          <button class="handle" type="button" aria-label="Move beat" data-testid="beat-imperfect-handle"><svg viewBox="0 0 24 24" class="fill"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg></button>
+          <span class="num" data-testid="beat-imperfect-num">04</span>
+          <div class="beat-text"><div class="beat-title" data-testid="beat-imperfect-title">Try one imperfect take</div><div class="beat-line" data-testid="beat-imperfect-line">Try filming one take before planning any more.</div></div>
+          <span class="tag" data-testid="beat-imperfect-source">YAP suggestion</span>
+          <button class="icon-btn" type="button" aria-label="Edit beat" data-testid="beat-imperfect-edit"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="m14.5 6.5 3 3"/></svg></button>
+          <button class="icon-btn dots" type="button" aria-label="More" data-testid="beat-imperfect-menu"><svg viewBox="0 0 24 24" class="fill"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+          <button class="outline accept" type="button" aria-pressed="false" data-testid="beat-imperfect-accept">Accept</button>
+        </div>
+        <div class="beat" data-testid="beat-first-step" data-id="first-step" data-state="suggested">
+          <button class="handle" type="button" aria-label="Move beat" data-testid="beat-first-step-handle"><svg viewBox="0 0 24 24" class="fill"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg></button>
+          <span class="num" data-testid="beat-first-step-num">05</span>
+          <div class="beat-text"><div class="beat-title" data-testid="beat-first-step-title">Leave them with a first step</div><div class="beat-line" data-testid="beat-first-step-line">Start before you feel ready.</div></div>
+          <span class="tag" data-testid="beat-first-step-source">YAP suggestion</span>
+          <button class="icon-btn" type="button" aria-label="Edit beat" data-testid="beat-first-step-edit"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="m14.5 6.5 3 3"/></svg></button>
+          <button class="icon-btn dots" type="button" aria-label="More" data-testid="beat-first-step-menu"><svg viewBox="0 0 24 24" class="fill"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+          <button class="outline accept" type="button" aria-pressed="false" data-testid="beat-first-step-accept">Accept</button>
+        </div>
+      </div>
+
+      <button class="add-beat" type="button" data-testid="add-beat">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add beat</span></button>
+      <button class="extras" type="button" aria-expanded="false" data-testid="extras">
+        <svg viewBox="0 0 24 24" class="pic"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5"/></svg>
+        <span class="extras-title" data-testid="extras-title">Thumbnail &amp; experiment</span>
+        <span class="extras-chip" data-testid="extras-chip">Proposed</span>
+        <svg viewBox="0 0 24 24" class="chev"><path d="m6 9 6 6 6-6"/></svg></button>
+
+      <div class="actions">
+        <button class="gold" type="button" data-testid="prepare-recording"><span>Prepare recording</span>
+          <svg viewBox="0 0 24 24"><path d="M4 12h16M14 6l6 6-6 6"/></svg></button>
+        <a class="back-bottom" href="#" data-testid="back-bottom">Back to idea</a>
+      </div>
+    </section>
+
+    <aside class="panel refine" data-testid="refine-panel">
+      <div class="refine-head">
+        <svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5z"/></svg>
+        <h2 class="refine-title" data-testid="refine-title">Refine with YAP</h2>
+      </div>
+      <div class="refine-message" data-testid="refine-message">
+        <span class="spark"><svg viewBox="0 0 24 24" class="fill"><path d="M10 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7zM18.5 14c.3 2.4 1.1 3.2 3.5 3.5-2.4.3-3.2 1.1-3.5 3.5-.3-2.4-1.1-3.2-3.5-3.5 2.4-.3 3.2-1.1 3.5-3.5z"/></svg></span>
+        <p>I split your idea into moments.<br>Keep what fits; change the rest.</p>
+      </div>
+      <hr class="rule">
+      <textarea class="refine-input" data-testid="refine-input" placeholder="Ask YAP or add a thought..." aria-label="Ask YAP"></textarea>
+      <button class="outline-gold" type="button" data-testid="talk-to-yap">
+        <svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5z"/></svg><span>Talk to YAP</span></button>
+      <p class="refine-note" data-testid="refine-note">Suggestions are yours to change or skip.</p>
+    </aside>
+  </main>
+</div>
+<script defer src="beats.js"></script>
+</body>
+</html>

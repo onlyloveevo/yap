@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>YAP engine debug page</title>
+</head>
+<body>
+<h1>YAP's engine debug page</h1>
+<p>Temporary, no design. This page only drives the engine so it can be checked in Chrome; it is thrown away when the real screens land. No sound is ever played.</p>
+<p>
+<button id="run-sample" type="button">Run the sample take</button>
+<label><input id="fast" type="checkbox"> Fast</label>
+</p>
+<p>
+<button id="use-mic" type="button">Use the microphone</button>
+<button id="stop-mic" type="button" disabled>Stop the microphone take</button>
+<button id="listen-again" type="button" disabled>Listen again</button>
+</p>
+<p id="hearing"></p>
+<p id="early"></p>
+<pre id="log"></pre>
+<script type="module" src="debug.js"></script>
+</body>
+</html>
